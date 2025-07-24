@@ -1,0 +1,10 @@
+use_frameworks!
+
+platform :ios, '14.0'
+
+target 'SWToolKit_Example' do
+  pod 'SWToolKit', :path => '../'
+
+  
+  
+end
