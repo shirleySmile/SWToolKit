@@ -35,9 +35,9 @@ Pod::Spec.new do |s|
   
   s.source_files = 'SWToolKit/Classes/**/*'
   
-  # s.resource_bundles = {
-  #   'SWToolKit' => ['SWToolKit/Assets/*.png']
-  # }
+   s.resource_bundles = {
+     'SWToolKit' => ['SWToolKit/Assets/*']
+   }
   
   # s.public_header_files = 'Pod/Classes/**/*.h'
   
