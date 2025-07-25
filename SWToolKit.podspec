@@ -8,8 +8,8 @@
 
 Pod::Spec.new do |s|
   s.name             = 'SWToolKit'
-  s.version          = '0.1.0'
-  s.summary          = 'A short description of SWToolKit.'
+  s.version          = '1.0.0'
+  s.summary          = 'This is base tool of SWToolKit. Support iOS 14 and above'
   
   # This description is used to generate tags and improve search results.
   #   * Think: What does it do? Why did you write it? What is the focus?
@@ -20,16 +20,17 @@ Pod::Spec.new do |s|
   s.description      = <<-DESC
   TODO: Add long description of the pod here.
   0.1.0 基础库
+  1.0.0 修改bug
   
   DESC
   
-  s.homepage         = 'https://github.com/shirley/SWToolKit'
+  s.homepage         = 'https://github.com/shirleySmile/SWToolKit'
   # s.screenshots     = 'www.example.com/screenshots_1', 'www.example.com/screenshots_2'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = { 'shirley' => '276482207@qq.com' }
-  s.source           = { :git => 'https://github.com/shirley/SWToolKit.git', :tag => s.version.to_s }
-  # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
-  
+  s.source           = { :git => 'https://github.com/shirleySmile/SWToolKit.git', :tag => s.version.to_s }
+
+
   s.ios.deployment_target = '14.0'
   
   s.source_files = 'SWToolKit/Classes/**/*'
