@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'SWToolKit'
-  s.version          = '1.0.0'
+  s.version          = '1.0.1'
   s.summary          = 'This is base tool of SWToolKit. Support iOS 14 and above'
   
   # This description is used to generate tags and improve search results.
@@ -18,9 +18,9 @@ Pod::Spec.new do |s|
   #   * Finally, don't worry about the indent, CocoaPods strips it!
   
   s.description      = <<-DESC
-  TODO: Add long description of the pod here.
-  0.1.0 基础库
+  0.1.0 第一版基础代码整理
   1.0.0 修改bug
+  1.0.1 图片整理到bundle中
   
   DESC
   
@@ -29,15 +29,15 @@ Pod::Spec.new do |s|
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = { 'shirley' => '276482207@qq.com' }
   s.source           = { :git => 'https://github.com/shirleySmile/SWToolKit.git', :tag => s.version.to_s }
-
-
+  
+  
   s.ios.deployment_target = '14.0'
   
   s.source_files = 'SWToolKit/Classes/**/*'
   
-   s.resource_bundles = {
-     'SWToolKit' => ['SWToolKit/Assets/*']
-   }
+  s.resource_bundles = {
+    'SWToolKit' => ['SWToolKit/Assets/*']
+  }
   
   # s.public_header_files = 'Pod/Classes/**/*.h'
   
