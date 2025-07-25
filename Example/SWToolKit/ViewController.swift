@@ -14,6 +14,7 @@ class ViewController: UIViewController {
        
         let title = UILabel(frame: .init(x: 0, y: 200, width: self.view.frame.width, height: 20))
         title.text = "这是一个工具库"
+        title.textAlignment = .center
         self.view.addSubview(title)
         
     }
