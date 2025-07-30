@@ -1,5 +1,5 @@
 //
-//  NaviView.swift
+//  CNaviBar.swift
 //  SWToolKit
 //
 //  Created by shirley on 2022/4/14.
@@ -26,17 +26,9 @@ public struct CNaviBarBaseInfo {
 //MARK: 导航栏底图
 class CNaviBgView: UIView {
     ///磨砂透明
-    private lazy var blurView: UIVisualEffectView = {
-        let bffect = UIBlurEffect.init(style:.extraLight)
-        let visualView = UIVisualEffectView.init(effect: bffect)
-        visualView.isUserInteractionEnabled = false
-        visualView.frame = self.bounds
-        visualView.isHidden = true
-        self.addSubview(visualView)
-        self.sendSubviewToBack(visualView)
-        return visualView
-    }()
+    private weak var blurView: UIVisualEffectView?
     
+    private var bgA:CGFloat = 1.0
     ///背景图片
     private lazy var navBgImgV: UIImageView = {
         let imgV = UIImageView.init(frame: self.bounds)
@@ -48,7 +40,7 @@ class CNaviBgView: UIView {
     override init(frame: CGRect) {
         super.init(frame:frame)
         backgroundColor = .clear
-        alpha = 1.0
+        alpha = bgA
         clipsToBounds = true
     }
     required init?(coder: NSCoder) {
@@ -66,12 +58,22 @@ class CNaviBgView: UIView {
     }
     
     func bgAlpha(a:CGFloat){
+        bgA = a
         navBgImgV.alpha = a
-        blurView.alpha = a
+        blurView?.alpha = a
     }
     
-    func showBlurView(_ show:Bool) {
-        blurView.isHidden = !show
+    func addBlurView(_ blur:UIVisualEffect?) {
+        blurView?.removeFromSuperview()
+        if let blur {
+            let visualView = UIVisualEffectView.init(effect: blur)
+            visualView.isUserInteractionEnabled = false
+            visualView.frame = self.bounds
+            self.addSubview(visualView)
+            self.sendSubviewToBack(visualView)
+            self.blurView = visualView
+            visualView.alpha = bgA
+        }
     }
     
     func bgColor(color:UIColor?) {
@@ -283,9 +285,9 @@ public class CNaviBar: CNaviBarView {
     }
     
     /// 是否显示磨砂层
-    public var isShowBlur:Bool = false{
+    public var blurEffect:UIVisualEffect? {
         willSet{
-            navBarBgView?.showBlurView(newValue)
+            navBarBgView?.addBlurView(newValue)
         }
     }
 
