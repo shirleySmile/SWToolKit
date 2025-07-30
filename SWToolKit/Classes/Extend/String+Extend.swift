@@ -35,9 +35,10 @@ extension String {
         
     }
     
+    
     /// String使用下标截取字符串
     /// string[index] 例如："abcdefg"[3] // c
-    subscript (i:Int)->String{
+    subscript (i:Int)->String {
         let startIndex = self.index(self.startIndex, offsetBy: i)
         let endIndex = self.index(startIndex, offsetBy: 1)
         return String(self[startIndex..<endIndex])
@@ -201,7 +202,7 @@ extension String {
     
     //转换url中的中文
     public func urlEncoding() -> String{
-        if self.isEmpty == true{
+        if self.isEmpty == true {
             return self
         }
         //包含中文
@@ -211,28 +212,7 @@ extension String {
         return self.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!
     }
     
-    
-    //腾讯缩略图（/thumbnail/!<Width>x<Height>r限定缩略图的宽度和高度的最小值分别为 Width 和 Height，进行等比缩放）
-    public func toThumbnailImage(width:CGFloat,height:CGFloat,scale:CGFloat = 2.0) -> String{
-        if self.isEmpty == true{
-            return self
-        }
-        if width > 0  && height > 0 {
-            return self.appending("?imageMogr2/thumbnail/!\(Int(scale*width))x\(Int(scale*height))r")
-        }
-        return self
-    }
-    //腾讯缩略图（scale缩小比例，进行等比缩放） 0<scale<1
-    public func toThumbnailImage(scale:Float) -> String{
-        if self.isEmpty == true{
-            return self
-        }
-        if scale > 0 && scale < 1 {
-            return self.appending("?imageMogr2/thumbnail/!\(scale * 100)p")
-        }
-        return self
-    }
-    
+
     //安全的base64编码
     public func safeBase64Encode() -> String{
         if self.isEmpty == true{
@@ -350,10 +330,14 @@ extension String {
     /// 随机字符串， 默认十位数
     public static func random(num:Int = 10) -> String{
         let uuid:String = DeviceInfo.getOriginUUID().replacingOccurrences(of: "-", with: "")
-        let random:String = String(uuid.prefix(num))
+        guard num < uuid.count else {
+            return uuid
+        }
+        let maxStartIndex = uuid.count - num
+        let randomStartIndex = Int.random(in: 0...maxStartIndex)
+        let random:String = uuid.substring(location: randomStartIndex, length: num)
         return random
     }
-    
 }
 
 
@@ -535,4 +519,11 @@ extension CGFloat {
     }
 }
 
+extension CGRect {
+    
+    public func toString() -> String {
+        return "{{ \(self.minX) , \(self.minY) } , { \(self.width) , \(self.height) }}"
+    }
+    
+}
 
