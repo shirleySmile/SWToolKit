@@ -12,20 +12,27 @@ import UIKit
 extension String {
     
     ///字符串变Dictionary
-    public func toDictionary() -> [String : Any] {
-        
-        var result = [String : Any]()
-        guard !self.isEmpty else { return result }
-        
-        guard let dataSelf = self.data(using: .utf8) else {
-            return result
-        }
+    public func toDictionary() -> [String : Any]? {
+        guard !self.isEmpty else { return nil }
+        guard let dataSelf = self.data(using: .utf8) else { return nil }
         
         if let dic = try? JSONSerialization.jsonObject(with: dataSelf,
                                                        options: .mutableContainers) as? [String : Any] {
-            result = dic
+            return dic
         }
-        return result
+        return nil
+    }
+    
+    /// 字符串转Array
+    public func toArray() -> [Any]? {
+        guard !self.isEmpty else { return nil }
+        guard let dataSelf = self.data(using: .utf8) else { return nil }
+        if let arr = try? JSONSerialization.jsonObject(with: dataSelf,
+                                                       options: .mutableContainers) as? [Any] {
+            return arr
+        }
+        return nil
+        
     }
     
     /// String使用下标截取字符串
