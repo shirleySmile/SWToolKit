@@ -224,7 +224,7 @@ extension Date {
     ///   - Set<Calendar.Component>: 计算差的类型
     ///   - isSet: 是否重置时间到0点
     /// - Returns:
-    public func dateComponents(by other:Date, fmt:String?, components: Set<Calendar.Component>) -> DateComponents {
+    public func dateComponents(by other:Date, fmt:String? = nil, components: Set<Calendar.Component>) -> DateComponents {
         let calendar:Calendar = Calendar.current   ///Calendar(identifier: .gregorian)
         let dateA:Date = self.changeNewDate(fmt: fmt)
         let dateB:Date = other.changeNewDate(fmt: fmt)
