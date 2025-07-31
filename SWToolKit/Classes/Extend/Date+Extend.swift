@@ -64,7 +64,7 @@ extension Date {
     /// 当年的第几天
     public var dayOfYear:Int {
         var res = 0, monthArr = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        let time = self.stringFmt("yyyy-MM-dd").split(separator: "-"), y = Int(time[0])!, m = Int(time[1])!, d = Int(time[2])!
+        let time = self.string(format:"yyyy-MM-dd").split(separator: "-"), y = Int(time[0])!, m = Int(time[1])!, d = Int(time[2])!
         if y % 400 == 0 || (y % 4 == 0 && y % 100 != 0) {
             monthArr[1] = 29
         }
@@ -123,7 +123,7 @@ extension Date {
 extension Date {
     
     /// 日期转字符串
-    public func stringFmt(_ fmt:String, locale:String? = "en_GB") -> String {
+    public func string(format fmt:String, locale:String? = "en_GB") -> String {
         let dateFmt = DateFormatter()
         if let locale = locale, locale.count > 0 {
             dateFmt.locale = Locale.init(identifier: locale)
@@ -133,7 +133,7 @@ extension Date {
     }
     
     /// 字符串转日期
-    public static func dateFmt(_ str:String, _ fmt:String, locale:String? = "en_GB") -> Date {
+    public static func date(format fmt:String, str:String, locale:String? = "en_GB") -> Date {
         let dataFmt = DateFormatter()
         if let locale = locale, locale.count > 0 {
             dataFmt.locale = Locale.init(identifier: locale)
@@ -343,7 +343,7 @@ extension Date {
     
     func changeNewDate(fmt:String?) -> Date {
         guard let fmt else { return self }
-        return Date.dateFmt(self.stringFmt(fmt), fmt)
+        return Date.date(format: fmt, str: self.string(format: fmt))
     }
     
     
