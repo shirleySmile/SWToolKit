@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'SWToolKit'
-  s.version          = '1.0.1'
+  s.version          = '1.0.2'
   s.summary          = 'This is base tool of SWToolKit. Support iOS 14 and above'
   
   # This description is used to generate tags and improve search results.
@@ -21,6 +21,7 @@ Pod::Spec.new do |s|
   0.1.0 第一版基础代码整理
   1.0.0 修改bug
   1.0.1 图片整理到bundle中
+  1.0.2 添加扩展类
   
   DESC
   
