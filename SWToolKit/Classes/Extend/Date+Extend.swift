@@ -10,51 +10,140 @@ import Foundation
 
 extension Date {
     
-//    public func stringFmt(fmt: String) -> String{
-//        let dataFmt = DateFormatter()
-//        dataFmt.locale = Locale.init(identifier: "zh_CN")
-//        dataFmt.dateFormat = fmt;
-//        return dataFmt.string(from: self)
-//    }
-//    
-//    public static func dateFormatter(fmt : String, time: String) -> Date{
-//        let dataFmt = DateFormatter()
-//        dataFmt.locale = Locale.init(identifier: "zh_CN")
-//        dataFmt.dateFormat = fmt
-//        let date = dataFmt.date(from: time)
-//        return date ?? Date.init()
-//    }
-//    
+    public var nextHour: Date {
+        Calendar.current.nextDate(after: self, matching: DateComponents(minute: 0), matchingPolicy: .strict)!
+    }
+    /// 下一秒钟
+    public var nextSecond: Date {
+        Calendar.current.nextDate(after: self, matching: DateComponents(nanosecond: 0), matchingPolicy: .strict)!
+    }
+    /// 下一分钟
+    public var nextMinute: Date {
+        Calendar.current.nextDate(after: self, matching: DateComponents(second: 0), matchingPolicy: .strict)!
+    }
+    /// 明天
+    public var nextDay: Date {
+        Calendar.current.nextDate(after: self, matching: DateComponents(hour:0), matchingPolicy: .strict)!
+    }
+    /// 下一个月初
+    public var nextMonth: Date {
+        Calendar.current.nextDate(after: self, matching: DateComponents(day:0), matchingPolicy: .strict)!
+    }
+    /// 明年
+    public var nextYear: Date {
+        Calendar.current.nextDate(after: self, matching: DateComponents(month: 0), matchingPolicy: .strict)!
+    }
+    
+    public var year: Int {
+        Calendar.current.component(.year, from: self)
+    }
+    public var month: Int {
+        Calendar.current.component(.month, from: self)
+    }
+    public var day: Int {
+        Calendar.current.component(.day, from: self)
+    }
+    public var hour: Int {
+        Calendar.current.component(.hour, from: self)
+    }
+    public var minute: Int {
+        Calendar.current.component(.minute, from: self)
+    }
+    public var second: Int {
+        Calendar.current.component(.second, from: self)
+    }
+    /// 美国星期 1:周日。2:周一 3:周二 4:周三 5:周四 6:周五 7:周六
+    public var weekday:Int {
+        Calendar.current.component(.weekday, from: self)
+    }
+    /// 当年的第几周
+    public var weekOfYear:Int {
+        Calendar.current.component(.weekOfYear, from: self)
+    }
+    
+    /// 当年的第几天
+    public var dayOfYear:Int {
+        var res = 0, monthArr = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        let time = self.stringFmt("yyyy-MM-dd").split(separator: "-"), y = Int(time[0])!, m = Int(time[1])!, d = Int(time[2])!
+        if y % 400 == 0 || (y % 4 == 0 && y % 100 != 0) {
+            monthArr[1] = 29
+        }
+        for i in 0 ..< m - 1 {
+            res += monthArr[i]
+        }
+        return res + d
+    }
+    
+    /// 中国星期 1:周一 2:周二 3:周三 4:周四 5:周五 6:周六 7:周日
+    public var cnWeekDay:Int{
+        var week = self.weekday - 1
+        if week == 0 {
+            week = 7
+        }
+        return week
+    }
+    
+    /// 日期中的月份共几个星期
+    public func weeksOfMonth() -> Int {
+        let calendar:Calendar = Calendar(identifier: .gregorian)
+        let weekRange = calendar.range(of: .weekOfMonth, in: .month, for: self)
+        let weeksCount = weekRange?.count ?? 0
+        return weeksCount
+    }
     
     
-    ///普遍时间格式
-//    static public func getTimeDifference(time: Date) -> String {
-//         let calendar = Calendar.current
-//         let fromComp = calendar.dateComponents(in: .current, from: time)
-//         let toComp = calendar.dateComponents(in: .current, from: Date())
-//
-//
-//         var showTime = "" ///具体显示时间
-//         let timeStr = time.stringFmt( "HH:mm")  /// 时分
-//         let days:[Substring] = time.stringFmt( "yyyy-MM-dd").split(separator: "-")///年月日
-//        ///是否为今天
-//        if calendar.isDateInToday(time) {
-//            showTime = timeStr
-//        } else if calendar.isDateInYesterday(time) {
-//            showTime = "txt_date_select_yesterday".local
-//        }else {
-//            if fromComp.year == toComp.year {
-//                showTime = days[1] + "txt_date_select_month".local + days[2] + "txt_date_select_day".local
-//
-//            }else{
-//                showTime = days[1] + "txt_date_select_month".local + days[2] + "txt_date_select_day".local
-//
-//            }
-//        }
-//         return showTime
-//    }
-     
+    /// 日期中的月份共有几天
+    public func daysOfMonth() -> Int {
+        let year = self.year
+        let month = self.month
+        switch month {
+        case 1, 3, 5, 7, 8, 10, 12:
+            return 31
+        case 4, 6, 9, 11:
+            return 30
+        case 2:
+            let isLeapYear = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
+            return isLeapYear ? 29 : 28
+        default:
+            return 30
+        }
+    }
     
+    /// 日期中的年的总天数
+    public func daysOfYear() -> Int{
+        let year = self.year
+        let isLeapYear = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
+        return isLeapYear ? 366 : 365
+    }
+    
+}
+
+
+//MARK: 杂七杂八
+extension Date {
+    
+    /// 日期转字符串
+    public func stringFmt(_ fmt:String, locale:String? = "en_GB") -> String {
+        let dateFmt = DateFormatter()
+        if let locale = locale, locale.count > 0 {
+            dateFmt.locale = Locale.init(identifier: locale)
+        }
+        dateFmt.dateFormat = fmt;
+        return dateFmt.string(from: self)
+    }
+    
+    /// 字符串转日期
+    public static func dateFmt(_ str:String, _ fmt:String, locale:String? = "en_GB") -> Date {
+        let dataFmt = DateFormatter()
+        if let locale = locale, locale.count > 0 {
+            dataFmt.locale = Locale.init(identifier: locale)
+        }
+        dataFmt.dateFormat = fmt
+        let date = dataFmt.date(from: str)
+        return date ?? Date.init()
+    }
+         
+
     /// 获取指定时间前或者后的时间（年月日）
     /// - Parameters:
     ///   - date: 指定时间
@@ -73,101 +162,143 @@ extension Date {
     }
     
     
+}
+ 
+
+//MARK: 两个时间的比较
+extension Date {
+    
+    
     /// 计算两个日期相差多少天
     /// - Parameters:
     ///   - startDate: 开始
     ///   - endDate: 结束
     /// - Returns: 返回天数
-    public static func getDiffDay(startDate:Date? = Date(),endDate:Date? = Date()) -> Int{
-          let formatter = DateFormatter()
+    public func betweenDays(by other:Date) -> Int {
           let calendar = Calendar.current
-          formatter.dateFormat = "yyyy-MM-dd"
-          let diff:DateComponents = calendar.dateComponents([.day], from: startDate!, to: endDate!)
+          let fmt = "yyyy-MM-dd"
+            let dateA:Date = self.changeNewDate(fmt: fmt)
+            let dateB:Date = other.changeNewDate(fmt: fmt)
+            let diff:DateComponents = calendar.dateComponents([.day], from: dateA, to: dateB)
           return diff.day!
     }
+
     
-    
-    /// 获取指定时间的年
-    /// - Parameter date: 指定时间
-    /// - Returns: 返回年数字
-    public func getYear() -> Int?{
-        let calendar = NSCalendar.current
-        let com = calendar.dateComponents([.year,.month,.day], from:self)
-        return com.year
-    }
-    
-    
-    /// 获取指定时间的月
-    /// - Parameter date: 指定时间
-    /// - Returns: 返回月数字
-    public func getMonth() -> Int?{
-        let calendar = NSCalendar.current
-        let com = calendar.dateComponents([.year,.month,.day], from:self)
-        return com.month
-    }
-    
-    /// 获取指定时间的日
-    /// - Parameter date: 指定时间
-    /// - Returns: 返回日数字
-    public func getDay() -> Int?{
-        let calendar = NSCalendar.current
-        let com = calendar.dateComponents([.year,.month,.day], from:self)
-        return com.day
-    }
-    
-    
-    /// 某个日期和设定日期比较大小
+    /// 获取指定时间前或者后的时间（年月日）
     /// - Parameters:
-    ///   - date: 比较的时间
-    ///   - formatter: 时间格式
-    /// - Returns: 1:某个日期比设定日期大， -1:某个日期比设定日期小。 0:相同
-//    public func compare(date:Date, formatter:String = "yyyy-MM-dd") -> Int{
-//
-//        let newSelfDate:Date = Date.dateFormatter(fmt: formatter, time: self.stringFmt( formatter) )
-//        let newCompareDate:Date = Date.dateFormatter(fmt: formatter, time: date.stringFmt( formatter) )
-//
-//        let result = newSelfDate.compare(newCompareDate)
-//        switch result {
-//        case .orderedAscending:
-//            return -1
-//        case .orderedDescending:
-//            return 1
-//        case .orderedSame:
-//            return 0
-//        }
-//    }
+    ///   - year: 年间隔
+    ///   - month: 月间隔
+    ///   - day: 日间隔
+    ///   - hour: 时间间隔
+    ///   - minute: 分钟间隔
+    ///   - second: 秒钟
+    /// - Returns: 返回相应的时间
+    func getLaterDateFromDate(year:Int,month:Int,day:Int,hour:Int,minute:Int,second:Int) -> Date {
+        let calendar:Calendar = Calendar.current
+        let adcomps = NSDateComponents()
+        adcomps.year = year
+        adcomps.month = month
+        adcomps.day = day
+        adcomps.hour = hour
+        adcomps.minute = minute
+        adcomps.second = second
+        let newdate = calendar.date(byAdding: adcomps as DateComponents, to: self, wrappingComponents: false)
+        return newdate!
+    }
     
-    /// 比较两个时间大小
+    
+    /// 比较两个时间大小   -1:开始时间大于结束时间    0:开始时间等于结束时间    1:开始时间小于结束时间
     /// - Parameters:
     ///   - startDate: 开始时间
     ///   - endDate: 结束时间
     /// - Returns: 结果
-    public static func compare(startDate:Date?, endDate:Date?) -> Int{
-        let intervalStart = startDate!.timeIntervalSince1970
-        let intervalStop = endDate!.timeIntervalSince1970
-        // -1:开始时间大于结束时间    0:开始时间等于结束时间    1:开始时间小于结束时间
-        return (intervalStart >  intervalStop) ? -1 : (intervalStart <  intervalStop ? 1 : 0)
+    public func compare(by other:Date, fmt:String?) -> Int {
+        let startD = self.changeNewDate(fmt: fmt).timeIntervalSince1970
+        let stopD =  other.changeNewDate(fmt: fmt).timeIntervalSince1970
+        return (startD > stopD) ? -1 : (startD <  stopD ? 1 : 0)
+    }
+
+    /// 两个日期的时间差 (前大后小时间为负)
+    /// - Parameters:
+    ///   - other: 比对的时间
+    ///   - Set<Calendar.Component>: 计算差的类型
+    ///   - isSet: 是否重置时间到0点
+    /// - Returns:
+    public func dateComponents(by other:Date, fmt:String?, components: Set<Calendar.Component>) -> DateComponents {
+        let calendar:Calendar = Calendar.current   ///Calendar(identifier: .gregorian)
+        let dateA:Date = self.changeNewDate(fmt: fmt)
+        let dateB:Date = other.changeNewDate(fmt: fmt)
+        let diff:DateComponents = calendar.dateComponents(components, from: dateA, to: dateB)
+        return diff
+    }
+
+    /// 是否为同天
+    /// - Parameters:
+    ///   - date: 比对的日期
+    ///   - reset: 重置到0点
+    public func theSameDay(by other:Date, reset:Bool = true) -> Bool {
+        let fmt:String? = (reset ? "yyyy-MM-dd" : nil)
+        let dateA:Date = self.changeNewDate(fmt: fmt)
+        let dateB:Date = other.changeNewDate(fmt: fmt)
+        let calendar = Calendar.current
+        let componentsA:DateComponents = calendar.dateComponents([.year, .month, .day], from: dateA)
+        let componentsB:DateComponents = calendar.dateComponents([.year, .month, .day], from: dateB)
+        return componentsA.year == componentsB.year && componentsA.month == componentsB.month && componentsA.day == componentsB.day
     }
     
-  
-    /// 获取某年某月有多少天
+    /// 是否在同一个星期
     /// - Parameters:
-    ///   - year: 年份
-    ///   - month: 月份
-    /// - Returns: 返回天数目
-    public static func getDaysWith(year:Int,month:Int) -> Int{
-        switch month {
-        case 1,3,5,7,8,10,12:
-            return 31
-        case 4,6,9,11:
-            return 30
-        case 2:
-            return ((year%4 == 0 && year%100 != 0) || (0 == year%400)) ? 29 : 28
-        default:
-            return 30
-        }
-
+    ///   - date: 比对的日期
+    ///   - reset: 重置到0点
+    public func theSameWeek(by other:Date, reset:Bool = true) -> Bool {
+        let fmt:String? = (reset ? "yyyy-MM-dd" : nil)
+        let dateA:Date = self.changeNewDate(fmt: fmt)
+        let dateB:Date = other.changeNewDate(fmt: fmt)
+        let calendar = Calendar.current
+        let componentsA:DateComponents = calendar.dateComponents([.weekOfYear], from: dateA)
+        let componentsB:DateComponents = calendar.dateComponents([.weekOfYear], from: dateB)
+        return componentsA.weekOfYear == componentsB.weekOfYear
     }
+    
+    /// 是否在同一个月
+    /// - Parameters:
+    ///   - date: 比对的日期
+    ///   - reset: 重置到0点
+    public func theSameMonth(by other:Date, reset:Bool = true) -> Bool {
+        let fmt:String? = (reset ? "yyyy-MM-dd" : nil)
+        let dateA:Date = self.changeNewDate(fmt: fmt)
+        let dateB:Date = other.changeNewDate(fmt: fmt)
+        let calendar = Calendar.current
+        let componentsA:DateComponents = calendar.dateComponents([.year, .month], from: dateA)
+        let componentsB:DateComponents = calendar.dateComponents([.year, .month], from: dateB)
+        return (componentsA.year == componentsB.year && componentsA.month == componentsB.month)
+    }
+    
+    /// 是否在两个之间之内
+    /// - Parameters:
+    ///   - start: 开始时间
+    ///   - end: 结束时间
+    ///   - fmt: Format
+    public func between(in start:Date, _ end:Date, fmt:String?) -> Bool {
+        let date = self.changeNewDate(fmt: fmt)
+        let startD = start.changeNewDate(fmt: fmt)
+        let endD = end.changeNewDate(fmt: fmt)
+        if date.compare(startD) == .orderedAscending {
+            return false
+        }
+        if date.compare(endD) == .orderedDescending {
+            return false
+        }
+        return true
+    }
+    
+}
+
+
+
+//MARK: 时间戳
+extension Date {
+    
     //时间戳字符串转date
     public static func timeStampStringToDate(timeStamp:Double, dateFormat:String="yyyy-MM-dd HH:mm:ss") -> Date {
         let timeZone = TimeZone.init(identifier: "UTC") //这是重点
@@ -180,7 +311,7 @@ extension Date {
     }
     
     //时间戳转格式
-    public static func getTimeFromtimeStamp(timeStamp: Double,format:String = "yyyy-MM-dd HH:mm:ss")->String {
+    public static func getTimeFromtimeStamp(timeStamp: Double,format:String = "yyyy-MM-dd HH:mm:ss") -> String {
         //时间戳为毫秒级要 ／ 1000， 秒就不用除1000，参数带没带000
         let timeSta:TimeInterval = TimeInterval(timeStamp / 1000)
         let date = NSDate(timeIntervalSince1970: timeSta)
@@ -203,19 +334,17 @@ extension Date {
         return "\(millisecond)"
     }
     
-    /// 两个日期的时间差 (前大后小时间为负)
-    /// - Parameters:
-    ///   - other: 比对的时间
-    ///   - Set<Calendar.Component>: 计算差的类型
-    ///   - isSet: 是否重置时间到0点
-    /// - Returns:
-    public func dateComponents(date other:Date, components: Set<Calendar.Component>) -> DateComponents {
-        let calendar:Calendar = Calendar(identifier: .gregorian)
-        var newSelfDate = self
-        var newOtherDate = other
-        let diff:DateComponents = calendar.dateComponents(components, from: newSelfDate, to: newOtherDate)
-        return diff
-    }
-
 }
- 
+
+
+
+
+extension Date {
+    
+    func changeNewDate(fmt:String?) -> Date {
+        guard let fmt else { return self }
+        return Date.dateFmt(self.stringFmt(fmt), fmt)
+    }
+    
+    
+}
