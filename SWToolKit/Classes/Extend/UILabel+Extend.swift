@@ -46,7 +46,7 @@ public extension UILabel{
                 func rangeStringForMaxNumber(attrStr:NSAttributedString) -> Int {
                     var count = 0
                     for (_, str) in attrStr.string.enumerated().reversed() {
-                        let oneStrRange = lineStr.string.range(of: String(describing: str))
+                        let oneStrRange = lineStr.string.nsRange(of: String(describing: str))
                         /// 剪切后的文字
                         let subAttrStr = lineStr.attributedSubstring(from: .init(location: 0, length: attrStr.length - oneStrRange.length))
                         if subAttrStr.size().width > (labWidth - addTextW - 10) {

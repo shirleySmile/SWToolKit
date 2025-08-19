@@ -113,7 +113,7 @@ extension String {
     }
     
     /// 获取子字符串的范围NSRange
-    public func range(of subString: String) -> NSRange {
+    public func nsRange(of subString: String) -> NSRange {
         let text = NSString.init(string: self)
         return text.range(of: subString)
     }
