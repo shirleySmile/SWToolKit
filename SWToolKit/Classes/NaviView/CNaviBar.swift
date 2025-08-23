@@ -13,12 +13,15 @@ public struct CNaviBarBaseInfo {
     var textColor:UIColor
     var tintColor:UIColor
     var tapShark:Bool
+
+    var backImage:UIImage? = UIImage.bundle(imageNamed: "arrow_nav_back")
     
     public init(textColor: UIColor, tintColor: UIColor, tapShark: Bool) {
         self.textColor = textColor
         self.tintColor = tintColor
         self.tapShark = tapShark
     }
+    
 }
 
 
@@ -36,7 +39,7 @@ class CNaviBgView: UIView {
         self.sendSubviewToBack(imgV)
         return imgV
     }()
-
+    
     override init(frame: CGRect) {
         super.init(frame:frame)
         backgroundColor = .clear
@@ -93,10 +96,10 @@ public class CNaviBarView: UIControl {
     ///底部分割线
     fileprivate var navBtmLineV: UIView = {
         let v = UIView()
-//        v.isHidden = true
+        //        v.isHidden = true
         return v
     }()
-
+    
     fileprivate var isRegKVO:Bool = false
     ///当前controller返回
     fileprivate weak var currentVC:UIViewController?{
@@ -113,7 +116,7 @@ public class CNaviBarView: UIControl {
     
     public override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
         if let view = object as? UIView, currentVC?.view == view, let bgView = navBarBgView {
-//            self.superview?.bringSubviewToFront(self)
+            //            self.superview?.bringSubviewToFront(self)
             view.bringSubviewToFront(bgView)
         }
     }
@@ -137,7 +140,7 @@ public class CNaviBarView: UIControl {
                 self?.currentVC?.dismiss(animated: true)
             }
         }
-
+        
         navBtmLineV.frame = CGRect(x: 0, y: self.frame.height-0.6, width: self.frame.width, height: 0.1)
         ///添加view
         bgView.addSubview(funcBar)
@@ -208,8 +211,8 @@ extension CNaviBar {
 public class CNaviBar: CNaviBarView {
     
     public static var barInfo = CNaviBarBaseInfo.init(textColor: UIColor.black, tintColor: UIColor.white, tapShark: false)
-
-
+    
+    
     deinit {
         rightItemArr?.removeAll()
         leftItemArr?.removeAll()
@@ -218,7 +221,7 @@ public class CNaviBar: CNaviBarView {
         self.removeAllSubviews()
         self.removeFromSuperview()
     }
-
+    
     /// 左侧按钮  ---  有左侧按钮就不显示返回按钮， 第一个按钮默认距左15pt ， 第二个按钮距离第一个按钮3pt
     public var leftItemArr:[CNaviItemView]?{
         willSet{
@@ -290,7 +293,7 @@ public class CNaviBar: CNaviBarView {
             navBarBgView?.addBlurView(newValue)
         }
     }
-
+    
     /// 设置背景透明度, 导航栏的按钮没有透明度
     public var bgAlpha:CGFloat = 1.0{
         willSet{
@@ -313,7 +316,7 @@ public class CNaviBar: CNaviBarView {
             }
         }
     }
-
+    
     /// 只修改返回按钮的图片 不赋值默认是黑色的返回按钮
     public var navBackImage:UIImage?{
         willSet{
@@ -342,7 +345,7 @@ public class CNaviBar: CNaviBarView {
             funcBar.backBtn?.isHidden = newValue
         }
     }
-
+    
     
 }
 

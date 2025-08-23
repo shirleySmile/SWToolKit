@@ -139,7 +139,7 @@ public class CNaviFuncBar: UIView{
     
     ///基本返回按钮
     fileprivate func baseBackBtn() -> CNaviItemView {
-        let itemV = _defaultBackImg != nil ? CNaviItemView.navBackView(_defaultBackImg) : CNaviItemView.navBackView()
+        let itemV = _defaultBackImg != nil ? CNaviItemView.navBackView(_defaultBackImg) : CNaviItemView.navBackView(CNaviBar.barInfo.backImage)
         itemV.addTarget(self, action: #selector(backBtnClick), for: .touchUpInside)
         return itemV
     }
@@ -148,6 +148,8 @@ public class CNaviFuncBar: UIView{
         print("===========hint CNaviBarView backBtnClick")
         self.backBlock?()
     }
+    
+    private lazy var backImg = UIImage(named: "")
 }
 
 

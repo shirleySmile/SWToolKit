@@ -13,16 +13,11 @@ import UIKit
 
 class KBToolView: UIView {
     
-    private lazy var currentBundle:Bundle? = {
-        guard let path = Bundle(for: KBToolView.self).resourceURL ?? Bundle.main.resourceURL else { return nil }
-        return Bundle.init(url: path)
-    }()
-    
     /// 下一个按钮
     public var nextBtnEnable:Bool = true {
         didSet{
             let imageStr = nextBtnEnable ? "arrow_black_down.png" : "arrow_gray_down.png"
-            let img = UIImage(named: imageStr, in: currentBundle, compatibleWith: nil)
+            let img = UIImage.bundle(imageNamed: imageStr)
             nextImage.image = img
             nextBtn.isUserInteractionEnabled = nextBtnEnable
         }
@@ -31,7 +26,7 @@ class KBToolView: UIView {
     public var lastBtnEnable:Bool = true {
         didSet{
             let imageStr = lastBtnEnable ? "arrow_black_up.png" : "arrow_gray_up.png"
-            let img = UIImage(named: imageStr, in: currentBundle, compatibleWith: nil)
+            let img =  UIImage.bundle(imageNamed: imageStr)
             lastImage.image = img
             lastBtn.isUserInteractionEnabled = lastBtnEnable
         }

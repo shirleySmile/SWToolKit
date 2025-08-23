@@ -190,7 +190,7 @@ extension UIImage {
     
     
     //水印位置枚举
-    enum WaterMarkCorner{
+    public enum WaterMarkCorner{
         case TopLeft
         case TopRight
         case BottomLeft
@@ -198,7 +198,7 @@ extension UIImage {
     }
     
     //添加水印方法
-    func waterMarkedImage(waterMarkText:String, corner:WaterMarkCorner = .BottomRight, margin:CGPoint = CGPoint(x: 20, y: 20), waterMarkTextColor:UIColor = .white,
+    public func waterMarkedImage(waterMarkText:String, corner:WaterMarkCorner = .BottomRight, margin:CGPoint = CGPoint(x: 20, y: 20), waterMarkTextColor:UIColor = .white,
                           waterMarkTextFont:UIFont = .systemFont(ofSize:20),
                           backgroundColor:UIColor = .clear) -> UIImage{
         
