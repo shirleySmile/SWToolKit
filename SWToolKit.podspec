@@ -23,7 +23,7 @@ Pod::Spec.new do |s|
   1.0.1 图片整理到bundle中
   1.0.2 添加扩展类
   1.0.3 优化苹果内购
-  1.0.4 修改bug
+  1.0.4 优化导航栏设置，修改发现的bug
   DESC
   
   s.homepage         = 'https://github.com/shirleySmile/SWToolKit'
