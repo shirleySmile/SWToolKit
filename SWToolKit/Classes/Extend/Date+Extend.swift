@@ -119,6 +119,16 @@ extension Date {
 }
 
 
+extension Date {
+    
+    public var isToday: Bool {
+        let calendar = Calendar.current
+        return calendar.isDateInToday(self)
+    }
+    
+}
+
+
 //MARK: 杂七杂八
 extension Date {
     
@@ -335,6 +345,7 @@ extension Date {
     }
     
 }
+
 
 
 

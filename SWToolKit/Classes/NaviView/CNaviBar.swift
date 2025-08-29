@@ -10,19 +10,26 @@ import UIKit
 import SnapKit
 
 public struct CNaviBarBaseInfo {
-    var textColor:UIColor
-    var tintColor:UIColor
-    var tapShark:Bool
-
-    var backImage:UIImage? = UIImage.bundle(imageNamed: "arrow_nav_back")
     
-    public init(textColor: UIColor, tintColor: UIColor, tapShark: Bool) {
-        self.textColor = textColor
-        self.tintColor = tintColor
-        self.tapShark = tapShark
+    /// 文字颜色
+    public var titleColor:UIColor = .black
+    /// 导航栏背景色
+    public var tintColor:UIColor = .white
+    /// 标题字体大小
+    public var titleFont:UIFont = .systemFont(ofSize: 17, weight: .bold)
+    /// 点击是否震动
+    public var tapShark:Bool = false
+    /// 返回按钮图片
+    public var backImage:UIImage? = UIImage.bundle(imageNamed: "arrow_nav_back")
+    
+    public init(titleColor: UIColor?, tintColor: UIColor?) {
+        self.titleColor = titleColor ?? .black
+        self.tintColor = tintColor ?? .white
     }
-    
+
+    fileprivate init() {}
 }
+
 
 
 
@@ -210,7 +217,7 @@ extension CNaviBar {
 //MARK: 自定义 CNaviBar   ---   可直接使用，此处为外部设置，不赋值会使用默认值
 public class CNaviBar: CNaviBarView {
     
-    public static var barInfo = CNaviBarBaseInfo.init(textColor: UIColor.black, tintColor: UIColor.white, tapShark: false)
+    public static var barInfo = CNaviBarBaseInfo.init()
     
     
     deinit {
@@ -251,7 +258,7 @@ public class CNaviBar: CNaviBarView {
     public var title:String?{
         willSet{
             funcBar.titleStr = newValue
-            if let titleV = funcBar.navTitleView as? CNaviTitleView {
+            if let titleV = funcBar.navTitleView {
                 titleV.titleL?.text = newValue
             }
         }
@@ -261,7 +268,7 @@ public class CNaviBar: CNaviBarView {
     public var attrTitle:NSAttributedString?{
         willSet{
             funcBar.attrTitleStr = newValue
-            if let titleV = funcBar.navTitleView as? CNaviTitleView {
+            if let titleV = funcBar.navTitleView {
                 titleV.titleL?.attributedText = newValue
             }
         }
@@ -272,7 +279,7 @@ public class CNaviBar: CNaviBarView {
         willSet{
             if let value = newValue {
                 funcBar.titleColor = value
-                if let titleV = funcBar.navTitleView as? CNaviTitleView {
+                if let titleV = funcBar.navTitleView {
                     titleV.titleL?.textColor = newValue
                 }
             }

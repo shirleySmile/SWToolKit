@@ -54,7 +54,7 @@ public class CNaviFuncBar: UIView{
             }
         }
     }
-    var titleColor:UIColor = CNaviBar.barInfo.textColor{
+    var titleColor:UIColor = CNaviBar.barInfo.titleColor {
         didSet{
             if let titleStr = titleStr {
                 attrTitleStr = NSAttributedString.init(string: titleStr, attributes: [.foregroundColor:titleColor])
@@ -253,7 +253,7 @@ class CNaviTitleView: CNavItemBaseView{
         titleL = UILabel.init(frame: .zero)
         self.addSubview(titleL!)
         titleL?.font = UIFont.MSystemFont(17, .medium)
-        titleL?.textColor = CNaviBar.barInfo.textColor
+        titleL?.textColor = CNaviBar.barInfo.titleColor
         titleL?.textAlignment = .center
         titleL?.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         titleL?.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)

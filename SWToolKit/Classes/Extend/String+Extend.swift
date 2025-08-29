@@ -329,7 +329,7 @@ extension String {
     
     /// 随机字符串， 默认十位数
     public static func random(num:Int = 10) -> String{
-        let uuid:String = DeviceInfo.getOriginUUID().replacingOccurrences(of: "-", with: "")
+        let uuid:String = UUID().uuidString.replacingOccurrences(of: "-", with: "")
         guard num < uuid.count else {
             return uuid
         }

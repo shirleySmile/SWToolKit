@@ -31,8 +31,8 @@ extension Bundle {
 
 extension UIImage {
     
-    static func bundle(imageNamed: String) -> UIImage {
-        return Bundle.image(named: imageNamed) ?? UIImage()
+    static func bundle(imageNamed: String) -> UIImage? {
+        return Bundle.image(named: imageNamed)
     }
 
     private static func bundleImage(named imageName: String) -> UIImage {

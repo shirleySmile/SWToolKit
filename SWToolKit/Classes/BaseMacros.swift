@@ -109,13 +109,17 @@ public struct kDevice {
     /// 设备的系统版本
     public static let systemVersion = UIDevice.current.systemVersion
     /// 获取设备具体型号:(iphone 6s plus)
-    public static let modelName = DeviceInfo.currentDeviceModelName()
+    public static let modelName = DeviceModeType.nameType?.rawValue
     /// 设置型号:(iPhone10,3)
-    public static let modelIdentifier = DeviceInfo.currentDeviceModelIdentifier()
+    public static let modelIdentifier = DeviceInfo.modeIdentifier
     /// 设备的别名::用户定义的名称
     public static let phoneName = UIDevice.current.name
     /// IP地址
     public static let ip = DeviceInfo.ipAddress
+    /// cpu
+    public static let cpu = DeviceInfo.cpuCores
+    /// 设置型号Enum
+    public static let modelType = DeviceModeType.nameType
     
 }
 

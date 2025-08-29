@@ -39,7 +39,7 @@ fileprivate class KBSubInputViews:NSObject{
         super.init()
         self.obserView = observerView
         if hasToolView {
-            self.toolView = KBToolView.init(frame: CGRect(x: 0, y: 0, width: kScreen.width, height: 40))
+            self.toolView = KBToolView()
             self.toolView?.doneBtn.tapView {[weak self] in
                 self?.obserView?.endEditing(true)
             }
@@ -168,74 +168,17 @@ public class KeyboardTool:NSObject{
             NotificationCenter.default.removeObserver(self, name: UITextView.textDidBeginEditingNotification, object: nil)
         }
     }
-    
 
-    @objc func textViewDidBeginEditing(notify:Notification){
-        if #available(iOS 13, *) {
-            print("ios 13及以上")
-        }else{
-            if kbInputViews?.oldBecomingView != nil {
-                print("textViewDidBeginEditing\n" + String(describing: notify.object) + "\n" + String(describing: notify.userInfo))
-                /// 先不处理，遇到再说
-            }
-        }
-    }
-    
-    @objc func textFieldDidBeginEditing(notify:Notification){
-        if #available(iOS 13, *) {
-            print("ios 13及以上")
-        }else{
-            guard let abView = observerView else{
-                return
-            }
-            if let kbHeight = kbInputViews?.currentKBHeight, kbHeight > 0{
-                print("textFieldDidBeginEditing\n" + String(describing: notify.object) + "\n" + String(describing: notify.userInfo))
-                kbWillShow(abView: abView, kbRect: .init(x: 0, y: kScreen.height-kbHeight, width: kScreen.width, height: kbHeight), time: 0.02)
-            }
-        }
-    }
-    
-    ///显示
-    @objc func keyboardWillShow(notify:Notification) {
-        guard let abView = observerView else{
-            return
-        }
-        guard let localAppKB = notify.userInfo?[UIWindow.keyboardIsLocalUserInfoKey], localAppKB as! Int == 1 else {
-            return
-        }
-        abView.layer.removeAllAnimations()
-        abView.layoutIfNeeded()
-        
-//        kbInputViews?.keyBoardWillChange(will: true)
-        kbInputViews?.toolView?.changeBecome()
-        
-        let time = notify.userInfo?[UIWindow.keyboardAnimationDurationUserInfoKey] as! TimeInterval
-        let kbRect = (notify.userInfo?[UIWindow.keyboardFrameEndUserInfoKey] as! NSValue).cgRectValue
-        
-        kbWillShow(abView: abView, kbRect: kbRect, time: time)
-    }
-    
-    
-    ///隐藏
-    @objc func keyboardWillHide(notify:Notification) {
-        guard let abView = observerView else{
-            return
-        }
-//        kbInputViews?.keyBoardWillChange(will: false)
-        self.kbInputViews?.oldBecomingView = nil
-        let time = notify.userInfo?[UIWindow.keyboardAnimationDurationUserInfoKey] as! TimeInterval
-        kbWillHide(abView: abView, time: time)
-    }
-    
+
     /// 通用 键盘显示
     private func kbWillShow(abView:UIView, kbRect:CGRect, time:TimeInterval){
         let originalF = originalFrame
 //        print("【键盘】keyboardWillShow originalFrame == \(originalFrame)")
-        let defaultSpace = viewOrInputDistance
+        let safeSpace = viewOrInputDistance
         if scrollStyle == .translation {
             self.startAnimation?(true, max(time, 0.02))
             UIView.animate(withDuration: max(time, 0.02)) {
-                abView.y = kScreen.height - (kbRect.height + originalF.size.height) - defaultSpace
+                abView.y = kScreen.height - (kbRect.height + originalF.size.height) - safeSpace
                 abView.layoutIfNeeded()
             } completion: { finish in
                 if finish {
@@ -257,7 +200,7 @@ public class KeyboardTool:NSObject{
             if let kbInputViews = kbInputViews,let becomingView = kbInputViews.firstResponderView, abView.isKind(of: UIScrollView.self) {
                 let abScrollView = abView as! UIScrollView
                 let scrollVFrame = becomingView.bView.superview?.convert(becomingView.bView.frame, to: abScrollView)
-                let y = max(0, (scrollVFrame?.maxY ?? 0) + defaultSpace - abScrollView.height)
+                let y = max(0, (scrollVFrame?.maxY ?? 0) + safeSpace - abScrollView.height)
                 if abScrollView.contentOffset.y != y {
                     UIView.animate(withDuration: max(time, 0.02)) {
                         abScrollView.setContentOffset(.init(x: 0, y: y), animated: true)
@@ -270,8 +213,9 @@ public class KeyboardTool:NSObject{
             if let kbInputViews = kbInputViews,let becomingView = kbInputViews.firstResponderView{
                 func animationView(){
                     let winFrame = becomingView.bView.superview?.convert(becomingView.bView.frame, to: kHighWindow)
-                    let spaceH = kbRect.origin.y - ((winFrame?.maxY ?? 0) + defaultSpace)
-                    let y = (spaceH <= 0 || spaceH >= defaultSpace-10) ? min((abView.y + spaceH - defaultSpace), originalF.origin.y) : originalF.origin.y
+                    let spaceH = kbRect.origin.y - ((winFrame?.maxY ?? 0) + safeSpace)
+//                    let y = (spaceH <= 0 || spaceH >= safeSpace-10) ? min((abView.y + spaceH - safeSpace), originalF.origin.y) : originalF.origin.y
+                    let y = min((abView.y + spaceH - safeSpace), originalF.origin.y)
                     self.startAnimation?(true, max(time, 0.02))
                     UIView.animate(withDuration: max(time, 0.02)) {
                         abView.y = y
@@ -289,8 +233,7 @@ public class KeyboardTool:NSObject{
         }
     }
     
-    
-    
+
     /// 通用 键盘隐藏
     private func kbWillHide(abView:UIView, time:TimeInterval){
         abView.layer.removeAllAnimations()
@@ -363,6 +306,75 @@ public class KeyboardTool:NSObject{
 
 
 
+
+
+// MARK: 通知
+extension KeyboardTool {
+    
+    ///显示
+    @objc func keyboardWillShow(notify:Notification) {
+        guard let abView = observerView else{
+            return
+        }
+        guard let localAppKB = notify.userInfo?[UIWindow.keyboardIsLocalUserInfoKey], localAppKB as! Int == 1 else {
+            return
+        }
+        abView.layer.removeAllAnimations()
+        abView.layoutIfNeeded()
+        
+//        kbInputViews?.keyBoardWillChange(will: true)
+        kbInputViews?.toolView?.changeBecome()
+        
+        let time = notify.userInfo?[UIWindow.keyboardAnimationDurationUserInfoKey] as! TimeInterval
+        let kbRect = (notify.userInfo?[UIWindow.keyboardFrameEndUserInfoKey] as! NSValue).cgRectValue
+        
+        kbWillShow(abView: abView, kbRect: kbRect, time: time)
+    }
+    
+    ///隐藏
+    @objc func keyboardWillHide(notify:Notification) {
+        guard let abView = observerView else{
+            return
+        }
+//        kbInputViews?.keyBoardWillChange(will: false)
+        self.kbInputViews?.oldBecomingView = nil
+        let time = notify.userInfo?[UIWindow.keyboardAnimationDurationUserInfoKey] as! TimeInterval
+        kbWillHide(abView: abView, time: time)
+    }
+    
+    /// textView的通知
+    @objc func textViewDidBeginEditing(notify:Notification){
+        if #available(iOS 13, *) {
+            print("ios 13及以上")
+        }else{
+            if kbInputViews?.oldBecomingView != nil {
+                print("textViewDidBeginEditing\n" + String(describing: notify.object) + "\n" + String(describing: notify.userInfo))
+                /// 先不处理，遇到再说
+            }
+        }
+    }
+    
+    /// textView的通知
+    @objc func textFieldDidBeginEditing(notify:Notification){
+        if #available(iOS 13, *) {
+            print("ios 13及以上")
+        }else{
+            guard let abView = observerView else{
+                return
+            }
+            if let kbHeight = kbInputViews?.currentKBHeight, kbHeight > 0{
+                print("textFieldDidBeginEditing\n" + String(describing: notify.object) + "\n" + String(describing: notify.userInfo))
+                kbWillShow(abView: abView, kbRect: .init(x: 0, y: kScreen.height-kbHeight, width: kScreen.width, height: kbHeight), time: 0.02)
+            }
+        }
+    }
+}
+
+
+
+
+
+// MARK: 对外
 extension KeyboardTool {
     
     
@@ -399,7 +411,6 @@ extension KeyboardTool {
     }
     
     /// 监听结束后调用次方法
-    @discardableResult
     public static func removeKBNotification() {
         KeyboardTool.share.removeObserverManager()
     }

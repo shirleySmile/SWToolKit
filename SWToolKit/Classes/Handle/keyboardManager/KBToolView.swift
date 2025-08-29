@@ -9,8 +9,6 @@ import Foundation
 import UIKit
 
 
-
-
 class KBToolView: UIView {
     
     /// 下一个按钮
@@ -54,7 +52,7 @@ class KBToolView: UIView {
     }
     
     override init(frame: CGRect) {
-        super.init(frame: frame)
+        super.init(frame: CGRect(x: 0, y: 0, width: kScreen.width, height: 40))
         createUI()
     }
     
