@@ -32,6 +32,12 @@ class ViewController: UIViewController {
 
         KeyboardTool.addKBNotification(self, showToolView: true)
         
+        let fmt:String = "yyyy-MM-dd HH:mm:ss"
+        let dateStr = "2025-08-28 23:50:10"
+        let date:Date = Date.date(format: fmt, str: dateStr)
+        print("==123==", date.isToday)
+        
+        
     }
 
     override func didReceiveMemoryWarning() {
