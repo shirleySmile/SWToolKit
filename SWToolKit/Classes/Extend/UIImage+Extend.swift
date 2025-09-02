@@ -12,16 +12,6 @@ import UIKit
 extension UIImage {
     
     
-    /// 改变图片的尺寸
-    public func scale(newSize: CGSize) -> UIImage {
-        UIGraphicsBeginImageContextWithOptions(newSize, false, 0.0)
-        draw(in: CGRect(x: 0, y: 0, width: newSize.width, height: newSize.height))
-        let newImage: UIImage = UIGraphicsGetImageFromCurrentImageContext()!
-        UIGraphicsEndImageContext();
-        return newImage
-    }
-    
-    
     /// 通过颜色创建图片
     /// - Parameter color: 颜色值
     /// - Returns: 图片
@@ -190,7 +180,7 @@ extension UIImage {
     
     
     //水印位置枚举
-    public enum WaterMarkCorner{
+    enum WaterMarkCorner {
         case TopLeft
         case TopRight
         case BottomLeft
@@ -198,7 +188,7 @@ extension UIImage {
     }
     
     //添加水印方法
-    public func waterMarkedImage(waterMarkText:String, corner:WaterMarkCorner = .BottomRight, margin:CGPoint = CGPoint(x: 20, y: 20), waterMarkTextColor:UIColor = .white,
+    func waterMarkedImage(waterMarkText:String, corner:WaterMarkCorner = .BottomRight, margin:CGPoint = CGPoint(x: 20, y: 20), waterMarkTextColor:UIColor = .white,
                           waterMarkTextFont:UIFont = .systemFont(ofSize:20),
                           backgroundColor:UIColor = .clear) -> UIImage{
         
@@ -231,6 +221,221 @@ extension UIImage {
     }
     
 }
+
+
+
+extension UIImage {
+    
+    // 修复图片旋转
+    func fixOrientation() -> UIImage{
+        if self.imageOrientation == .up{
+            return self
+        }
+        var transform = CGAffineTransform.identity
+        
+        switch self.imageOrientation {
+        case .down, .downMirrored:
+            transform = transform.translatedBy(x:self.size.width, y:self.size.height)
+            transform = transform.rotated(by: .pi)
+            break
+            
+        case .left, .leftMirrored:
+            transform = transform.translatedBy(x:self.size.width, y:0)
+            transform = transform.rotated(by: .pi/2)
+            break
+            
+        case .right, .rightMirrored:
+            transform = transform.translatedBy(x:0, y:self.size.height)
+            transform = transform.rotated(by: -.pi/2)
+            break
+            
+        default:
+            break
+        }
+        
+        switch self.imageOrientation {
+        case .upMirrored, .downMirrored:
+            transform = transform.translatedBy(x:self.size.width, y:0)
+            transform = transform.scaledBy(x:-1, y:1)
+            break
+            
+        case .leftMirrored, .rightMirrored:
+            transform = transform.translatedBy(x:self.size.height, y:0);
+            transform = transform.scaledBy(x:-1, y:1)
+            break
+        default:
+            break
+        }
+        
+        let ctx = CGContext(data:nil, width:Int(self.size.width), height:Int(self.size.height), bitsPerComponent:self.cgImage!.bitsPerComponent, bytesPerRow:0, space:self.cgImage!.colorSpace!, bitmapInfo:self.cgImage!.bitmapInfo.rawValue)
+        ctx?.concatenate(transform)
+        
+        switch self.imageOrientation {
+        case .left, .leftMirrored, .right, .rightMirrored:
+            ctx?.draw(self.cgImage!, in:CGRect(x:CGFloat(0), y:CGFloat(0), width:CGFloat(size.height), height:CGFloat(size.width)))
+            break
+            
+        default:
+            ctx?.draw(self.cgImage!, in:CGRect(x:CGFloat(0), y:CGFloat(0), width:CGFloat(size.width), height:CGFloat(size.height)))
+            break
+        }
+        
+        let cgimg:CGImage = (ctx?.makeImage())!
+        let img = UIImage(cgImage: cgimg)
+        
+        return img
+    }
+    
+    
+}
+
+
+
+// MARK: 压缩图片
+extension UIImage {
+    
+    
+    /// 改变图片的尺寸
+    public func scale(newSize: CGSize) -> UIImage {
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 0.0)
+        draw(in: CGRect(x: 0, y: 0, width: newSize.width, height: newSize.height))
+        let newImage: UIImage = UIGraphicsGetImageFromCurrentImageContext()!
+        UIGraphicsEndImageContext();
+        return newImage
+    }
+    
+    /// 仅改变图片的尺寸
+    func resize(to newSize: CGSize) -> UIImage {
+        guard (self.size.width > newSize.width && self.size.height > newSize.height) else {
+            return self
+        }
+        
+        let format = UIGraphicsImageRendererFormat()
+        let renderer = UIGraphicsImageRenderer(size: newSize, format: format)
+        return renderer.image { _ in
+            self.draw(in: CGRect(origin: .zero, size: newSize))
+        }
+    }
+}
+
+
+
+//MARK: 给图片加描边
+extension UIImage {
+    
+    /// Applies a stroke around the image
+    /// - Parameters:
+    ///   - strokeColor: The color of the desired stroke
+    ///   - inputThickness: The thickness, in pixels, of the desired stroke
+    ///   - rotationSteps: The number of rotations to make when applying the stroke. Higher rotationSteps will result in a more precise stroke. Defaults to 8.
+    ///   - extrusionSteps: The number of extrusions to make along a given rotation. Higher extrusions will make a more precise stroke, but aren't usually needed unless using a very thick stroke. Defaults to 1.
+    func applyingStroke(color strokeColor: UIColor, width inputThickness: CGFloat, rotation: Int? = nil, extrusion: Int? = nil) -> UIImage {
+        //        let thickness: CGFloat = inputThickness > 0 ? inputThickness : 0
+        let thickness: CGFloat = inputThickness
+        guard thickness > 0 else {
+            return self
+        }
+        let rotationSteps:Int = rotation ?? min(max(Int(inputThickness * 2), 12), 30)
+        let extrusionSteps:Int = extrusion ?? 1
+        // Create a "stamp" version of ourselves that we can stamp around our edges
+        let strokeImage = imageByFillingWithColor(strokeColor)
+        let inputSize: CGSize = size
+        let outputSize: CGSize = CGSize(width: size.width + (thickness * 2), height: size.height + (thickness * 2))
+        let renderer = UIGraphicsImageRenderer(size: outputSize)
+        let stroked = renderer.image { ctx in
+            // Compute the center of our image
+            let center = CGPoint(x: outputSize.width / 2, y: outputSize.height / 2)
+            let centerRect = CGRect(x: center.x - (inputSize.width / 2), y: center.y - (inputSize.height / 2), width: inputSize.width, height: inputSize.height)
+            // Compute the increments for rotations / extrusions
+            let rotationIncrement: CGFloat = rotationSteps > 0 ? 360 / CGFloat(rotationSteps) : 360
+            let extrusionIncrement: CGFloat = extrusionSteps > 0 ? thickness / CGFloat(extrusionSteps) : thickness
+            for rotation in 0..<rotationSteps {
+                for extrusion in 1...extrusionSteps {
+                    // Compute the angle and distance for this stamp
+                    let angleInDegrees: CGFloat = CGFloat(rotation) * rotationIncrement
+                    let angleInRadians: CGFloat = angleInDegrees * .pi / 180.0
+                    let extrusionDistance: CGFloat = CGFloat(extrusion) * extrusionIncrement
+                    // Compute the position for this stamp
+                    let x = center.x + extrusionDistance * cos(angleInRadians)
+                    let y = center.y + extrusionDistance * sin(angleInRadians)
+                    let vector = CGPoint(x: x, y: y)
+                    // Draw our stamp at this position
+                    let drawRect = CGRect(x: vector.x - (inputSize.width / 2), y: vector.y - (inputSize.height / 2), width: inputSize.width, height: inputSize.height)
+                    strokeImage.draw(in: drawRect, blendMode: .destinationOver, alpha: 1.0)
+                }
+            }
+            // Finally, re-draw ourselves centered within the context, so we appear in-front of all of the stamps we've drawn
+            self.draw(in: centerRect, blendMode: .normal, alpha: 1.0)
+        }
+        return stroked
+    }
+    
+    
+    /// Returns a version of this image any non-transparent pixels filled with the specified color
+    /// - Parameter color: The color to fill
+    /// - Returns: A re-colored version of this image with the specified color
+    private func imageByFillingWithColor(_ color: UIColor) -> UIImage {
+        return UIGraphicsImageRenderer(size: size).image { context in
+            color.setFill()
+            context.fill(context.format.bounds)
+            draw(in: context.format.bounds, blendMode: .destinationIn, alpha: 1.0)
+        }
+    }
+    
+}
+
+
+
+//MARK: 生成背景图片
+extension UIImage {
+    
+    /// 渐变色图片
+    public static func gradientImage(with imgSize:CGSize, colors: [UIColor], start startPoint: CGPoint = CGPoint(x: 0, y: 0.5), end endPoint: CGPoint = CGPoint(x: 1, y: 0.5)) -> UIImage? {
+        let gradientLayer = CAGradientLayer()
+        gradientLayer.frame = CGRect(origin: .zero, size: imgSize)
+        gradientLayer.colors = colors.map { $0.cgColor }
+        gradientLayer.startPoint = startPoint
+        gradientLayer.endPoint = endPoint
+        
+        return UIGraphicsImageRenderer(size: imgSize).image { context in
+            gradientLayer.render(in: context.cgContext)
+        }
+    }
+    
+    /// 以圆心向外渐变色图片
+    public static func radialGradientView(with imgSize:CGSize, colors:[UIColor]) -> UIImage? {
+        let cgColors = colors.map { $0.cgColor } as CFArray
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let scale:CGFloat = 1.0 / CGFloat(colors.count-1)
+        var locations: [CGFloat] = Array()
+        for idx in 0..<(colors.count-1) {
+            locations.append(CGFloat(idx) * scale)
+        }
+        locations.append(1.0)
+        if let gradient = CGGradient(colorsSpace: colorSpace,
+                                     colors: cgColors,
+                                     locations: locations) {
+            let center = CGPoint(x: imgSize.width/2.0, y: imgSize.height/2.0)
+            let radius = max(imgSize.width, imgSize.height) / 2
+            
+            return UIGraphicsImageRenderer(size: imgSize).image { context in
+                context.cgContext.drawRadialGradient(gradient,
+                                                     startCenter: center,
+                                                     startRadius: 0,
+                                                     endCenter: center,
+                                                     endRadius: radius,
+                                                     options: .drawsAfterEndLocation)
+            }
+            
+        }
+        return nil
+    }
+    
+    
+}
+
+
+
 
 
 
