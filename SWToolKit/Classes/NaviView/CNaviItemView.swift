@@ -50,26 +50,27 @@ public class CNaviItemView: CNavItemBaseView {
     /// 本地图片
     /// - Parameters:
     ///   - image: 图片
-    ///   - width: 按钮宽度
+    ///   - width: 按钮宽度(固定宽度，若没有，取图片宽度+间距)
     ///   - space: 图片左右内边距
-    public static func showImage(_ image:UIImage?, width:CGFloat = 20, space:CGFloat = 0, tintColor:UIColor? = nil) -> CNaviItemView {
+    public static func showImage(_ image:UIImage?, width:CGFloat? = nil, space:CGFloat = 0, tintColor:UIColor? = nil) -> CNaviItemView {
         let item = CNaviItemView.getBaseItem()
-        if image != nil {
+        if let image {
             let imgV = UIImageView.init()
             if let tintC = tintColor {
-                imgV.image = image?.withRenderingMode(.alwaysTemplate)
+                imgV.image = image.withRenderingMode(.alwaysTemplate)
                 imgV.tintColor = tintC
             }else{
                 imgV.image = image
             }
+            let viewW:CGFloat = (width ?? (image.size.width+space*2.0))
             imgV.tag = 9999
             imgV.contentMode = .scaleAspectFit
             item.addSubview(imgV)
             imgV.snp.makeConstraints { make in
                 make.center.equalTo(item)
-                make.size.equalTo(CGSize.init(width: width-space*2.0, height: item.height))
+                make.size.equalTo(CGSize.init(width: viewW - space*2.0, height: item.height))
             }
-            item.width = width
+            item.width = viewW
         }
         return item
     }

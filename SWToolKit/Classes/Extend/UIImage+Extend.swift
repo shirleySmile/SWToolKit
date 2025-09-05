@@ -390,7 +390,7 @@ extension UIImage {
 extension UIImage {
     
     /// 渐变色图片
-    public static func gradientImage(with imgSize:CGSize, colors: [UIColor], start startPoint: CGPoint = CGPoint(x: 0, y: 0.5), end endPoint: CGPoint = CGPoint(x: 1, y: 0.5)) -> UIImage? {
+    public static func gradient(with imgSize:CGSize, colors: [UIColor], start startPoint: CGPoint = CGPoint(x: 0, y: 0.5), end endPoint: CGPoint = CGPoint(x: 1, y: 0.5)) -> UIImage? {
         let gradientLayer = CAGradientLayer()
         gradientLayer.frame = CGRect(origin: .zero, size: imgSize)
         gradientLayer.colors = colors.map { $0.cgColor }
@@ -403,7 +403,7 @@ extension UIImage {
     }
     
     /// 以圆心向外渐变色图片
-    public static func radialGradientView(with imgSize:CGSize, colors:[UIColor]) -> UIImage? {
+    public static func radialGradient(with imgSize:CGSize, colors:[UIColor]) -> UIImage? {
         let cgColors = colors.map { $0.cgColor } as CFArray
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         let scale:CGFloat = 1.0 / CGFloat(colors.count-1)
