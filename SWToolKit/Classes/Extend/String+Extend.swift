@@ -262,8 +262,7 @@ extension String {
         
         let cStartIndex = carid.startIndex
         let _ = carid.endIndex
-        let index = carid.index(cStartIndex, offsetBy: 2)
-        
+
         //判断年月日是否有效
         //年份
         let yStartIndex = carid.index(cStartIndex, offsetBy: 6)

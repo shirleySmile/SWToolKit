@@ -21,7 +21,7 @@ extension Dictionary {
 
     
     /// 字典转字符串
-    public func toJson(options opt: JSONSerialization.WritingOptions = [.prettyPrinted]) -> String {
+    public func toJson(options opt: JSONSerialization.WritingOptions = []) -> String {
         if self.count == 0 {
             return ""
         }
