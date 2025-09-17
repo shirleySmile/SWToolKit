@@ -43,7 +43,7 @@ public class CNaviItemView: CNavItemBaseView {
 
     /// 独立方法是为了可以不修改返回的按钮图片，只添加点击事件
     /// - Parameter image: 返回按钮的图片
-    public static func navBackView(_ image: UIImage?, tintColor:UIColor? = nil) -> CNaviItemView {
+    public static func navBackView(_ image: UIImage? = CNaviBar.barInfo.backImage, tintColor:UIColor? = nil) -> CNaviItemView {
         return showImage(image, tintColor: tintColor)
     }
 
