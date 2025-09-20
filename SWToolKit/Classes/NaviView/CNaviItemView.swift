@@ -142,7 +142,7 @@ public class CNaviItemView: CNavItemBaseView {
 
 extension UIView {
     
-    public func changeCNavItemView() -> CNaviItemView{
+    public func convertToCNaviItemView() -> CNaviItemView{
         if self.isKind(of: CNaviItemView.self) {
             return self as! CNaviItemView
         }

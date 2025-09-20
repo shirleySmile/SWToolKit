@@ -62,7 +62,12 @@ public enum DeviceModeType: String {
     case iPhone_16_pro = "iPhone 16 Pro"
     case iPhone_16_pro_max = "iPhone 16 Pro Max"
     case iPhone_16e = "iPhone 16e"
+    case iPhone_17_air = "iPhone Air"    /// 2025.9.9
+    case iPhone_17 = "iPhone 17"   /// 2025.9.9
+    case iPhone_17_pro = "iPhone 17 Pro"   /// 2025.9.9
+    case iPhone_17_pro_max = "iPhone 17 Pro Max"  /// 2025.9.9
     
+
     /// iPad
     case iPad_1 = "iPad 1"
     case iPad_2 = "iPad 2"
@@ -305,18 +310,16 @@ extension DeviceModeType {
         case .iPhone_16_pro: return 24
         case .iPhone_16_pro_max: return 30
         case .iPhone_16e: return 26
-        case .iPad_1, .iPad_2, .iPad_3, .iPad_4, .iPad_5, .iPad_6, .iPad_7, .iPad_8, .iPad_9, .iPad_10, .iPad_16:
-            return 10
-        case .iPad_air, .iPad_air_2, .iPad_air_3, .iPad_air_4, .iPad_air_5, .iPad_air_m2_11, .iPad_air_m2_13, .iPad_air_m3_11, .iPad_air_m3_13:
-            return 10
-        case .iPad_pro_9_7, .iPad_pro_12_9, .iPad_pro_12_9_2nd, .iPad_pro_10_5, .iPad_pro_11, .iPad_pro_12_9_3rd, .iPad_pro_11_2nd:
-            return 10
-        case .iPad_pro_12_9_4th, .iPad_pro_11_3rd, .iPad_pro_12_9_5th, .iPad_pro_m4_11, .iPad_pro_m4_13, .iPad_pro_11_4th, .iPad_pro_12_9_6th:
-            return 10
-        case .iPad_mini, .iPad_mini_2, .iPad_mini_3, .iPad_mini_4, .iPad_mini_5, .iPad_mini_6, .iPad_mini_a17_pro:
-            return 10
-        case .simulator:
-            return 10
+        case .iPad_1, .iPad_2, .iPad_3, .iPad_4, .iPad_5, .iPad_6, .iPad_7, .iPad_8, .iPad_9, .iPad_10, .iPad_16: return 10
+        case .iPad_air, .iPad_air_2, .iPad_air_3, .iPad_air_4, .iPad_air_5, .iPad_air_m2_11, .iPad_air_m2_13, .iPad_air_m3_11, .iPad_air_m3_13: return 10
+        case .iPad_pro_9_7, .iPad_pro_12_9, .iPad_pro_12_9_2nd, .iPad_pro_10_5, .iPad_pro_11, .iPad_pro_12_9_3rd, .iPad_pro_11_2nd: return 10
+        case .iPad_pro_12_9_4th, .iPad_pro_11_3rd, .iPad_pro_12_9_5th, .iPad_pro_m4_11, .iPad_pro_m4_13, .iPad_pro_11_4th, .iPad_pro_12_9_6th: return 10
+        case .iPad_mini, .iPad_mini_2, .iPad_mini_3, .iPad_mini_4, .iPad_mini_5, .iPad_mini_6, .iPad_mini_a17_pro: return 10
+        case .simulator: return 10
+        case .iPhone_17: return 30
+        case .iPhone_17_air: return 27
+        case .iPhone_17_pro: return 33
+        case .iPhone_17_pro_max: return 37
         }
     }
     
@@ -371,7 +374,7 @@ extension DeviceModeType {
         case .iPhone_16:  return 3561
         case .iPhone_16_plus:  return 4006
         case .iPhone_16_pro:  return 3355
-        case .iPhone_16_pro_max:  return 4676
+        case .iPhone_16_pro_max:  return 4685
         case .iPhone_16e:  return 3961
         case .iPad_1:  return 6600
         case .iPad_2:  return 6930
@@ -414,8 +417,12 @@ extension DeviceModeType {
         case .iPad_mini_5: return 5124
         case .iPad_mini_6: return 5257
         case .iPad_mini_a17_pro: return 5124
-        case .simulator:
-            return 3227  /// 数据可能不全，防止崩溃 默认给一个数据:(iphone13的)
+        case .simulator: return 3227  /// 数据可能不全，防止崩溃 默认给一个数据:(iphone13的)
+        case .iPhone_17: return 3692
+        case .iPhone_17_air: return 3149
+        case .iPhone_17_pro:  return 4252
+        case .iPhone_17_pro_max: return 5088
+
         }
         
     }
@@ -501,6 +508,10 @@ extension DeviceModeType {
             return "A17 Pro"
         case .simulator:
             return "Simulator"
+        case .iPhone_17:
+            return "A19"
+        case .iPhone_17_air, .iPhone_17_pro, .iPhone_17_pro_max:
+            return "A19 Pro"
         }
     }
     
@@ -531,6 +542,7 @@ extension DeviceModeType {
         case .iPhone_16, .iPhone_16_plus: return 4040
         case .iPhone_16_pro, .iPhone_16_pro_max: return 4050
         case .iPhone_16e: return 4050
+        case .iPhone_17, .iPhone_17_air, .iPhone_17_pro, .iPhone_17_pro_max: return 4362
         case .iPad_1, .iPad_2, .iPad_3: return 1000
         case .iPad_4: return 1400
         case .iPad_5: return 1850
