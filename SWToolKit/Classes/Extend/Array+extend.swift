@@ -11,13 +11,13 @@ import UIKit
 
 extension Array {
     
-    public func toJson() -> String {
+    public func toJson(options opt: JSONSerialization.WritingOptions = []) -> String {
         do {
             if (!JSONSerialization.isValidJSONObject(self)) {
                 print("无法解析出JSONString")
                 return ""
             }
-            let data:NSData = try JSONSerialization.data(withJSONObject: self, options: []) as NSData
+            let data:NSData = try JSONSerialization.data(withJSONObject: self, options: opt) as NSData
             let JSONString = NSString(data:data as Data,encoding: String.Encoding.utf8.rawValue)
             return JSONString as? String ?? ""
         } catch {
