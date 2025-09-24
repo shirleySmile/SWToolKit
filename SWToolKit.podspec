@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'SWToolKit'
-  s.version          = '1.0.4'
+  s.version          = '1.0.5'
   s.summary          = 'This is base tool of SWToolKit. Support iOS 14 and above'
   
   # This description is used to generate tags and improve search results.
@@ -24,6 +24,7 @@ Pod::Spec.new do |s|
   1.0.2 添加扩展类
   1.0.3 优化苹果内购
   1.0.4 优化导航栏设置，修改发现的bug
+  1.0.5 补充扩展信息
   DESC
   
   s.homepage         = 'https://github.com/shirleySmile/SWToolKit'
@@ -49,7 +50,7 @@ Pod::Spec.new do |s|
   
   # s.dependency 'AFNetworking', '~> 2.3'
   
-  s.dependency "SnapKit"
+  s.dependency 'SnapKit'
   
   
 end
