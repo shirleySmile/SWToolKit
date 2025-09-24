@@ -35,12 +35,14 @@ extension Dictionary {
         return result
     }
     
-    
+
     /// 检测json的value值是否为非基础数据类型
-    public static func filter(dic:[String:Any]?) -> [String:Any]? {
-        guard let dic, dic.count > 0 else { return dic }
-        var newDic:[String:Any] = dic
-        dic.forEach { key, value in
+    public func filterError() -> [String:Any]? {
+        guard let tempDic = self as? [String:Any], tempDic.count > 0 else {
+            return nil
+        }
+        var newDic:[String:Any] = tempDic
+        tempDic.forEach { key, value in
             if let new =  value as? Int {
                 newDic[key] = new
             } else if let new = value as? String {
@@ -52,22 +54,22 @@ extension Dictionary {
             } else if let new = value as? Bool {
                 newDic[key] = new
             } else if let dict = value as? [String: Any] {
-                let tempDic = Dictionary.filter(dic: dict)
+                let tempDic = dict.filterError()
                 newDic[key] = tempDic
             } else if let arr = value as? [Dictionary<String,Any>] {
                 var list:[Dictionary<String,Any>] = Array()
                 for (_, dict) in arr.enumerated() {
-                    if let tempDic = Dictionary.filter(dic: dict) {
+                    if let tempDic = dict.filterError() {
                         list.append(tempDic)
                     }
                 }
                 newDic[key] = list
             } else if let new = value as? NSError {
                 var errDic:[String: Any] = ["domain": new.domain, "code": "\(new.code)", "localizedDescription": new.localizedDescription]
-                if let userInfo = Dictionary.filter(dic: new.userInfo) {
+                if let userInfo = new.userInfo.filterError() {
                     errDic["userInfo"] = userInfo
                 }
-                let tempDic = Dictionary.filter(dic: errDic)
+                let tempDic = errDic.filterError()
                 newDic[key] = tempDic
             } else {
                 newDic.removeValue(forKey: key)
@@ -75,6 +77,7 @@ extension Dictionary {
         }
         return newDic
     }
+    
     
 }
 

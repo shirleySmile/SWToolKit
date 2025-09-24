@@ -41,12 +41,12 @@ extension Array {
     
     
     /// 过滤不可转成json的数据
-    public static func filter(arr:[Dictionary<String, Any>]?) -> [Dictionary<String, Any>]? {
-        guard let arr, arr.count > 0 else { return arr }
-        let newList:[Dictionary<String,Any>] = arr.compactMap { subDic in
-            return Dictionary<String, Any>.filter(dic: subDic)
+    public func filterError() -> [Dictionary<String, Any>]? {
+        guard let tempArr = self as? [Dictionary<String, Any>], tempArr.count > 0 else { return nil }
+        let newList:[Dictionary<String, Any>] = tempArr.compactMap { subDic in
+            return subDic.filterError()
         }
-        return arr
+        return newList
     }
     
 }
