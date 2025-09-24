@@ -35,6 +35,48 @@ extension Dictionary {
         return result
     }
     
+    
+    /// 检测json的value值是否为非基础数据类型
+    public static func filter(dic:[String:Any]?) -> [String:Any]? {
+        guard let dic, dic.count > 0 else { return dic }
+        var newDic:[String:Any] = dic
+        dic.forEach { key, value in
+            if let new =  value as? Int {
+                newDic[key] = new
+            } else if let new = value as? String {
+                newDic[key] = new
+            } else if let new = value as? Float {
+                newDic[key] = new
+            } else if let new = value as? Double {
+                newDic[key] = new
+            } else if let new = value as? Bool {
+                newDic[key] = new
+            } else if let dict = value as? [String: Any] {
+                let tempDic = Dictionary.filter(dic: dict)
+                newDic[key] = tempDic
+            } else if let arr = value as? [Dictionary<String,Any>] {
+                var list:[Dictionary<String,Any>] = Array()
+                for (_, dict) in arr.enumerated() {
+                    if let tempDic = Dictionary.filter(dic: dict) {
+                        list.append(tempDic)
+                    }
+                }
+                newDic[key] = list
+            } else if let new = value as? NSError {
+                var errDic:[String: Any] = ["domain": new.domain, "code": "\(new.code)", "localizedDescription": new.localizedDescription]
+                if let userInfo = Dictionary.filter(dic: new.userInfo) {
+                    errDic["userInfo"] = userInfo
+                }
+                let tempDic = Dictionary.filter(dic: errDic)
+                newDic[key] = tempDic
+            } else {
+                newDic.removeValue(forKey: key)
+            }
+        }
+        return newDic
+    }
+    
 }
+
 
  

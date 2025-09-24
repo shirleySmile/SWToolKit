@@ -1,5 +1,5 @@
 //
-//  Array+extend.swift
+//  Array+Extend.swift
 //  SWToolKit
 //
 //  Created by shirley on 2022/8/17.
@@ -39,4 +39,15 @@ extension Array {
         return data
     }
     
+    
+    /// 过滤不可转成json的数据
+    public static func filter(arr:[Dictionary<String, Any>]?) -> [Dictionary<String, Any>]? {
+        guard let arr, arr.count > 0 else { return arr }
+        let newList:[Dictionary<String,Any>] = arr.compactMap { subDic in
+            return Dictionary<String, Any>.filter(dic: subDic)
+        }
+        return arr
+    }
+    
 }
+
