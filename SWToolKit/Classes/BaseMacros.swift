@@ -25,8 +25,6 @@ public let kStatusBarH = UIApplication.shared.windows.first?.windowScene?.status
 public let kNaviH = (kStatusBarH + 44.0)
 /// tabbar切换视图控制器高度
 public let kTabBarH = (kSafeBtmH + 49.0)
-/// 分页
-public let kPageSize = 20
 
 public let kIphoneXUp:Bool = kSafeBtmH > 0 ? true : false
 
