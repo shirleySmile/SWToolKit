@@ -13,9 +13,9 @@ extension Dictionary {
     
 
     /// 字典拼接字典
-    mutating public func addDictionary(dic:Dictionary) {
-        for (key,value) in dic {
-            self[key] = value
+    mutating public func merge(other dic:Dictionary) {
+        self.merge(dic) { curr, new in
+            new
         }
     }
 
@@ -35,7 +35,7 @@ extension Dictionary {
         return result
     }
     
-
+    
     /// 检测json的value值是否为非基础数据类型
     public func filterError() -> [String:Any]? {
         guard let tempDic = self as? [String:Any], tempDic.count > 0 else {
@@ -43,20 +43,10 @@ extension Dictionary {
         }
         var newDic:[String:Any] = tempDic
         tempDic.forEach { key, value in
-            if let new =  value as? Int {
-                newDic[key] = new
-            } else if let new = value as? String {
-                newDic[key] = new
-            } else if let new = value as? Float {
-                newDic[key] = new
-            } else if let new = value as? Double {
-                newDic[key] = new
-            } else if let new = value as? Bool {
-                newDic[key] = new
-            } else if let dict = value as? [String: Any] {
+            if let dict = value as? [String: Any] {
                 let tempDic = dict.filterError()
                 newDic[key] = tempDic
-            } else if let arr = value as? [Dictionary<String,Any>] {
+            } else if let arr = value as? [Dictionary<String, Any>] {
                 var list:[Dictionary<String,Any>] = Array()
                 for (_, dict) in arr.enumerated() {
                     if let tempDic = dict.filterError() {
@@ -71,13 +61,35 @@ extension Dictionary {
                 }
                 let tempDic = errDic.filterError()
                 newDic[key] = tempDic
+            } else if let dict = value as? String {
+                newDic[key] = value
             } else {
-                newDic.removeValue(forKey: key)
+                newDic[key] = "\(value)"
             }
         }
         return newDic
     }
     
+    
+    /// 字典转字符串
+    public func toString(options opt: JSONSerialization.WritingOptions = []) -> String? {
+        if self.count == 0 {
+            return nil
+        }
+        guard let json = self.filterError() else {
+            print("不是基本的数据类型")
+            return nil
+        }
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: json, options: opt)
+            let result = String(data: jsonData, encoding: String.Encoding.utf8)
+            return result
+        } catch {
+            print("dictionary转换string错误:\(error)")
+            return nil
+        }
+        
+    }
     
 }
 

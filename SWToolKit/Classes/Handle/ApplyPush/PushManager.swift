@@ -26,7 +26,7 @@ class PushInfoHandle:NSObject{
         super.init()
         let tempDic:[String:Any]? = pushUserDef?.object(forKey: "PushInfoHandle") as? Dictionary
         if tempDic != nil {
-            param.addDictionary(dic: tempDic!)
+            param.merge(other: tempDic!)
         }
     }
     

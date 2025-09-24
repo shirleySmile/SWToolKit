@@ -27,6 +27,7 @@ extension Array {
         
     }
     
+    
     //打乱数组
     public static func shuffleArray(arr:[Int]) -> [Int] {
         var data:[Int] = arr
@@ -47,6 +48,27 @@ extension Array {
             return subDic.filterError()
         }
         return newList
+    }
+    
+    
+    /// 是否需要过滤数据
+    public func toString(options opt: JSONSerialization.WritingOptions = []) -> String? {
+        if (!JSONSerialization.isValidJSONObject(self)) {
+            print("无法解析出JSONString")
+            return nil
+        }
+        guard let tempArr = self.filterError() else {
+            print("过滤Array数据为空")
+            return nil
+        }
+        do {
+            let data = try JSONSerialization.data(withJSONObject: tempArr, options: opt)
+            let result = String(data: data , encoding: .utf8)
+            return result
+        } catch {
+            print("==SWToolKit==",error)
+            return nil
+        }
     }
     
 }
