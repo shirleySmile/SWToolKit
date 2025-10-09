@@ -194,7 +194,7 @@ extension UIPickerManager : UIPickerViewDelegate, UIPickerViewDataSource {
                         let twoRow = pickerView.selectedRow(inComponent: 1)
                         if twoRow < subList.count{
                             let twoInfo = subList[twoRow]
-                            print("===========第三层的数据==========" + String(twoInfo.subList?.count ?? 0))
+                            MessageInfo.print("===========第三层的数据==========" + String(twoInfo.subList?.count ?? 0))
                             return twoInfo.subList?.count ?? 0
                         }
                         return 0

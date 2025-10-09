@@ -14,14 +14,14 @@ extension Array {
     public func toJson(options opt: JSONSerialization.WritingOptions = []) -> String {
         do {
             if (!JSONSerialization.isValidJSONObject(self)) {
-                print("无法解析出JSONString")
+                MessageInfo.print("无法解析出JSONString")
                 return ""
             }
             let data:NSData = try JSONSerialization.data(withJSONObject: self, options: opt) as NSData
             let JSONString = NSString(data:data as Data,encoding: String.Encoding.utf8.rawValue)
             return JSONString as? String ?? ""
         } catch {
-            print("==SWToolKit==",error)
+            MessageInfo.print("==SWToolKit==",error)
             return ""
         }
         
@@ -54,11 +54,11 @@ extension Array {
     /// 是否需要过滤数据
     public func toString(options opt: JSONSerialization.WritingOptions = []) -> String? {
         if (!JSONSerialization.isValidJSONObject(self)) {
-            print("无法解析出JSONString")
+            MessageInfo.print("无法解析出JSONString")
             return nil
         }
         guard let tempArr = self.filterError() else {
-            print("过滤Array数据为空")
+            MessageInfo.print("过滤Array数据为空")
             return nil
         }
         do {
@@ -66,7 +66,7 @@ extension Array {
             let result = String(data: data , encoding: .utf8)
             return result
         } catch {
-            print("==SWToolKit==",error)
+            MessageInfo.print(error)
             return nil
         }
     }

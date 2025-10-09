@@ -148,7 +148,7 @@ extension String {
     private func machesEmoji() -> [NSTextCheckingResult] {
         
         guard let expression = try? NSRegularExpression.init(pattern: "\\[\\w+\\]", options: .caseInsensitive) else {
-            print("正则表达式创建失败")
+            MessageInfo.print("正则表达式创建失败")
             return []
         }
         let machesString:NSString = NSString(string: self)

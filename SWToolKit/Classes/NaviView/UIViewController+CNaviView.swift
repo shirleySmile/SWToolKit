@@ -29,11 +29,9 @@ extension UIViewController {
     
     /// 添加导航栏  默认显示
     /// - Parameter showBackView: 是否显示返回按钮
-    public func showNaviView(showBack showBackView:Bool = true){
+    public func showNaviView(showBack showBackView:Bool = true, translucent:Bool = false){
         navBar.showNaviView(show: showBackView)
-        
-//        self.navigationController?.navigationBar.isTranslucent = false
-
+        self.navigationController?.navigationBar.isTranslucent = translucent
     }
     
     /// 隐藏导航栏
@@ -41,9 +39,5 @@ extension UIViewController {
         navBar.hiddenNaviView()
     }
     
-    /// 
-    public func NaviViewAnimation(_ isShow:Bool){
-        
-    }
-    
+
 }

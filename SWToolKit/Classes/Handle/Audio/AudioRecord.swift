@@ -261,17 +261,17 @@ extension AudioRecord {
             switch assetExport!.status
             {
             case .failed:
-                print("failed \(String(describing: assetExport?.error))")
+                MessageInfo.print("failed \(String(describing: assetExport?.error))")
             case .cancelled:
-                print("cancelled\(String(describing: assetExport?.error))")
+                MessageInfo.print("cancelled\(String(describing: assetExport?.error))")
             case .unknown:
-                print("unknown\(String(describing: assetExport?.error))")
+                MessageInfo.print("unknown\(String(describing: assetExport?.error))")
             case .waiting:
-                print("waiting\(String(describing: assetExport?.error))")
+                MessageInfo.print("waiting\(String(describing: assetExport?.error))")
             case .exporting:
-                print("exporting\(String(describing: assetExport?.error))")
+                MessageInfo.print("exporting\(String(describing: assetExport?.error))")
             default:
-                print("success\(String(describing: assetExport?.error))")
+                MessageInfo.print("success\(String(describing: assetExport?.error))")
                 ///删除文件
                 for i in 0..<audioLocalUrls.count{
                     self.destructionRecordingFile(path: audioLocalUrls[i])

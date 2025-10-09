@@ -60,12 +60,12 @@ class ApplyPayRefresh:NSObject {
 extension ApplyPayRefresh:SKRequestDelegate {
     
     public func request(_ request: SKRequest, didFailWithError error: Error) {
-        print("-------请求失败-------\(error)")
+        MessageInfo.print("-------请求失败-------\(error)")
         self.callbackHandle(error)
     }
     
     public func requestDidFinish(_ request: SKRequest) {
-        print("-------请求结束-------")
+        MessageInfo.print("-------请求结束-------")
         self.callbackHandle(nil)
     }
     

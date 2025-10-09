@@ -30,7 +30,7 @@ extension Dictionary {
             let jsonData = try JSONSerialization.data(withJSONObject: self, options: opt)
             result = String(data: jsonData, encoding: String.Encoding.utf8) ?? ""
         } catch {
-            print("dictionary转换string错误:\(error)")
+            MessageInfo.print("dictionary转换string错误:\(error)")
         }
         return result
     }
@@ -61,8 +61,8 @@ extension Dictionary {
                 }
                 let tempDic = errDic.filterError()
                 newDic[key] = tempDic
-            } else if let dict = value as? String {
-                newDic[key] = value
+            } else if let new = value as? String {
+                newDic[key] = new
             } else {
                 newDic[key] = "\(value)"
             }
@@ -77,7 +77,7 @@ extension Dictionary {
             return nil
         }
         guard let json = self.filterError() else {
-            print("不是基本的数据类型")
+            MessageInfo.print("不是基本的数据类型")
             return nil
         }
         do {
@@ -85,7 +85,7 @@ extension Dictionary {
             let result = String(data: jsonData, encoding: String.Encoding.utf8)
             return result
         } catch {
-            print("dictionary转换string错误:\(error)")
+            MessageInfo.print("dictionary转换string错误:\(error)")
             return nil
         }
         

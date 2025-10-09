@@ -60,7 +60,7 @@ public class PlayAudio {
         do {
             try self.audioSession.setActive(false, options: .notifyOthersOnDeactivation)
         } catch let error {
-            debugPrint("\(type(of:self)):\(error)")
+            MessageInfo.print("\(type(of:self)):\(error)")
         }
     }
     
@@ -69,7 +69,7 @@ public class PlayAudio {
             try self.audioSession.setCategory(.playback, options:.mixWithOthers)
             try self.audioSession.setActive(true)
         } catch let error {
-            debugPrint("\(type(of:self)):\(error)")
+            MessageInfo.print("\(type(of:self)):\(error)")
         }
     }
     

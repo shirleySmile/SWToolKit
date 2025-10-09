@@ -42,7 +42,7 @@ public class ApplePay: NSObject {
     }
 
     public func startHandle() {
-        print("苹果内购开始处理....")
+        MessageInfo.print("苹果内购开始处理....")
     }
     
     ///支付代理
@@ -209,9 +209,9 @@ extension ApplePay: SKProductsRequestDelegate{
         
         var prod:SKProduct?
         for (idx, pro) in product.enumerated() {
-            print("---------商品信息下----------")
+            MessageInfo.print("---------商品信息下----------")
             var proStr:String = pro.productIdentifier + "," + pro.localizedTitle + "," + pro.price.stringValue
-            print("---------商品信息上----------")
+            MessageInfo.print("---------商品信息上----------")
             payLog.add(type: .product, title: "产品回调", des: "产品信息\(idx+1)(\(proStr))")
             if pro.productIdentifier == (self.aProductId ?? "") {
                 prod = pro
@@ -243,12 +243,12 @@ extension ApplePay: SKProductsRequestDelegate{
 extension ApplePay:SKRequestDelegate {
     
     public func request(_ request: SKRequest, didFailWithError error: Error) {
-        print("-------购买失败-------\(error)")
+        MessageInfo.print("-------购买失败-------\(error)")
         failResultHandle(type: .buyFail, msg: error.localizedDescription)
     }
     
     public func requestDidFinish(_ request: SKRequest) {
-        print("-------请求结束--可能会多次回调-----")
+        MessageInfo.print("-------请求结束--可能会多次回调-----")
     }
     
 }
