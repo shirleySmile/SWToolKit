@@ -58,7 +58,7 @@ public class ApplePay: NSObject {
     /// 购买定时器
     private var paymentTimer:Timer?
     /// 超时时间
-    public var timeoutInterval: TimeInterval = 30.0
+    public var timeoutInterval: TimeInterval = 60.0
     
     ///开始支付
     public func pay(productId:String) -> ApplePay.StartFailType? {

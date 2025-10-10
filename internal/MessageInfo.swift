@@ -8,14 +8,6 @@
 import Foundation
 
 
-public class SWToolKit:NSObject {
- 
-    /// 是否打印数据
-    public static var logInfo:Bool = false
-    
-}
-
-
 
 class MessageInfo: NSObject {
     
