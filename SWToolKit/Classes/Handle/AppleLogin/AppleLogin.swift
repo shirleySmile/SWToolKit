@@ -81,6 +81,16 @@ public class AppleLogin: NSObject, ASAuthorizationControllerDelegate, ASAuthoriz
                 errorMsg = "授权请求失败未知原因";
             case .notInteractive:
                 errorMsg = "没有交互"
+            case .matchedExcludedCredential:
+                errorMsg = "尝试使用了一个已被排除的凭证"
+            case .credentialImport:
+                errorMsg = "证书导入"
+            case .credentialExport:
+                errorMsg = "证书导出"
+            case .preferSignInWithApple:
+                errorMsg = "偏好用苹果登陆"
+            case .deviceNotConfiguredForPasskeyCreation:
+                errorMsg = "设备未配置密码键"
             @unknown default:
                 errorMsg = "默认";
             }

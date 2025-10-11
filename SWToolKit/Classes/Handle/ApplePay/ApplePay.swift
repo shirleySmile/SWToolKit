@@ -58,7 +58,7 @@ public class ApplePay: NSObject {
     /// 购买定时器
     private var paymentTimer:Timer?
     /// 超时时间
-    public var timeoutInterval: TimeInterval = 60.0
+    public var timeoutInterval: TimeInterval = 120.0
     
     ///开始支付
     public func pay(productId:String) -> ApplePay.StartFailType? {
@@ -210,7 +210,7 @@ extension ApplePay: SKProductsRequestDelegate{
         var prod:SKProduct?
         for (idx, pro) in product.enumerated() {
             MessageInfo.print("---------商品信息下----------")
-            var proStr:String = pro.productIdentifier + "," + pro.localizedTitle + "," + pro.price.stringValue
+            let proStr:String = pro.productIdentifier + "," + pro.localizedTitle + "," + pro.price.stringValue
             MessageInfo.print("---------商品信息上----------")
             payLog.add(type: .product, title: "产品回调", des: "产品信息\(idx+1)(\(proStr))")
             if pro.productIdentifier == (self.aProductId ?? "") {
@@ -373,8 +373,9 @@ extension ApplePay {
     private func getReceipt() -> (msg:String, receiptStr:String?) {
         if let receiptURL = Bundle.main.appStoreReceiptURL {
             do {
-                let receiptData = try? Data(contentsOf: receiptURL)
-                if let encodeStr = receiptData?.base64EncodedString(), encodeStr.count > 0 {
+                let receiptData = try Data(contentsOf: receiptURL)
+                let encodeStr = receiptData.base64EncodedString()
+                if encodeStr.count > 0 {
                     return ("苹果内购成功获取数据", encodeStr)
                 }else{
                     return ("苹果服务器解析出错", nil)

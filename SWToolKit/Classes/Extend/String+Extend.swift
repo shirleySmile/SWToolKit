@@ -8,6 +8,8 @@
 import Foundation
 import CommonCrypto
 import UIKit
+import CryptoKit
+
 
 extension String {
     
@@ -79,10 +81,10 @@ extension String {
     
     /// 系统md5方法
     public var md5:String {
-        let utf8 = cString(using: .utf8)
-        var digest = [UInt8](repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH))
-        CC_MD5(utf8, CC_LONG(utf8!.count - 1), &digest)
-        return digest.reduce("") { $0 + String(format:"%02X", $1) }
+        let digest = Insecure.MD5.hash(data: self.data(using: .utf8) ?? Data())
+        return digest.map {
+            String(format: "%02hhx", $0)
+        }.joined()
     }
     
     

@@ -10,15 +10,8 @@ import UIKit
 import AVFoundation
 
 
-public let kSafeArea:UIEdgeInsets = {
-    let scene = UIApplication.shared.connectedScenes.first
-    guard let windowScene = scene as? UIWindowScene else { return .zero }
-    guard let window = windowScene.windows.first else { return .zero }
-    return window.safeAreaInsets
-}()
-
 /// 底部安全区高度
-public let kSafeBtmH:CGFloat = kSafeArea.bottom
+public let kSafeBtmH:CGFloat = kScreen.safeArea.bottom
 /// 状态栏高度
 public let kStatusBarH = UIApplication.shared.windows.first?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
 /// 导航栏高度
@@ -60,18 +53,11 @@ public struct kScreen {
     /// UI水平方向对照比例
     public static let pt_x = Self.maxWidth/375.0
 
-    
-    public static let safeAreaInset:UIEdgeInsets = {
-        if #available(iOS 13.0, *) {
-            let scene = UIApplication.shared.connectedScenes.first
-            guard let windowScene = scene as? UIWindowScene else { return .zero }
-            guard let window = windowScene.windows.first else { return .zero }
-            return window.safeAreaInsets
-        } else if #available(iOS 11.0, *) {
-            guard let window = UIApplication.shared.windows.first else { return .zero }
-            return window.safeAreaInsets
-        }
-        return .zero
+    public static let safeArea:UIEdgeInsets = {
+        let scene = UIApplication.shared.connectedScenes.first
+        guard let windowScene = scene as? UIWindowScene else { return .zero }
+        guard let window = windowScene.windows.first else { return .zero }
+        return window.safeAreaInsets
     }()
 }
 

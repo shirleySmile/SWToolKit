@@ -7,6 +7,7 @@
 
 import Foundation
 public extension UIButton {
+    
     private struct AssociatedKeys {
         static var eventInterval = "eventInterval"
         static var eventUnavailable = "eventUnavailable"

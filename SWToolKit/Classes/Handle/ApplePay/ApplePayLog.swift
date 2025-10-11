@@ -52,7 +52,7 @@ class ApplePayLog: NSObject {
 
 private extension Date {
     
-    public func stringFmt(fmt: String) -> String{
+    func stringFmt(fmt: String) -> String{
         let dataFmt = DateFormatter()
         dataFmt.locale = Locale.init(identifier: "zh_CN")
         dataFmt.dateFormat = fmt;
