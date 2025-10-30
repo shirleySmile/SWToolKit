@@ -7,9 +7,104 @@
 
 import Foundation
 import UIKit
-
+import SnapKit
 
 public typealias DismissClosure = () -> Void
+
+
+/// 带下滑手势的View
+open class SheetBorderSliderHeader: UIView {
+    
+    private var originPointY:CGFloat = 0
+    fileprivate var dismissClosure:(()->Void)?
+    fileprivate var panLinkView:UIView? {
+        didSet {
+            if let panLinkView {
+                panLinkView.layoutIfNeeded()
+                originPointY = kScreen.height-panLinkView.height
+            }
+        }
+    }
+    
+    lazy var sliderView:UIView = {
+        let bgView = UIView()
+        bgView.layerCorner(radius: 3)
+        bgView.isUserInteractionEnabled = false
+        bgView.backgroundColor = .color(hex: "#D9D9D9")
+        return bgView
+    }()
+    
+    
+    public init(viewHeight:CGFloat = 20) {
+        super.init(frame: .init(x: 0, y: 0, width: 0, height: max(viewHeight, 20)))
+        self.create()
+    }
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        
+        self.backgroundColor = .yellow
+        self.create()
+    }
+
+    open override func layoutSubviews() {
+        super.layoutSubviews()
+        sliderView.center = .init(x: self.width/2.0, y: 6 + sliderView.height/2.0)
+    }
+    
+    required public init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    private func create() {
+        sliderView.frame = .init(x: 100, y: 6, width: 44.0, height: 6.0)
+        self.addSubview(sliderView)
+        
+        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
+        self.addGestureRecognizer(panGesture)
+    }
+    
+    @objc private func handlePanGesture(_ gestureRecognizer: UIPanGestureRecognizer) {
+        if gestureRecognizer.state == .began {
+            self.panLinkView?.endEditing(true)
+        }
+        guard let linkView = self.panLinkView else { return }
+        let translation = gestureRecognizer.translation(in: linkView)
+        // 将视图的位置根据手势的移动进行调整
+        // 只允许向下移动
+        if translation.y > 0 {
+            // 将视图的位置根据手势的移动进行调整
+            if let _ = gestureRecognizer.view {
+                linkView.center = CGPoint(x: linkView.center.x, y: linkView.center.y + translation.y)
+            }
+        }
+        
+        // 当手势结束时，实现反弹效果
+        if gestureRecognizer.state == .ended {
+            if let _ = gestureRecognizer.view {
+                if linkView.origin.y - (kScreen.height - linkView.height) > (linkView.height * 1.0 / 3.0){
+                    self.dismiss()
+                }else{
+                    UIView.animate(withDuration: 0.25) {
+                        // 将视图的位置恢复到原始位置
+                        linkView.y = self.originPointY
+                    } completion: { finish in
+                    }
+                }
+            }
+        }
+        gestureRecognizer.setTranslation(CGPoint.zero, in: linkView)
+    }
+    
+    /// 关闭
+    @objc func dismiss() {
+        self.dismissClosure?()
+    }
+    
+    
+}
+
+
 
 ///弹出view的包边
 open class SheetBorder: UIView {
@@ -44,10 +139,17 @@ open class SheetBorder: UIView {
         }
 
         ScreenPopup.share.createMutiPopupView(popupView: self, mainView: detailV, action: (hidden ? #selector(dismissView) : nil), target: (hidden ? self : nil), cover: cover)
+        
+        if let headerView = headerV as? SheetBorderSliderHeader {
+            headerView.panLinkView = self
+            headerView.dismissClosure = { [weak self] in
+                self?.dismissView()
+            }
+        }
     }
     
     @objc fileprivate func dismissView(){
-        dismissSheetBorderView(animation: animationShow)
+        self.dismissSheetBorderView(animation: animationShow)
     }
     
     public func dismissSheetBorderView(animation:Bool){
