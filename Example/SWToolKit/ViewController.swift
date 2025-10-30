@@ -38,6 +38,17 @@ class ViewController: UIViewController {
         print("==123==", date.isToday)
         
         
+        let btn = UIButton(type: .custom)
+        btn.frame = .init(x: 20, y: 400, width: 100, height: 20)
+        btn.setTitle("显示弹窗", for: .normal)
+        btn.setTitleColor(.red, for: .normal)
+        self.view.addSubview(btn)
+        btn.addTarget(self, action: #selector(click), for: .touchUpInside)
+    }
+    
+    
+    @objc func click(){
+        AlertView.show()
     }
 
     override func didReceiveMemoryWarning() {
@@ -46,4 +57,18 @@ class ViewController: UIViewController {
     }
 
 }
+
+class AlertView:UIView {
+    
+    static func show() {
+        
+        let view = AlertView(frame: .init(origin: .zero, size: .init(width: kScreen.width, height: 300)))
+        view.animationShow(headerView: SheetBorderSliderHeader.init(frame: .init(origin: .zero, size: .init(width: kScreen.width, height: 60))))
+    }
+    
+    
+    
+}
+
+
 

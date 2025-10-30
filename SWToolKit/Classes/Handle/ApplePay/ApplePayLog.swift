@@ -14,10 +14,12 @@ struct ApplePayProgressInfo {
     var date:Date
     
     func info() -> String {
-        return "\(date.stringFmt(fmt: "yyyy.MM.dd HH:mm:ss:SSS"))  status:\(type.des())  content:\(title)-\(des)"
+        return "\(date.stringFmt("yyyy.MM.dd HH:mm:ss:SSS"))  status:\(type.des())  content:\(title)-\(des)"
     }
 }
 
+
+let applePayLog = ApplePayLog()
 
 class ApplePayLog: NSObject {
     
@@ -33,9 +35,11 @@ class ApplePayLog: NSObject {
         /// 产品信息
         case product
     }
- 
+
     private(set) var infoList:[ApplePayProgressInfo] = Array()
     
+    fileprivate override init() {}
+       
     func add(type:ProgressType, title:String, des:String) {
         infoList.append(.init(type: type, title: title, des: des, date: Date()))
     }
@@ -52,7 +56,7 @@ class ApplePayLog: NSObject {
 
 private extension Date {
     
-    func stringFmt(fmt: String) -> String{
+    func stringFmt(_ fmt: String) -> String{
         let dataFmt = DateFormatter()
         dataFmt.locale = Locale.init(identifier: "zh_CN")
         dataFmt.dateFormat = fmt;
