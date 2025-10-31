@@ -128,8 +128,8 @@ public class ApplePayManager: NSObject {
     }
     
     /// 刷新苹果内购的数据
-    public func reloadProductInfo() {
-        self.appleProducts.reloadData()
+    public func reloadProductInfo(ids:[String]) {
+        self.appleProducts.reloadData(ids)
     }
     
     /// 日志
@@ -216,5 +216,6 @@ extension ApplePayManager:ApplyPaymentHandleDelegate {
     }
 
 }
+
 
 

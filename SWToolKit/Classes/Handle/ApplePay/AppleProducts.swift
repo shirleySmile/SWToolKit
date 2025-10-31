@@ -11,7 +11,7 @@ import StoreKit
 class AppleProducts:NSObject {
     
     
-    private var products:[SKProduct]?
+    private var productDict:[String:SKProduct] = Dictionary()
     private var request:SKProductsRequest?
 
     /// 得到的商品回调
@@ -21,9 +21,9 @@ class AppleProducts:NSObject {
     /// 获取购买的产品信息
     func getProducts(productId:String, completed:((SKProduct?)->Void)?) {
         self.productId = productId
-        if let info = self.getProdictInfo()  {
+        if let pInfo = self.productDict[productId] {
             applePayLog.add(type: .product, title: "产品回调", des: "已从本地获取内购信息")
-            completed?(info)
+            completed?(pInfo)
             self.cancelHandle()
             return
         }
@@ -38,9 +38,11 @@ class AppleProducts:NSObject {
     
     
     /// 刷新购买数据
-    func reloadData() {
-        if request == nil {
-            request = SKProductsRequest.init()
+    func reloadData(_ ids:[String]) {
+        if request == nil, ids.count > 0 {
+            let set:Set<String> = Set(ids)
+            applePayLog.add(type: .product, title: "产品回调", des: "刷新本地的内购信息")
+            request = SKProductsRequest.init(productIdentifiers: set)
             request?.delegate = self;
             request?.start()
         }
@@ -51,23 +53,6 @@ class AppleProducts:NSObject {
     func cancel() {
         applePayLog.add(type: .product, title: "产品回调", des: "外部调用取消购买")
         self.cancelHandle()
-    }
-    
-
-    
-    private func getProdictInfo() -> SKProduct? {
-        if let products, products.count > 0 {
-            for (idx, pro) in products.enumerated() {
-                debugPrint("==SWToolKit==" + "----产品回调-----商品信息下----------")
-                let proStr:String = pro.productIdentifier + "," + pro.localizedTitle + "," + pro.price.stringValue
-                debugPrint("==SWToolKit==" + "----产品回调-----商品信息上----------")
-                applePayLog.add(type: .product, title: "产品回调", des: "产品信息\(idx+1)(\(proStr))")
-                if let productId, pro.productIdentifier == productId {
-                    return pro
-                }
-            }
-        }
-        return nil
     }
     
     
@@ -88,18 +73,26 @@ extension AppleProducts: SKProductsRequestDelegate {
     public func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
         debugPrint("==SWToolKit==" + "----产品回调-----收到产品回馈信息----------")
         applePayLog.add(type: .product, title: "产品回调", des: "收到产品反馈消息")
-        self.products = response.products;
-        let pCount:Int = (self.products?.count ?? 0)
-        if pCount == 0 {
+        let products = response.products;
+        if products.count == 0 {
             applePayLog.add(type: .product, title: "产品回调", des: "可购买的产品为空")
             self.productClosure?(nil)
             self.cancelHandle()
             return
         }
         
-        applePayLog.add(type: .product, title: "产品回调", des: "产品付费数量:\(pCount)")
-        let info = self.getProdictInfo()
-        self.productClosure?(info)
+        applePayLog.add(type: .product, title: "产品回调", des: "产品付费数量:\(products.count)")
+        
+        for (idx, pro) in products.enumerated() {
+            self.productDict[pro.productIdentifier] = pro
+            debugPrint("==SWToolKit==" + "----产品回调-----商品信息下----------")
+            let proStr:String = pro.productIdentifier + "," + pro.localizedTitle + "," + pro.price.stringValue
+            debugPrint("==SWToolKit==" + "----产品回调-----商品信息上----------")
+            applePayLog.add(type: .product, title: "产品回调", des: "产品信息\(idx+1)(\(proStr))")
+        }
+        
+        let pInfo = self.productDict[productId ?? ""]
+        self.productClosure?(pInfo)
         self.cancelHandle()
     }
     
