@@ -1,5 +1,5 @@
 //
-//  ApplyPayNew.swift
+//  ApplyPaymentNew.swift
 //  Pods
 //
 //  Created by muwa on 2025/10/27.
@@ -12,7 +12,7 @@ import Foundation
 @available(iOS 15.0, *)
 // 定义一个主类来管理内购相关逻辑
 @MainActor
-private final class ApplyPayNew {
+private final class ApplyPaymentNew {
     
     // 发布产品列表，供UI监听
     @Published private(set) var products: [Product] = []

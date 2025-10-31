@@ -67,7 +67,7 @@ private extension Date {
 
 
 
-extension ApplePay.PaymentType {
+extension ApplePayManager.PaymentType {
     /// 内容
     func des() -> String {
         switch self {
@@ -79,7 +79,7 @@ extension ApplePay.PaymentType {
     }
 }
 
-extension ApplePay.ResultFailType {
+extension ApplePayManager.ResultFailType {
     
     func des() -> String {
         switch self {
@@ -95,10 +95,24 @@ extension ApplePay.ResultFailType {
             return "没有订单号"
         case .timeout:
             return "超时"
-        case .cannotPayments:
-            return "不允许程序内付费"
         case .other:
             return "其他问题"
+        }
+    }
+}
+
+extension ApplePayManager.StartFailType {
+    
+    func des() -> String {
+        switch self {
+        case .productIdNull:
+            return "产品ID为空"
+        case .purchasing:
+            return "正在购买中"
+        case .restoring:
+            return "正在恢复购买"
+        case .cannotPayments:
+            return "不允许程序内付费"
         }
     }
 }

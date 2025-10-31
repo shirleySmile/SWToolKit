@@ -7,7 +7,7 @@
 
 import Foundation
 
-public extension ApplePay {
+public extension ApplePayManager {
     
     /// 支付结果错误的类型
     enum ResultFailType:Int {
@@ -25,8 +25,6 @@ public extension ApplePay {
         case noOrder
         /// 购买超时
         case timeout
-        /// 不可进行购买
-        case cannotPayments
         
         /// 其他 (未知错误)
         case other
@@ -41,6 +39,8 @@ public extension ApplePay {
         case purchasing
         /// 正在恢复购买
         case restoring
+        /// 不可进行购买
+        case cannotPayments
     }
     
     /// 支付状态
