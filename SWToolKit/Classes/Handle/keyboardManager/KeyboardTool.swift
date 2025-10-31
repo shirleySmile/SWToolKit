@@ -115,7 +115,7 @@ fileprivate class KBSubInputViews:NSObject{
 public class KeyboardTool:NSObject{
     
     deinit {
-        print(#file,"======单例文件异常销毁======")
+        MessageInfo.print(#file,"======单例文件异常销毁======")
     }
     
     private static let share = KeyboardTool()

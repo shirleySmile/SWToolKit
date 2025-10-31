@@ -67,7 +67,7 @@ public class UIPickerManager: UIView {
     ///没有设定选中某个值时，默认选中第几个
     public var defailtInitSelectNum:[UInt]?{
         didSet{
-            print(defailtInitSelectNum ?? "");
+            MessageInfo.print(defailtInitSelectNum ?? "");
             pickerV.layoutIfNeeded()
             if let defailtInitSelectNum = self.defailtInitSelectNum, defailtInitSelectNum.count > 0 {
                 for i in 0..<defailtInitSelectNum.count {
@@ -315,7 +315,7 @@ extension UIPickerManager : UIPickerViewDelegate, UIPickerViewDataSource {
                     pickerView.selectRow(min(((maxNum > 0) ? (maxNum - 1) : 0), seletNum), inComponent: 2, animated: false)
                 }
             default:
-                print(#file,"123___default")
+                MessageInfo.print(#file,"123___default")
             }
         }
                   

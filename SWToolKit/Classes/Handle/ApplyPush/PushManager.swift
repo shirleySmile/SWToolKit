@@ -188,7 +188,7 @@ public class PushManager: NSObject, UNUserNotificationCenterDelegate,VoipRingDel
         for item in bytes {
             deviceTokenString += String(format: "%02x", item&0x000000FF)
         }
-        print(deviceTokenString)
+        MessageInfo.print(deviceTokenString)
         return deviceTokenString
     }
     

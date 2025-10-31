@@ -33,27 +33,30 @@ public class ApplePayManager: NSObject {
     /// 内购处理
     private var appleSKHandle:ApplyPaymentHandle = .init()
 
-    public override init() {
+    fileprivate override init() {
         super.init()
         self.appleSKHandle.delegate = self
     }
-    
-    public func startHandle() {
-        MessageInfo.print("苹果内购开始处理....")
-    }
-    
-    ///支付代理
-    public weak var delegate:ApplePayManagerDelegate?
-    
+ 
     /// 苹果内购Id
     private var aProductId:String?
     private var currPaymentType:PaymentType?
     
     /// 超时定时器
     private var paymentTimer:Timer?
+    
+ 
+    ///支付代理
+    public weak var delegate:ApplePayManagerDelegate?
+    
     /// 超时时间
     public var timeoutInterval: TimeInterval = 150.0
     
+    
+    public func initData() {
+        MessageInfo.print("苹果内购开始处理....")
+    }
+
     ///开始支付
     public func pay(productId:String) -> ApplePayManager.StartFailType? {
         guard self.appleSKHandle.checkCanPayment() else {

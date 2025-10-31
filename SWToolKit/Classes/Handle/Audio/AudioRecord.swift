@@ -133,7 +133,7 @@ public class AudioRecord: NSObject, AVAudioRecorderDelegate{
         //初始化录音器
         
         guard canRecord() else {
-            print(#file,"不允许或者不能录制")
+            MessageInfo.print(#file,"不允许或者不能录制")
             recordDelegate?.audioRecord?(audioRecord: self, start: false)
             return
         }
@@ -311,7 +311,7 @@ extension AudioRecord {
             do{
                 try fileManager.removeItem(atPath: path)
             }catch{
-                print(#file,error)
+                MessageInfo.print(#file,error)
             }
             
         }
