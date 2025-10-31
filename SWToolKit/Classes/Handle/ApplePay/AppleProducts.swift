@@ -42,8 +42,8 @@ class AppleProducts:NSObject {
         if request == nil {
             request = SKProductsRequest.init()
             request?.delegate = self;
+            request?.start()
         }
-        request?.start()
     }
     
     

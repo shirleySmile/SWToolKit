@@ -202,17 +202,19 @@ extension ApplePayManager:ApplyPaymentHandleDelegate {
     
     func applePayment(handle: ApplyPaymentHandle, payNew receipt: String) {
         self.delegate?.applePaySuccess(pay: self, productId: self.aProductId ?? "", encode: receipt)
+        self.clearDataHandle()
     }
     
     func applePayment(handle: ApplyPaymentHandle, retoreNew receipt: String) {
         self.delegate?.applePayRestore(pay: self, encode: receipt)
+        self.clearDataHandle()
     }
     
     func applePayment(handle: ApplyPaymentHandle, failType: ResultFailType, message: String) {
         self.delegate?.applePayFail(pay: self, type: failType, errorMsg: message)
+        self.clearDataHandle()
     }
 
 }
-
 
 

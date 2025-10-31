@@ -113,8 +113,8 @@ extension ApplyPaymentHandle:SKPaymentTransactionObserver {
             if let receiptURL = Bundle.main.appStoreReceiptURL, FileManager.default.fileExists(atPath: receiptURL.path) {
                 let receptInfo = getReceipt()
                 if let receiptStr = receptInfo.receiptStr {
-                    self.delegate?.applePayment(handle: self, retoreNew: receiptStr)
                     applePayLog.add(type: .end, title: "恢复购买", des: "本地有票据")
+                    self.delegate?.applePayment(handle: self, retoreNew: receiptStr)
                     self.clearData()
                 }else{
                     failResultHandle(type: .restoreFail, msg: receptInfo.msg)
