@@ -145,7 +145,7 @@ public class CNaviFuncBar: UIView{
     }
     
     @objc fileprivate func backBtnClick(){
-        MessageInfo.print("===========hint CNaviBarView backBtnClick")
+        debugPrint("==SWToolKit==" + "===========hint CNaviBarView backBtnClick")
         self.backBlock?()
     }
     
@@ -302,7 +302,7 @@ class CNaviCustomTitleView:CNaviTitleView{
     
     open override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         let hitV = super.hitTest(point, with: event)
-        MessageInfo.print("hint CNaviCustomTitleView") 
+        debugPrint("==SWToolKit==" + "hint CNaviCustomTitleView") 
         return hitV
     }
     

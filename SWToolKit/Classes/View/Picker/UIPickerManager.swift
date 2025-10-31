@@ -67,7 +67,7 @@ public class UIPickerManager: UIView {
     ///没有设定选中某个值时，默认选中第几个
     public var defailtInitSelectNum:[UInt]?{
         didSet{
-            MessageInfo.print(defailtInitSelectNum ?? "");
+            debugPrint("==SWToolKit==\(defailtInitSelectNum?.toJson() ?? "无")");
             pickerV.layoutIfNeeded()
             if let defailtInitSelectNum = self.defailtInitSelectNum, defailtInitSelectNum.count > 0 {
                 for i in 0..<defailtInitSelectNum.count {
@@ -194,7 +194,7 @@ extension UIPickerManager : UIPickerViewDelegate, UIPickerViewDataSource {
                         let twoRow = pickerView.selectedRow(inComponent: 1)
                         if twoRow < subList.count{
                             let twoInfo = subList[twoRow]
-                            MessageInfo.print("===========第三层的数据==========" + String(twoInfo.subList?.count ?? 0))
+                            debugPrint("==SWToolKit==" + "==第三层的数据==" + String(twoInfo.subList?.count ?? 0))
                             return twoInfo.subList?.count ?? 0
                         }
                         return 0
@@ -315,7 +315,7 @@ extension UIPickerManager : UIPickerViewDelegate, UIPickerViewDataSource {
                     pickerView.selectRow(min(((maxNum > 0) ? (maxNum - 1) : 0), seletNum), inComponent: 2, animated: false)
                 }
             default:
-                MessageInfo.print(#file,"123___default")
+                debugPrint("==SWToolKit==" + #file,"123___default")
             }
         }
                   

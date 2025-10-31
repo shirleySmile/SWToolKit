@@ -148,7 +148,7 @@ class VoipRing : NSObject, PKPushRegistryDelegate {
     //MARK: PKPushRegistryDelegate
     func pushRegistry(_ registry: PKPushRegistry, didUpdate pushCredentials: PKPushCredentials, for type: PKPushType) {
         if pushCredentials.token.count == 0 {
-            MessageInfo.print("ApplePush推送voip token NULL");
+            debugPrint("==SWToolKit==" + "ApplePush推送voip token NULL");
             return
         }
         delegate?.voipServerToken(data: pushCredentials.token)
@@ -160,7 +160,7 @@ class VoipRing : NSObject, PKPushRegistryDelegate {
             return
         }
         
-        MessageInfo.print("ApplePush推送收到---voip推送 ----实现客户端逻辑~~~\(payload.dictionaryPayload)~~~\(type)")
+        debugPrint("==SWToolKit==" + "ApplePush推送收到---voip推送 ----实现客户端逻辑~~~\(payload.dictionaryPayload)~~~\(type)")
         
         ///通话
         let extraMap:String? = payload.dictionaryPayload["extraMap"] as? String

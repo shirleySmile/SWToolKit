@@ -47,7 +47,7 @@ public class AppleLogin: NSObject, ASAuthorizationControllerDelegate, ASAuthoriz
             
         }else{
             callback(.nonSupport, nil)
-            MessageInfo.print(#file,"系统不支持Apple登录")
+            debugPrint("==SWToolKit==" + #file,"系统不支持Apple登录")
         }
     }
     
@@ -94,7 +94,7 @@ public class AppleLogin: NSObject, ASAuthorizationControllerDelegate, ASAuthoriz
             @unknown default:
                 errorMsg = "默认";
             }
-            MessageInfo.print(#file,errorMsg)
+            debugPrint("==SWToolKit==" + #file,errorMsg)
             DispatchQueue.main.async {
                 if self.userInfoBlock != nil {
                     self.userInfoBlock!(errorType, nil)

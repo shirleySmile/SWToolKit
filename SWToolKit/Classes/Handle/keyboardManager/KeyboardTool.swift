@@ -115,7 +115,7 @@ fileprivate class KBSubInputViews:NSObject{
 public class KeyboardTool:NSObject{
     
     deinit {
-        MessageInfo.print(#file,"======单例文件异常销毁======")
+        debugPrint("==SWToolKit==" + #file,"======单例文件异常销毁======")
     }
     
     private static let share = KeyboardTool()
@@ -173,7 +173,7 @@ public class KeyboardTool:NSObject{
     /// 通用 键盘显示
     private func kbWillShow(abView:UIView, kbRect:CGRect, time:TimeInterval){
         let originalF = originalFrame
-//        MessageInfo.print("【键盘】keyboardWillShow originalFrame == \(originalFrame)")
+//        debugPrint("==SWToolKit==" + "【键盘】keyboardWillShow originalFrame == \(originalFrame)")
         let safeSpace = viewOrInputDistance
         if scrollStyle == .translation {
             self.startAnimation?(true, max(time, 0.02))
@@ -345,10 +345,10 @@ extension KeyboardTool {
     /// textView的通知
     @objc func textViewDidBeginEditing(notify:Notification){
         if #available(iOS 13, *) {
-            MessageInfo.print("ios 13及以上")
+            debugPrint("==SWToolKit==" + "ios 13及以上")
         }else{
             if kbInputViews?.oldBecomingView != nil {
-                MessageInfo.print("textViewDidBeginEditing\n" + String(describing: notify.object) + "\n" + String(describing: notify.userInfo))
+                debugPrint("==SWToolKit==" + "textViewDidBeginEditing\n" + String(describing: notify.object) + "\n" + String(describing: notify.userInfo))
                 /// 先不处理，遇到再说
             }
         }
@@ -357,13 +357,13 @@ extension KeyboardTool {
     /// textView的通知
     @objc func textFieldDidBeginEditing(notify:Notification){
         if #available(iOS 13, *) {
-            MessageInfo.print("ios 13及以上")
+            debugPrint("==SWToolKit==" + "ios 13及以上")
         }else{
             guard let abView = observerView else{
                 return
             }
             if let kbHeight = kbInputViews?.currentKBHeight, kbHeight > 0{
-                MessageInfo.print("textFieldDidBeginEditing\n" + String(describing: notify.object) + "\n" + String(describing: notify.userInfo))
+                debugPrint("==SWToolKit==" + "textFieldDidBeginEditing\n" + String(describing: notify.object) + "\n" + String(describing: notify.userInfo))
                 kbWillShow(abView: abView, kbRect: .init(x: 0, y: kScreen.height-kbHeight, width: kScreen.width, height: kbHeight), time: 0.02)
             }
         }

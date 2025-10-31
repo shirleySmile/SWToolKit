@@ -58,9 +58,9 @@ class AppleProducts:NSObject {
     private func getProdictInfo() -> SKProduct? {
         if let products, products.count > 0 {
             for (idx, pro) in products.enumerated() {
-                MessageInfo.print("----产品回调-----商品信息下----------")
+                debugPrint("==SWToolKit==" + "----产品回调-----商品信息下----------")
                 let proStr:String = pro.productIdentifier + "," + pro.localizedTitle + "," + pro.price.stringValue
-                MessageInfo.print("----产品回调-----商品信息上----------")
+                debugPrint("==SWToolKit==" + "----产品回调-----商品信息上----------")
                 applePayLog.add(type: .product, title: "产品回调", des: "产品信息\(idx+1)(\(proStr))")
                 if let productId, pro.productIdentifier == productId {
                     return pro
@@ -86,7 +86,7 @@ extension AppleProducts: SKProductsRequestDelegate {
     
     // 收到产品反馈消息
     public func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
-        MessageInfo.print("----产品回调-----收到产品回馈信息----------")
+        debugPrint("==SWToolKit==" + "----产品回调-----收到产品回馈信息----------")
         applePayLog.add(type: .product, title: "产品回调", des: "收到产品反馈消息")
         self.products = response.products;
         let pCount:Int = (self.products?.count ?? 0)
@@ -104,11 +104,11 @@ extension AppleProducts: SKProductsRequestDelegate {
     }
     
     func requestDidFinish(_ request: SKRequest) {
-        MessageInfo.print("----产品回调-----请求结束----可能会多次回调------")
+        debugPrint("==SWToolKit==" + "----产品回调-----请求结束----可能会多次回调------")
     }
     
     func request(_ request: SKRequest, didFailWithError error: any Error) {
-        MessageInfo.print("----产品回调-----请求产品信息失败----------")
+        debugPrint("==SWToolKit==" + "----产品回调-----请求产品信息失败----------")
         applePayLog.add(type: .product, title: "产品回调", des: "获取产品信息失败\(error.localizedDescription)")
         self.productClosure?(nil)
         self.cancelHandle()

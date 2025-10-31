@@ -54,7 +54,7 @@ public class ApplePayManager: NSObject {
     
     
     public func initData() {
-        MessageInfo.print("苹果内购开始处理....")
+        debugPrint("==SWToolKit==" + "苹果内购开始处理....")
     }
 
     ///开始支付

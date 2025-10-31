@@ -33,7 +33,7 @@ public class HorizontalFlowLayout:UICollectionViewFlowLayout {
     public override func prepare() {
         
         guard rowOfPage > 0 && columnOfPage > 0 else {
-            MessageInfo.print("必须设置rowOfPage和columnOfPage")
+            debugPrint("==SWToolKit==" + "必须设置rowOfPage和columnOfPage")
             return
         }
         collectionView?.isPagingEnabled = true;

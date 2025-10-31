@@ -11,7 +11,6 @@ import Foundation
 extension Dictionary {
     
     
-
     /// 字典拼接字典
     mutating public func merge(other dic:Dictionary) {
         self.merge(dic) { curr, new in
@@ -30,7 +29,7 @@ extension Dictionary {
             let jsonData = try JSONSerialization.data(withJSONObject: self, options: opt)
             result = String(data: jsonData, encoding: String.Encoding.utf8) ?? ""
         } catch {
-            MessageInfo.print("dictionary转换string错误:\(error)")
+            debugPrint("==SWToolKit==" + "dictionary转换string错误:\(error)")
         }
         return result
     }
@@ -77,7 +76,7 @@ extension Dictionary {
             return nil
         }
         guard let json = self.filterError() else {
-            MessageInfo.print("不是基本的数据类型")
+            debugPrint("==SWToolKit==" + "不是基本的数据类型")
             return nil
         }
         do {
@@ -85,7 +84,7 @@ extension Dictionary {
             let result = String(data: jsonData, encoding: String.Encoding.utf8)
             return result
         } catch {
-            MessageInfo.print("dictionary转换string错误:\(error)")
+            debugPrint("==SWToolKit==" + "dictionary转换string错误:\(error)")
             return nil
         }
         

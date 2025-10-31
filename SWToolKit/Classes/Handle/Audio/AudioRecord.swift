@@ -133,7 +133,7 @@ public class AudioRecord: NSObject, AVAudioRecorderDelegate{
         //初始化录音器
         
         guard canRecord() else {
-            MessageInfo.print(#file,"不允许或者不能录制")
+            debugPrint("==SWToolKit==" + #file,"不允许或者不能录制")
             recordDelegate?.audioRecord?(audioRecord: self, start: false)
             return
         }
@@ -261,17 +261,17 @@ extension AudioRecord {
             switch assetExport!.status
             {
             case .failed:
-                MessageInfo.print("failed \(String(describing: assetExport?.error))")
+                debugPrint("==SWToolKit==" + "failed \(String(describing: assetExport?.error))")
             case .cancelled:
-                MessageInfo.print("cancelled\(String(describing: assetExport?.error))")
+                debugPrint("==SWToolKit==" + "cancelled\(String(describing: assetExport?.error))")
             case .unknown:
-                MessageInfo.print("unknown\(String(describing: assetExport?.error))")
+                debugPrint("==SWToolKit==" + "unknown\(String(describing: assetExport?.error))")
             case .waiting:
-                MessageInfo.print("waiting\(String(describing: assetExport?.error))")
+                debugPrint("==SWToolKit==" + "waiting\(String(describing: assetExport?.error))")
             case .exporting:
-                MessageInfo.print("exporting\(String(describing: assetExport?.error))")
+                debugPrint("==SWToolKit==" + "exporting\(String(describing: assetExport?.error))")
             default:
-                MessageInfo.print("success\(String(describing: assetExport?.error))")
+                debugPrint("==SWToolKit==" + "success\(String(describing: assetExport?.error))")
                 ///删除文件
                 for i in 0..<audioLocalUrls.count{
                     self.destructionRecordingFile(path: audioLocalUrls[i])
@@ -311,7 +311,7 @@ extension AudioRecord {
             do{
                 try fileManager.removeItem(atPath: path)
             }catch{
-                MessageInfo.print(#file,error)
+                debugPrint("==SWToolKit==" + #file,error)
             }
             
         }

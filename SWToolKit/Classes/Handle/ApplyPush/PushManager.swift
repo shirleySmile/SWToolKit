@@ -144,19 +144,19 @@ public class PushManager: NSObject, UNUserNotificationCenterDelegate,VoipRingDel
     
     ///处理用户的数据
     private func handleUserInfo(userInfo:[AnyHashable : Any]){
-        MessageInfo.print("ApplePush推送系统，收到通知:\(userInfo)");
+        debugPrint("==SWToolKit==" + "ApplePush推送系统，收到通知:\(userInfo)");
         if let extraMap = (userInfo["extraMap"] as? String){
             if launchedByNotification {
-                MessageInfo.print("ApplePush推送程序关闭(杀死)状态点击推送消息打开应用")
+                debugPrint("==SWToolKit==" + "ApplePush推送程序关闭(杀死)状态点击推送消息打开应用")
                 DispatchQueue.main.asyncAfter(deadline: .now()+5.0) {
                     self.pushDataBlock(extraMap: extraMap, active: false)
                 }
             }else{
                 if UIApplication.shared.applicationState == .active {
-                    MessageInfo.print("ApplePush推送程序前台运行");
+                    debugPrint("==SWToolKit==" + "ApplePush推送程序前台运行");
                     self.pushDataBlock(extraMap: extraMap, active: true)
                 } else {
-                    MessageInfo.print("ApplePush推送程序挂起但未被杀死");
+                    debugPrint("==SWToolKit==" + "ApplePush推送程序挂起但未被杀死");
                     self.pushDataBlock(extraMap: extraMap, active: false)
                 }
             }
@@ -188,7 +188,7 @@ public class PushManager: NSObject, UNUserNotificationCenterDelegate,VoipRingDel
         for item in bytes {
             deviceTokenString += String(format: "%02x", item&0x000000FF)
         }
-        MessageInfo.print(deviceTokenString)
+        debugPrint("==SWToolKit==" + deviceTokenString)
         return deviceTokenString
     }
     
@@ -204,9 +204,9 @@ public class PushManager: NSObject, UNUserNotificationCenterDelegate,VoipRingDel
         let content = response.notification.request.content;
         let userInfo = content.userInfo;
         if ((response.notification.request.trigger?.isKind(of: UNPushNotificationTrigger.self)) != nil) {
-            MessageInfo.print("ApplePush推送iOS10 收到远程通知")
+            debugPrint("==SWToolKit==" + "ApplePush推送iOS10 收到远程通知")
         }else{
-            MessageInfo.print("ApplePush推送iOS10 收到本地通知")
+            debugPrint("==SWToolKit==" + "ApplePush推送iOS10 收到本地通知")
         }
         
         voipRing?.onCancelRing()
@@ -224,7 +224,7 @@ public class PushManager: NSObject, UNUserNotificationCenterDelegate,VoipRingDel
     //MARK: VoipRingDelegate
     func voipServerToken(data: Data) {
         voipTokenStr = setUserNotificationRegisterId(deviceToken: data)
-        MessageInfo.print("ApplePush推送拿到token~~~\(data)~~~~\n~~~-\(String(describing: voipTokenStr))")
+        debugPrint("==SWToolKit==" + "ApplePush推送拿到token~~~\(data)~~~~\n~~~-\(String(describing: voipTokenStr))")
         registerUserIdentifier()
     }
     
