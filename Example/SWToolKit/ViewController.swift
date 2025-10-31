@@ -63,7 +63,7 @@ class AlertView:UIView {
     static func show() {
         
         let view = AlertView(frame: .init(origin: .zero, size: .init(width: kScreen.width, height: 300)))
-        view.animationShow(headerView: SheetBorderSliderHeader.init(frame: .init(origin: .zero, size: .init(width: kScreen.width, height: 60))))
+        view.animationShow(headerView: SheetBorderSliderHeader.init(viewHeight: 60))
     }
     
     
