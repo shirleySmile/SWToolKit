@@ -46,7 +46,7 @@ class ApplyPaymentHandle: NSObject {
     ///开始支付
     func startPay(product:SKProduct) {
         self.currPaymentType = .purchase
-        applePayLog.add(type: .product, title: "开始购买", des: "发送购买请求")
+        applePayLog.add(type: .start, title: "开始购买", des: "发送购买请求")
         // 添加一个交易队列观察者
         let payment = SKPayment.init(product: product)
         SKPaymentQueue.default().add(payment)
