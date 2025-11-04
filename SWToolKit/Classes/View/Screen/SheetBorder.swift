@@ -12,6 +12,7 @@ import SnapKit
 public typealias DismissClosure = () -> Void
 
 
+
 /// 带下滑手势的View
 open class SheetBorderSliderHeader: UIView {
     
@@ -70,12 +71,16 @@ open class SheetBorderSliderHeader: UIView {
         }
         guard let linkView = self.panLinkView else { return }
         let translation = gestureRecognizer.translation(in: linkView)
+        
         // 将视图的位置根据手势的移动进行调整
         // 只允许向下移动
-        if translation.y > 0 {
+        let centerY:CGFloat = linkView.center.y + translation.y
+        let pointY:CGFloat = centerY - linkView.height/2.0
+        if pointY >= originPointY {
+//        if translation.y > 0 {
             // 将视图的位置根据手势的移动进行调整
             if let _ = gestureRecognizer.view {
-                linkView.center = CGPoint(x: linkView.center.x, y: linkView.center.y + translation.y)
+                linkView.center = CGPoint(x: linkView.center.x, y: centerY)
             }
         }
         
