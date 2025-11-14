@@ -1,5 +1,5 @@
 //
-//  SheetBorder.swift
+//  ScreenPopupSheetBorder.swift
 //  SWToolKit
 //
 //  Created by shirley on 2022/5/25.
@@ -112,12 +112,12 @@ open class SheetBorderSliderHeader: UIView {
 
 
 ///弹出view的包边
-open class SheetBorder: UIView {
+open class ScreenPopupSheetBorder: UIView {
 
     ///dimiss回调
     public var dimissBlock:DismissClosure?
     fileprivate var animationShow:Bool = true
-    
+    private weak var popView:ScreenPopupOnePiece?
     ///创建view
     public func createView(_ detailV:UIView, headerV:UIView?, cover:Bool, hidden:Bool, cornerSize:CGSize, btmHeight:CGFloat,
                                 bgColor:UIColor) {
@@ -143,7 +143,7 @@ open class SheetBorder: UIView {
             }
         }
 
-        ScreenPopup.share.createMutiPopupView(popupView: self, mainView: detailV, action: (hidden ? #selector(dismissView) : nil), target: (hidden ? self : nil), cover: cover)
+        self.popView = ScreenPopupManager.shared.createMutiPopupView(popupView: self, mainView: detailV, action: (hidden ? #selector(dismissView) : nil), target: (hidden ? self : nil), cover: cover)
         
         if let headerView = headerV as? SheetBorderSliderHeader {
             headerView.panLinkView = self
@@ -157,14 +157,14 @@ open class SheetBorder: UIView {
         self.dismissSheetBorderView(animation: animationShow)
     }
     
-    public func dismissSheetBorderView(animation:Bool){
+    public func dismissSheetBorderView(animation:Bool) {
         self.endEditing(true)
         self.dimissBlock?()
-        ScreenPopup.share.dismiss(popupView: self, animation: animation)
+        self.popView?.dismiss(animation: animation)
     }
     
     public func showView(animation:Bool = true){
-        ScreenPopup.share.show(popupView: self, animation: animation)
+        self.popView?.show(animation: .enterFromBottom)
     }
 }
 
@@ -188,12 +188,12 @@ extension UIView {
                               bottomHeight:CGFloat = max(kSafeBtmH, 20),
                               backgroundColor:UIColor = .white,
                               cornerSize:CGSize = CGSize(width: 10, height: 10),
-                              dismiss:DismissClosure? = nil) -> SheetBorder?{
+                              dismiss:DismissClosure? = nil) -> ScreenPopupSheetBorder?{
         
-        let borderV = ScreenPopup.getMutiPopupView(popupV: self)
-        guard let bdV = borderV as? SheetBorder else {
+        let borderV = ScreenPopupManager.getMutiPopupView(popupV: self)
+        guard let bdV = borderV as? ScreenPopupSheetBorder else {
             /// 没值
-            let borderView = SheetBorder.init(frame: CGRect.zero)
+            let borderView = ScreenPopupSheetBorder.init(frame: CGRect.zero)
             borderView.dimissBlock = dismiss
             borderView.animationShow = animation
             borderView.createView(self, headerV: headerView, cover: cover, hidden: hidden, cornerSize: cornerSize, btmHeight: bottomHeight, bgColor:backgroundColor)
@@ -206,8 +206,8 @@ extension UIView {
     
     /// 隐藏弹窗
     public func animationDismiss(animation:Bool = true){
-        let borderV = ScreenPopup.getMutiPopupView(popupV: self)
-        guard let borderView = borderV as? SheetBorder else {
+        let borderV = ScreenPopupManager.getMutiPopupView(popupV: self)
+        guard let borderView = borderV as? ScreenPopupSheetBorder else {
             return
         }
         borderView.dismissSheetBorderView(animation: animation)
@@ -215,8 +215,8 @@ extension UIView {
     
     
     public func checkAnimationPopupView() -> Bool {
-        let borderV = ScreenPopup.getMutiPopupView(popupV: self)
-        guard let _ = borderV as? SheetBorder else {
+        let borderV = ScreenPopupManager.getMutiPopupView(popupV: self)
+        guard let _ = borderV as? ScreenPopupSheetBorder else {
             return false
         }
         return true

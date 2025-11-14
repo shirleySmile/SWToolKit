@@ -44,6 +44,14 @@ class ViewController: UIViewController {
         btn.setTitleColor(.red, for: .normal)
         self.view.addSubview(btn)
         btn.addTarget(self, action: #selector(click), for: .touchUpInside)
+        
+        
+        let btn2 = UIButton(type: .custom)
+        btn2.frame = .init(x: 20, y: 500, width: 100, height: 20)
+        btn2.setTitle("显示弹窗2", for: .normal)
+        btn2.setTitleColor(.red, for: .normal)
+        self.view.addSubview(btn2)
+        btn2.addTarget(self, action: #selector(click2), for: .touchUpInside)
     }
     
     
@@ -51,6 +59,14 @@ class ViewController: UIViewController {
         AlertView.show()
     }
 
+    
+    @objc func click2(){
+        let view:UIView = .init(frame: .init(x: 0, y: 0, width: kScreen.width, height: 200))
+        view.backgroundColor = .red.withAlphaComponent(0.7)
+        view.screenPopup(show: .none)
+    }
+    
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
