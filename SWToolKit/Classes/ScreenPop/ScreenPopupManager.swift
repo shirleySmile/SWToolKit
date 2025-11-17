@@ -98,17 +98,17 @@ extension UIView {
     /// 直接显示主屏幕上
     /// - Parameters:
     ///   - cover: 是否有遮盖色
-    ///   - target: 目标 
+    ///   - target: 目标
     ///   - action: 方法
     public func screenPopup(show animation:ScreenPopupAnimationType = .none,
-                                cover:UIColor? = .black.withAlphaComponent(0.5),
-                                outside:Bool = true,
-                                outsizeAction:ScreenPopupAction? = nil) {
+                            cover:UIColor? = .black.withAlphaComponent(0.5),
+                            outside:Bool = true,
+                            outsizeAction:ScreenPopupAction? = nil) {
         let view = ScreenPopupManager.shared.createBase(self, cover: cover, outside: outside, outsizeAction: outsizeAction)
         view.show(animation: animation)
     }
     
-
+    
     /// 删除屏幕的view
     public func screenPopupDsmiss(_ animation:Bool = true) {
         ScreenPopupManager.shared.closePopupView(popupView: self, animation: animation)
@@ -120,6 +120,10 @@ extension UIView {
     }
     
 }
+
+
+
+
 
 ///弹窗处理
 extension ScreenPopupManager {

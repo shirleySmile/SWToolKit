@@ -10,29 +10,32 @@ import Foundation
 
 extension Date {
     
-    public var nextHour: Date {
-        Calendar.current.nextDate(after: self, matching: DateComponents(minute: 0), matchingPolicy: .strict)!
+    /// 下一个小时
+    public var nextHour: Date? {
+        return Calendar.current.nextDate(after: self, matching: DateComponents(minute: 0), matchingPolicy: .strict)
     }
     /// 下一秒钟
-    public var nextSecond: Date {
-        Calendar.current.nextDate(after: self, matching: DateComponents(nanosecond: 0), matchingPolicy: .strict)!
+    public var nextSecond: Date? {
+        return Calendar.current.nextDate(after: self, matching: DateComponents(nanosecond: 0), matchingPolicy: .strict)
     }
     /// 下一分钟
-    public var nextMinute: Date {
-        Calendar.current.nextDate(after: self, matching: DateComponents(second: 0), matchingPolicy: .strict)!
+    public var nextMinute: Date? {
+        return Calendar.current.nextDate(after: self, matching: DateComponents(second: 0), matchingPolicy: .strict)
     }
     /// 明天
-    public var nextDay: Date {
-        Calendar.current.nextDate(after: self, matching: DateComponents(hour:0), matchingPolicy: .strict)!
+    public var nextDay: Date? {
+        return Calendar.current.nextDate(after: self, matching: DateComponents(hour:0), matchingPolicy: .strict)
     }
     /// 下一个月初
-    public var nextMonth: Date {
-        Calendar.current.nextDate(after: self, matching: DateComponents(day:0), matchingPolicy: .strict)!
+    public var nextMonth: Date? {
+        return Calendar.current.nextDate(after: self, matching: DateComponents(day:1), matchingPolicy: .strict)
     }
     /// 明年
-    public var nextYear: Date {
-        Calendar.current.nextDate(after: self, matching: DateComponents(month: 0), matchingPolicy: .strict)!
+    public var nextYear: Date? {
+        return Calendar.current.nextDate(after: self, matching: DateComponents(month: 1), matchingPolicy: .strict)
     }
+    
+    
     
     public var year: Int {
         Calendar.current.component(.year, from: self)
@@ -40,6 +43,7 @@ extension Date {
     public var month: Int {
         Calendar.current.component(.month, from: self)
     }
+    /// 当月第几天
     public var day: Int {
         Calendar.current.component(.day, from: self)
     }
@@ -66,15 +70,19 @@ extension Date {
     
     /// 当年的第几天
     public var dayOfYear:Int {
-        var res = 0, monthArr = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        let time = self.string(format:"yyyy-MM-dd").split(separator: "-"), y = Int(time[0])!, m = Int(time[1])!, d = Int(time[2])!
-        if y % 400 == 0 || (y % 4 == 0 && y % 100 != 0) {
-            monthArr[1] = 29
+        if #available(iOS 18, *) {
+            return Calendar.current.component(.dayOfYear, from: self)
+        } else {
+            var res = 0, monthArr = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+            let time = self.string(format:"yyyy-MM-dd").split(separator: "-"), y = Int(time[0])!, m = Int(time[1])!, d = Int(time[2])!
+            if y % 400 == 0 || (y % 4 == 0 && y % 100 != 0) {
+                monthArr[1] = 29
+            }
+            for i in 0 ..< m - 1 {
+                res += monthArr[i]
+            }
+            return res + d
         }
-        for i in 0 ..< m - 1 {
-            res += monthArr[i]
-        }
-        return res + d
     }
     
     /// 中国星期 1:周一 2:周二 3:周三 4:周四 5:周五 6:周六 7:周日
@@ -102,8 +110,6 @@ extension Date {
         switch month {
         case 1, 3, 5, 7, 8, 10, 12:
             return 31
-        case 4, 6, 9, 11:
-            return 30
         case 2:
             let isLeapYear = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
             return isLeapYear ? 29 : 28
@@ -127,6 +133,10 @@ extension Date {
     public var isToday: Bool {
         let calendar = Calendar.current
         return calendar.isDateInToday(self)
+    }
+    
+    public var isLeapYear: Bool {
+        return (self.daysOfYear() == 366)
     }
     
 }
@@ -341,7 +351,7 @@ extension Date {
     }
     
     /// 获取当前 毫秒级 时间戳 - 13位
-    public  var milliStamp : String {
+    public var milliStamp : String {
         let timeInterval: TimeInterval = self.timeIntervalSince1970
         let millisecond = CLongLong(round(timeInterval*1000))
         return "\(millisecond)"
