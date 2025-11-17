@@ -63,7 +63,7 @@ class ViewController: UIViewController {
     @objc func click2(){
         let view:UIView = .init(frame: .init(x: 0, y: 0, width: kScreen.width, height: 200))
         view.backgroundColor = .red.withAlphaComponent(0.7)
-        view.screenPopup(show: .none)
+        view.screenPopup(show: .enterFromBottom)
     }
     
     

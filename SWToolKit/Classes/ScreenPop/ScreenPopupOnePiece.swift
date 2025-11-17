@@ -43,13 +43,14 @@ class ScreenPopupOnePiece: UIView {
     weak var delegate:ScreenPopupOnePieceDelegate?
     /// 背景色
     var bgColor:UIColor?
+    
 
     init(frame: CGRect, outlink: UIView) {
         super.init(frame: frame)
         self.isHidden = true
         self.clipsToBounds = true
         self.isUserInteractionEnabled = true
-        
+   
         self.addSubview(outlink)
         self.outlinkView = outlink
     }
@@ -107,14 +108,14 @@ extension ScreenPopupOnePiece {
         let viewH = self.height
         switch animationType {
         case .centerAndEnlarged:
-            UIView.animate(withDuration: 0.25) {
+            UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut) {
                 outlinkView.alpha = 0
                 outlinkView.transform = .init(scaleX: 0.1, y: 0.1)
             } completion: { [weak self] finish in
                 self?.dismissCallback()
             }
         case .enterFromTop:
-            UIView.animate(withDuration: 0.25) {
+            UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut) {
                 var tempF = outlinkView.frame
                 tempF.origin.y = (-tempF.height - 5)
                 outlinkView.frame = tempF
@@ -122,7 +123,7 @@ extension ScreenPopupOnePiece {
                 self?.dismissCallback()
             }
         case .enterFromBottom:
-            UIView.animate(withDuration: 0.25) {
+            UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut) {
                 var tempF = outlinkView.frame
                 tempF.origin.y = (viewH + 5)
                 outlinkView.frame = tempF
@@ -160,7 +161,7 @@ extension ScreenPopupOnePiece {
         case .enterFromTop:
             outlinkView.frame = .init(origin: .init(x: outlinkView.x, y: 0), size: outlinkView.size)
             self.alpha = 1.0
-            UIView.animate(withDuration: 0.25, delay: 0, usingSpringWithDamping: 1.0, initialSpringVelocity: 1.0, options: .curveEaseIn) {
+            UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseIn) {
                 var tempF2 = outlinkView.frame
                 tempF2.origin.y = 0
                 outlinkView.frame = tempF2
@@ -171,7 +172,7 @@ extension ScreenPopupOnePiece {
             let pointX:CGFloat = (kDevice.isPad && (self.width != outlinkView.width)) ? (self.width - outlinkView.width - 10) : 0
             outlinkView.frame = .init(origin: .init(x: pointX, y: self.height + 5), size: outlinkView.size)
             self.alpha = 1.0
-            UIView.animate(withDuration: 0.25, delay: 0, usingSpringWithDamping: 1.0, initialSpringVelocity: 1.0, options: .curveEaseIn) {
+            UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseIn) {
                 var tempF = outlinkView.frame
                 tempF.origin.y = (viewH-tempF.height)
                 outlinkView.frame = tempF
