@@ -164,7 +164,7 @@ open class ScreenPopupSheetBorder: UIView {
     }
     
     public func showView(animation:Bool = true){
-        self.popView?.show(animation: .enterFromBottom)
+        self.popView?.show(animation: .enterFromBottom())
     }
 }
 

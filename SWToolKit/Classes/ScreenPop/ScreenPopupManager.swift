@@ -14,9 +14,9 @@ import SwiftUI
 /// 显示的动画
 public enum ScreenPopupAnimationType {
     /// 从屏幕顶部向下
-    case enterFromTop
+    case enterFromTop(spring:Bool = false)
     /// 从屏幕底部向上
-    case enterFromBottom
+    case enterFromBottom(spring:Bool = false)
     /// 居中- 从小发大
     case centerAndEnlarged
     /// 无

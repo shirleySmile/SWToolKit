@@ -40,10 +40,10 @@ class ViewController: UIViewController {
         
         let btn = UIButton(type: .custom)
         btn.frame = .init(x: 20, y: 400, width: 100, height: 20)
-        btn.setTitle("显示弹窗", for: .normal)
+        btn.setTitle("显示弹窗1", for: .normal)
         btn.setTitleColor(.red, for: .normal)
         self.view.addSubview(btn)
-        btn.addTarget(self, action: #selector(click), for: .touchUpInside)
+        btn.addTarget(self, action: #selector(click1), for: .touchUpInside)
         
         
         let btn2 = UIButton(type: .custom)
@@ -55,7 +55,7 @@ class ViewController: UIViewController {
     }
     
     
-    @objc func click(){
+    @objc func click1(){
         AlertView.show()
     }
 
@@ -63,7 +63,7 @@ class ViewController: UIViewController {
     @objc func click2(){
         let view:UIView = .init(frame: .init(x: 0, y: 0, width: kScreen.width, height: 200))
         view.backgroundColor = .red.withAlphaComponent(0.7)
-        view.screenPopup(show: .enterFromBottom)
+        view.screenPopup(show: .enterFromTop())
     }
     
     
