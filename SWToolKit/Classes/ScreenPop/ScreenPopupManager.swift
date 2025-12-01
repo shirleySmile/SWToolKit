@@ -86,41 +86,7 @@ public class ScreenPopupManager : NSObject {
             return bgV
         }
     }
-
-
 }
-
-
-
-///使用以下方法
-extension UIView {
-    
-    /// 直接显示主屏幕上
-    /// - Parameters:
-    ///   - cover: 是否有遮盖色
-    ///   - target: 目标
-    ///   - action: 方法
-    public func screenPopup(show animation:ScreenPopupAnimationType = .none,
-                            cover:UIColor? = .black.withAlphaComponent(0.5),
-                            outside:Bool = true,
-                            outsizeAction:ScreenPopupAction? = nil) {
-        let view = ScreenPopupManager.shared.createBase(self, cover: cover, outside: outside, outsizeAction: outsizeAction)
-        view.show(animation: animation)
-    }
-    
-    
-    /// 删除屏幕的view
-    public func screenPopupDsmiss(_ animation:Bool = true) {
-        ScreenPopupManager.shared.closePopupView(popupView: self, animation: animation)
-    }
-    
-    /// 将弹窗带到最顶层
-    public func screenPopupBringToFront(){
-        ScreenPopupManager.shared.bringViewToFront(popupView: self)
-    }
-    
-}
-
 
 
 
@@ -128,10 +94,21 @@ extension UIView {
 ///弹窗处理
 extension ScreenPopupManager {
         
-    /// 关闭弹窗 ---从上往下退出
+    /// 显示弹窗
+    public func show(_ popupView:UIView,
+                     show animation:ScreenPopupAnimationType = .none,
+                     cover bgColor:UIColor?,
+                     outside:Bool,
+                     outsizeAction:ScreenPopupAction? = nil) {
+        let view = ScreenPopupManager.shared.createBase(popupView, cover: bgColor, outside: outside, outsizeAction: outsizeAction)
+        view.show(animation: animation)
+    }
+    
+    
+    /// 关闭弹窗
     /// - Parameters:
     ///   - popupView: 弹窗的view
-    ///   - animation: 是否有动画
+    ///   - animation: 是否播放动画
     public func dismiss(popupView:UIView, animation:Bool = true){
         self.closePopupView(popupView: popupView, animation: animation)
     }
@@ -149,6 +126,21 @@ extension ScreenPopupManager {
             for popBaseV in bgView.subviews {
                 if let popV = popBaseV as? ScreenPopupOnePiece, let lineView = popV.outlinkView {
                     if lineView.isMember(of: popupV.classForCoder) {
+                        return popV.outlinkView
+                    }
+                }
+            }
+        }
+        return nil
+    }
+    
+    // 根据自定义key查询弹窗view
+    public static func getPopupView(key customKey:String) -> UIView? {
+        let popBgView = ScreenPopupManager.shared._windowUpPopupBgView ?? ScreenPopupManager.shared.externalPopupBgView
+        if let bgView =  popBgView {
+            for popBaseV in bgView.subviews {
+                if let popV = popBaseV as? ScreenPopupOnePiece {
+                    if  popV.customKey == customKey {
                         return popV.outlinkView
                     }
                 }
@@ -214,6 +206,7 @@ extension ScreenPopupManager: ScreenPopupOnePieceDelegate {
 
 }
 
+
 /// private
 extension ScreenPopupManager {
     
@@ -225,7 +218,7 @@ extension ScreenPopupManager {
     ///   - outside: 是否允许点击弹窗外部关闭弹窗
     ///   - outsizeAction: 点击弹窗以外区域的外部事件
     /// - Returns: 返回一个弹窗管理视图
-    fileprivate func createBase(_ popupView:UIView,
+    func createBase(_ popupView:UIView,
                                 cover bgColor:UIColor?,
                                 outside:Bool,
                                 outsizeAction:ScreenPopupAction? = nil) -> ScreenPopupOnePiece {
@@ -255,14 +248,14 @@ extension ScreenPopupManager {
     }
     
     /// 关闭某个弹窗
-    fileprivate func closePopupView(popupView:UIView?, animation:Bool) {
+    func closePopupView(popupView:UIView?, animation:Bool) {
         let searchView = getPopDownView(popupView: popupView)
         searchView?.dismiss(animation: animation)
     }
 
 
     /// 将弹窗带到最顶层
-    fileprivate func bringViewToFront(popupView:UIView){
+    func bringViewToFront(popupView:UIView){
         for popBaseV in ScreenPopupManager.shared.screenBgView.subviews {
             if let popV = popBaseV as? ScreenPopupOnePiece {
                 if popV.outlinkView == popupView {

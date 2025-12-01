@@ -52,6 +52,13 @@ class ViewController: UIViewController {
         btn2.setTitleColor(.red, for: .normal)
         self.view.addSubview(btn2)
         btn2.addTarget(self, action: #selector(click2), for: .touchUpInside)
+        
+        let btn3 = UIButton(type: .custom)
+        btn3.frame = .init(x: 280, y: 500, width: 100, height: 20)
+        btn3.setTitle("显示弹窗3", for: .normal)
+        btn3.setTitleColor(.red, for: .normal)
+        self.view.addSubview(btn3)
+        btn3.addTarget(self, action: #selector(click3), for: .touchUpInside)
     }
     
     
@@ -66,6 +73,10 @@ class ViewController: UIViewController {
         view.screenPopup(show: .enterFromTop())
     }
     
+    @objc func click3() {
+        let vc = ScreenViewController()
+        self.present(vc, animated: true)
+    }
     
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -79,7 +90,7 @@ class AlertView:UIView {
     static func show() {
         
         let view = AlertView(frame: .init(origin: .zero, size: .init(width: kScreen.width, height: 300)))
-        view.animationShow(headerView: SheetBorderSliderHeader.init(viewHeight: 60))
+        view.animationShow(header: .init(view: SheetBorderSliderHeader.init(viewHeight: 60), type: .cover))
     }
     
     

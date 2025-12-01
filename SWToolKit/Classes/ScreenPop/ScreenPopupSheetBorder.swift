@@ -36,7 +36,7 @@ open class SheetBorderSliderHeader: UIView {
     }()
     
     
-    public init(viewHeight:CGFloat = 20) {
+    public init(viewHeight:CGFloat = 30) {
         super.init(frame: .init(x: 0, y: 0, width: 0, height: max(viewHeight, 20)))
         self.create()
     }
@@ -50,7 +50,7 @@ open class SheetBorderSliderHeader: UIView {
 
     open override func layoutSubviews() {
         super.layoutSubviews()
-        sliderView.center = .init(x: self.width/2.0, y: 6 + sliderView.height/2.0)
+        sliderView.center = .init(x: self.width/2.0, y: 9 + sliderView.height/2.0)
     }
     
     required public init?(coder: NSCoder) {
@@ -90,10 +90,15 @@ open class SheetBorderSliderHeader: UIView {
                 if linkView.origin.y - (kScreen.height - linkView.height) > (linkView.height * 1.0 / 3.0){
                     self.dismiss()
                 }else{
-                    UIView.animate(withDuration: 0.25) {
-                        // 将视图的位置恢复到原始位置
-                        linkView.y = self.originPointY
-                    } completion: { finish in
+                    let originY = self.getOriginPointY()
+                    if originY <= 0 {
+                        self.dismiss()
+                    } else {
+                        UIView.animate(withDuration: 0.25) {
+                            // 将视图的位置恢复到原始位置
+                            linkView.y = originY
+                        } completion: { finish in
+                        }
                     }
                 }
             }
@@ -106,6 +111,14 @@ open class SheetBorderSliderHeader: UIView {
         self.dismissClosure?()
     }
     
+    private func getOriginPointY() -> CGFloat {
+        guard self.originPointY <= 0 else {
+            return self.originPointY
+        }
+        self.originPointY = kScreen.height - (panLinkView?.height ?? kScreen.height)
+        return self.originPointY
+    }
+    
     
 }
 
@@ -114,26 +127,56 @@ open class SheetBorderSliderHeader: UIView {
 ///弹出view的包边
 open class ScreenPopupSheetBorder: UIView {
 
+    public enum HeaderType {
+        /// 内容视图的顶部
+        case vertical
+        /// 遮盖在内容视图的顶部
+        case cover
+    }
+    
+    public struct HeaderInfo {
+        var view:UIView
+        var type:HeaderType = .vertical
+        
+        public init(view: UIView, type: HeaderType) {
+            self.view = view
+            self.type = type
+        }
+    }
+    
     ///dimiss回调
     public var dimissBlock:DismissClosure?
-    fileprivate var animationShow:Bool = true
-    private weak var popView:ScreenPopupOnePiece?
+    private(set) weak var popView:ScreenPopupOnePiece?
     ///创建view
-    public func createView(_ detailV:UIView, headerV:UIView?, cover:Bool, hidden:Bool, cornerSize:CGSize, btmHeight:CGFloat,
+    public func createView(_ detailV:UIView, headerInfo:ScreenPopupSheetBorder.HeaderInfo?, cover:Bool, hidden:Bool, cornerSize:CGSize, btmHeight:CGFloat,
                                 bgColor:UIColor) {
         
         let detailH:CGFloat = detailV.height
-        let headerH:CGFloat = (headerV?.height ?? 0)
-        
+
+        var headerH:CGFloat = 0
+        if let headerInfo, headerInfo.type == .vertical {
+            headerH =  headerInfo.view.height
+        }
+
         self.frame = CGRect.init(x: 0, y: kScreen.height, width: detailV.width, height: detailH + headerH + btmHeight)
         self.backgroundColor = bgColor
         
-        headerV?.frame = CGRect(x: 0, y: 0, width: detailV.width, height: headerH);
-        detailV.y = headerV?.maxY ?? 0
-        if let headerView = headerV {
-            self.addSubview(headerView)
+        if let headerInfo {
+            /// 放这里说明要用到当前弹窗的高度
+            headerInfo.view.frame = CGRect(x: 0, y: 0, width: detailV.width, height: headerInfo.view.height);
+            self.addSubview(headerInfo.view)
+            if let headerView = headerInfo.view as? SheetBorderSliderHeader {
+                headerView.panLinkView = self
+                headerView.dismissClosure = { [weak self] in
+                    self?.dismissView()
+                }
+            }
         }
+        
+
+        detailV.y = headerH
         self.addSubview(detailV)
+        self.sendSubviewToBack(detailV)
 
         if !cornerSize.equalTo(.zero){
             self.cornerRadii(size: cornerSize, corners: [.topLeft,.topRight])
@@ -145,16 +188,10 @@ open class ScreenPopupSheetBorder: UIView {
 
         self.popView = ScreenPopupManager.shared.createMutiPopupView(popupView: self, mainView: detailV, action: (hidden ? #selector(dismissView) : nil), target: (hidden ? self : nil), cover: cover)
         
-        if let headerView = headerV as? SheetBorderSliderHeader {
-            headerView.panLinkView = self
-            headerView.dismissClosure = { [weak self] in
-                self?.dismissView()
-            }
-        }
     }
     
     @objc fileprivate func dismissView(){
-        self.dismissSheetBorderView(animation: animationShow)
+        self.dismissSheetBorderView(animation: true)
     }
     
     public func dismissSheetBorderView(animation:Bool) {
@@ -185,8 +222,7 @@ extension UIView {
     ///   - dismiss: 开始隐藏的回调
     @discardableResult
     public func animationShow(cover:Bool = true,
-                              headerView :UIView? = nil,
-                              animation:Bool = true,
+                              header info:ScreenPopupSheetBorder.HeaderInfo? = nil,
                               autoHidden hidden:Bool = true,
                               bottomHeight:CGFloat = max(kSafeBtmH, 20),
                               backgroundColor:UIColor = .white,
@@ -198,9 +234,8 @@ extension UIView {
             /// 没值
             let borderView = ScreenPopupSheetBorder.init(frame: CGRect.zero)
             borderView.dimissBlock = dismiss
-            borderView.animationShow = animation
-            borderView.createView(self, headerV: headerView, cover: cover, hidden: hidden, cornerSize: cornerSize, btmHeight: bottomHeight, bgColor:backgroundColor)
-            borderView.showView(animation: animation)
+            borderView.createView(self, headerInfo: info, cover: cover, hidden: hidden, cornerSize: cornerSize, btmHeight: bottomHeight, bgColor:backgroundColor)
+            borderView.showView(animation: true)
             return borderView
         }
         ///到这就是有值了
