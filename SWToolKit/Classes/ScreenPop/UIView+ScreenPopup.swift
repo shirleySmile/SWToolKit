@@ -27,7 +27,7 @@ extension UIView {
     
     
     /// 删除屏幕的view
-    public func screenPopupDsmiss(_ animation:Bool = true) {
+    public func screenPopupDismiss(_ animation:Bool = true) {
         ScreenPopupManager.shared.closePopupView(popupView: self, animation: animation)
     }
     
