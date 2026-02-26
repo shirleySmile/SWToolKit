@@ -68,7 +68,7 @@ struct ViewPopView: View {
     
     static func show() {
         let view = ViewPopView()
-        view.animationShow(key: "ViewPopView", viewFrame: .init(x: 0, y: 0, width: kScreen.width, height: 500), bottomHeight: 0, cornerSize: .init(width: 20, height: 20))
+        view.animationShow(key: "ViewPopView", viewFrame: .init(x: 0, y: 0, width: kScreen.width, height: 500), cornerSize: .init(width: 20, height: 20))
     }
     
 

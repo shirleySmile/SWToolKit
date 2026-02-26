@@ -45,7 +45,11 @@ class ScreenPopupOnePiece: UIView {
     var bgColor:UIColor?
     /// 自定义key
     var customKey:String = String.random(num: 10)
-
+    
+    var dismissCompletion:(()->Void)? = nil
+    /// 点击穿透
+    var hitThrough:Bool = false
+    
     init(frame: CGRect, outlink: UIView) {
         super.init(frame: frame)
         self.isHidden = true
@@ -61,10 +65,12 @@ class ScreenPopupOnePiece: UIView {
     }
     
     /// 显示
-    func show(animation aType: ScreenPopupAnimationType) {
+    func show(animation aType: ScreenPopupAnimationType, through:Bool = false, showCompletion:(()->Void)?, dismissCompletion:(()->Void)?) {
         self.backgroundColor = bgColor?.withAlphaComponent(0.2)
         self.animationType = aType
-        self.showAnimationView()
+        self.hitThrough = through
+        self.dismissCompletion = dismissCompletion
+        self.showAnimationView(showCompletion)
     }
     
     /// 关闭弹窗 ---从上往下退出
@@ -93,7 +99,14 @@ class ScreenPopupOnePiece: UIView {
             self.addGestureRecognizer(tap)
         }
     }
-
+    
+    open override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        let hitV = super.hitTest(point, with: event)
+        if hitThrough, hitV == self {
+            return nil
+        }
+        return hitV
+    }
 }
 
 
@@ -108,12 +121,17 @@ extension ScreenPopupOnePiece {
         }
         let viewH = self.height
         switch animationType {
-        case .centerAndEnlarged:
-            UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut) {
+        case .enterFromCenter(let enlarged):
+            if enlarged {
+                UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut) {
+                    outlinkView.alpha = 0
+                    outlinkView.transform = .init(scaleX: 0.1, y: 0.1)
+                } completion: { [weak self] finish in
+                    self?.dismissCallback()
+                }
+            } else {
                 outlinkView.alpha = 0
-                outlinkView.transform = .init(scaleX: 0.1, y: 0.1)
-            } completion: { [weak self] finish in
-                self?.dismissCallback()
+                self.dismissCallback()
             }
         case .enterFromTop:
             UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut) {
@@ -141,7 +159,7 @@ extension ScreenPopupOnePiece {
     /// - Parameters:
     ///   - popupView: 弹窗的view
     ///   - animation: 是否有动画
-    public func showAnimationView() {
+    public func showAnimationView(_ completion:(()->Void)?) {
         guard let outlinkView else {
             self.dismissCallback()
             return
@@ -150,14 +168,19 @@ extension ScreenPopupOnePiece {
         self.isHidden = false
         let viewH = self.height
         switch animationType {
-        case .centerAndEnlarged:
+        case .enterFromCenter(let enlarged):
             outlinkView.center = CGPoint.init(x: self.width/2.0, y: self.height/2.0)
-            outlinkView.transform = .init(scaleX: 0.1, y: 0.1)
-            UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseIn) { [weak self] in
-                self?.alpha = 1.0
-                outlinkView.transform = .identity
-            } completion: { finish in
-                
+            if enlarged {
+                outlinkView.transform = .init(scaleX: 0.1, y: 0.1)
+                UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseIn) { [weak self] in
+                    self?.alpha = 1.0
+                    outlinkView.transform = .identity
+                } completion: { finish in
+                    completion?()
+                }
+            } else {
+                self.alpha = 1.0
+                completion?()
             }
         case .enterFromTop(let spring):
             outlinkView.frame = .init(origin: .init(x: outlinkView.x, y: -(outlinkView.height + 5)), size: outlinkView.size)
@@ -167,12 +190,16 @@ extension ScreenPopupOnePiece {
                     var tempF2 = outlinkView.frame
                     tempF2.origin.y = 0
                     outlinkView.frame = tempF2
+                } completion: { _ in
+                    completion?()
                 }
             } else {
                 UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseIn) {
                     var tempF2 = outlinkView.frame
                     tempF2.origin.y = 0
                     outlinkView.frame = tempF2
+                } completion: { _ in
+                    completion?()
                 }
             }
         case .enterFromBottom(let spring):
@@ -184,16 +211,21 @@ extension ScreenPopupOnePiece {
                     var tempF = outlinkView.frame
                     tempF.origin.y = (viewH-tempF.height)
                     outlinkView.frame = tempF
+                } completion: { _ in
+                    completion?()
                 }
             } else {
                 UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseIn) {
                     var tempF = outlinkView.frame
                     tempF.origin.y = (viewH-tempF.height)
                     outlinkView.frame = tempF
+                } completion: { _ in
+                    completion?()
                 }
             }
         case .none:
             self.alpha = 1.0
+            completion?()
         }
     
     }
@@ -202,6 +234,7 @@ extension ScreenPopupOnePiece {
     
     /// 关闭子视图后的回调用
     private func dismissCallback() {
+        self.dismissCompletion?()
         self.subMainView?.removeFromSuperview()
         self.subMainView = nil
         self.outlinkView?.removeFromSuperview()

@@ -17,12 +17,14 @@ extension UIView {
     ///   - cover: 是否有遮盖色
     ///   - target: 目标
     ///   - action: 方法
-    public func screenPopup(show animation:ScreenPopupAnimationType = .none,
-                            cover:UIColor? = .black.withAlphaComponent(0.5),
-                            outside:Bool = true,
-                            outsizeAction:ScreenPopupAction? = nil) {
+    public func screenPopupShow(animation:ScreenPopupAnimationType = .none,
+                                cover:UIColor? = .black.withAlphaComponent(0.5),
+                                outside:Bool = true,
+                                outsizeAction:ScreenPopupAction? = nil,
+                                showCompletion:(()->Void)? = nil,
+                                dismissCompletion:(()->Void)? = nil) {
         let view = ScreenPopupManager.shared.createBase(self, cover: cover, outside: outside, outsizeAction: outsizeAction)
-        view.show(animation: animation)
+        view.show(animation: animation, showCompletion: showCompletion, dismissCompletion: dismissCompletion)
     }
     
     
@@ -47,26 +49,28 @@ extension View {
     ///   - cover: 是否有遮盖色
     ///   - target: 目标
     ///   - action: 方法
-    public func screenPopup(key customKey:String,
-                            viewFrame:CGRect,
-                            show animation:ScreenPopupAnimationType = .none,
-                            cover:UIColor? = .black.withAlphaComponent(0.5),
-                            outside:Bool = true,
-                            outsizeAction:ScreenPopupAction? = nil) {
+    public func screenPopupShow(key customKey:String,
+                                viewFrame:CGRect,
+                                show animation:ScreenPopupAnimationType = .none,
+                                cover:UIColor? = .black.withAlphaComponent(0.5),
+                                outside:Bool = true,
+                                outsizeAction:ScreenPopupAction? = nil,
+                                showCompletion:(()->Void)? = nil,
+                                dismissCompletion:(()->Void)? = nil) {
         if let subView = UIHostingController(rootView: self).view {
             subView.frame = viewFrame
             subView.backgroundColor = .clear
             let view = ScreenPopupManager.shared.createBase(subView, cover: cover, outside: outside, outsizeAction: outsizeAction)
             view.customKey = customKey
-            view.show(animation: animation)
+            view.show(animation: animation, showCompletion: showCompletion, dismissCompletion: dismissCompletion)
         }
     }
     
     
     /// 删除屏幕的view
-    public func screenPopupDsmiss(key customKey:String, _ animation:Bool = true) {
+    public func screenPopupDismiss(key customKey:String, _ animation:Bool = true) {
         if let subView = ScreenPopupManager.getPopupView(key: customKey) {
-            subView.screenPopupDsmiss(animation)
+            subView.screenPopupDismiss(animation)
         }
     }
     

@@ -18,7 +18,7 @@ public enum ScreenPopupAnimationType {
     /// 从屏幕底部向上
     case enterFromBottom(spring:Bool = false)
     /// 居中- 从小发大
-    case centerAndEnlarged
+    case enterFromCenter(enlarged:Bool = false)
     /// 无
     case none
 }
@@ -99,9 +99,11 @@ extension ScreenPopupManager {
                      show animation:ScreenPopupAnimationType = .none,
                      cover bgColor:UIColor?,
                      outside:Bool,
-                     outsizeAction:ScreenPopupAction? = nil) {
+                     outsizeAction:ScreenPopupAction? = nil,
+                     showCompletion:(()->Void)? = nil,
+                     dismissCompletion:(()->Void)? = nil) {
         let view = ScreenPopupManager.shared.createBase(popupView, cover: bgColor, outside: outside, outsizeAction: outsizeAction)
-        view.show(animation: animation)
+        view.show(animation: animation, showCompletion: showCompletion, dismissCompletion: dismissCompletion)
     }
     
     

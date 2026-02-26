@@ -42,9 +42,7 @@ open class SheetBorderSliderHeader: UIView {
     }
     
     override init(frame: CGRect) {
-        super.init(frame: frame)
-        
-        self.backgroundColor = .yellow
+        super.init(frame: .init(origin: .zero, size: .init(width: 0, height: max(30, frame.height))))
         self.create()
     }
 
@@ -138,7 +136,7 @@ open class ScreenPopupSheetBorder: UIView {
         var view:UIView
         var type:HeaderType = .vertical
         
-        public init(view: UIView, type: HeaderType) {
+        public init(view: UIView, type: HeaderType = .vertical) {
             self.view = view
             self.type = type
         }
@@ -200,8 +198,8 @@ open class ScreenPopupSheetBorder: UIView {
         self.popView?.dismiss(animation: animation)
     }
     
-    public func showView(animation:Bool = true){
-        self.popView?.show(animation: .enterFromBottom())
+    public func showView(animation:Bool = true, hitThrough:Bool = false){
+        self.popView?.show(animation: .enterFromBottom(), through: hitThrough, showCompletion: nil, dismissCompletion: nil)
     }
 }
 

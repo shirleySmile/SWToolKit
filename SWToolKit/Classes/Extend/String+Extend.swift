@@ -525,7 +525,6 @@ extension CGRect {
     public func toString() -> String {
         return "{{ \(self.minX) , \(self.minY) } , { \(self.width) , \(self.height) }}"
     }
-    
 }
 
 
