@@ -117,7 +117,11 @@ open class SheetBorderSliderHeader: UIView {
         return self.originPointY
     }
     
-    
+    /// 默认头部
+    public static func headerInfo() -> ScreenPopupSheetBorder.HeaderInfo {
+        let headerV = SheetBorderSliderHeader(viewHeight: 30)
+        return ScreenPopupSheetBorder.HeaderInfo.init(view: headerV)
+    }
 }
 
 
