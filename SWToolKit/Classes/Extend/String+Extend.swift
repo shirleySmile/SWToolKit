@@ -339,6 +339,17 @@ extension String {
         let random:String = uuid.substring(location: randomStartIndex, length: num)
         return random
     }
+    
+    /// 字符串转换成日期 
+    public func toDate(format:String, locale:String? = "en_GB") -> Date? {
+        let dataFmt = DateFormatter()
+        if let locale = locale, locale.count > 0 {
+            dataFmt.locale = Locale.init(identifier: locale)
+        }
+        dataFmt.dateFormat = format
+        let date = dataFmt.date(from: self)
+        return date
+    }
 }
 
 
