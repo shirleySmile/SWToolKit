@@ -172,6 +172,7 @@ extension ApplePayManager {
     
     /// 开始恢复购买
     private func startRestore() {
+        self.paymentTimer?.invalidate()
         self.paymentTimer = Timer.scheduledTimer(timeInterval: timeoutInterval, target: self, selector: #selector(paymentTimeOut), userInfo: nil, repeats: false)
         self.appleSKHandle.restore()
     }
@@ -179,6 +180,7 @@ extension ApplePayManager {
     ///获得购买的产品信息
     private func requestProduct(pId:String) {
         self.aProductId = pId
+        self.paymentTimer?.invalidate()
         self.paymentTimer = Timer.scheduledTimer(timeInterval: timeoutInterval, target: self, selector: #selector(paymentTimeOut), userInfo: nil, repeats: false)
         applePayLog.add(type: .start, title: "开始购买", des: "开始获得本地票据，若没有会从网络上请求")
         self.appleProducts.getProducts(productId: pId) { [weak self] product in
