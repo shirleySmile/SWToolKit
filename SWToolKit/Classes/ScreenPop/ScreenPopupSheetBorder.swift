@@ -221,6 +221,7 @@ extension UIView {
     ///   - cover: 是否有遮盖色
     ///   - hidden: 点击view外侧是否自动隐藏
     ///   - cornerSize: 左右两角弧度
+    ///   - clickThrough: 点击透传
     ///   - dismiss: 开始隐藏的回调
     @discardableResult
     public func animationShow(cover:Bool = true,
@@ -229,6 +230,7 @@ extension UIView {
                               bottomHeight:CGFloat = max(kSafeBtmH, 20),
                               backgroundColor:UIColor = .white,
                               cornerSize:CGSize = CGSize(width: 10, height: 10),
+                              clickThrough:Bool = false,
                               dismiss:DismissClosure? = nil) -> ScreenPopupSheetBorder?{
         
         let borderV = ScreenPopupManager.getMutiPopupView(popupV: self)
@@ -237,7 +239,7 @@ extension UIView {
             let borderView = ScreenPopupSheetBorder.init(frame: CGRect.zero)
             borderView.dimissBlock = dismiss
             borderView.createView(self, headerInfo: info, cover: cover, hidden: hidden, cornerSize: cornerSize, btmHeight: bottomHeight, bgColor:backgroundColor)
-            borderView.showView(animation: true)
+            borderView.showView(animation: true, hitThrough: clickThrough)
             return borderView
         }
         ///到这就是有值了
