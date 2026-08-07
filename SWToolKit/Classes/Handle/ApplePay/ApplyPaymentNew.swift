@@ -9,8 +9,8 @@ import StoreKit
 import Foundation
 
 
-@available(iOS 15.0, *)
-// 定义一个主类来管理内购相关逻辑
+
+// 定义一个主类来管理内购相关逻辑 最低支持iOS 15.0
 @MainActor
 private final class ApplyPaymentNew {
     

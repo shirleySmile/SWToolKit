@@ -50,36 +50,30 @@ public extension UIButton {
     
     private func positionLabelRespectToImage(title: String,style: ButtonImageAndTitlePossitionStyle = .normal,spacing: CGFloat = 0, isSureTitleCompress: Bool = false) {
         var isConfig = false
-        if #available(iOS 15.0, *) {
-            if self.configuration != nil{
-                isConfig = true
-            }
+        if self.configuration != nil{
+            isConfig = true
         }
         if isConfig{
-            if #available(iOS 15.0, *) {
-                var config = self.configuration
-                config?.imagePadding = spacing
-                switch style{
-                case .imageIsLeft:
-                    config?.imagePlacement = .leading
-                    break
-                case .imageIsRight:
-                    config?.imagePlacement = .trailing
-                    break
-                case .imageIsTop :
-                    config?.imagePlacement = .top
-                    break
-                case .imgageIsBottom:
-                    config?.imagePlacement = .bottom
-                    break
-                default:
-                    config?.imagePlacement = .leading
-                    break
-                }
-                self.configuration = config
-            } else {
-                return
+            var config = self.configuration
+            config?.imagePadding = spacing
+            switch style{
+            case .imageIsLeft:
+                config?.imagePlacement = .leading
+                break
+            case .imageIsRight:
+                config?.imagePlacement = .trailing
+                break
+            case .imageIsTop :
+                config?.imagePlacement = .top
+                break
+            case .imgageIsBottom:
+                config?.imagePlacement = .bottom
+                break
+            default:
+                config?.imagePlacement = .leading
+                break
             }
+            self.configuration = config
         }else{
            updateBtnLayoutViews(title: title,style: style,spacing: spacing,isSureTitleCompress: isSureTitleCompress)
         }
