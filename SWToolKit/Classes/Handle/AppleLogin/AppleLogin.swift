@@ -30,25 +30,19 @@ public class AppleLogin: NSObject, ASAuthorizationControllerDelegate, ASAuthoriz
     
     
     public func authInfo(callback: @escaping resultClosure) {
-        if #available(iOS 13.0, *){
-            userInfoBlock = callback
-            
-            let appleIDProvider = ASAuthorizationAppleIDProvider()
-            let authAppleIDRequest = appleIDProvider.createRequest()
-            
-            var array:[ASAuthorizationRequest] = []
-            array.append(authAppleIDRequest);
-            
-            
-            let authorizationController = ASAuthorizationController.init(authorizationRequests: array)
-            authorizationController.delegate = self
-            authorizationController.presentationContextProvider = self;
-            authorizationController.performRequests()
-            
-        }else{
-            callback(.nonSupport, nil)
-            debugPrint("==SWToolKit==" + #file,"系统不支持Apple登录")
-        }
+        userInfoBlock = callback
+        
+        let appleIDProvider = ASAuthorizationAppleIDProvider()
+        let authAppleIDRequest = appleIDProvider.createRequest()
+        
+        var array:[ASAuthorizationRequest] = []
+        array.append(authAppleIDRequest);
+        
+        
+        let authorizationController = ASAuthorizationController.init(authorizationRequests: array)
+        authorizationController.delegate = self
+        authorizationController.presentationContextProvider = self;
+        authorizationController.performRequests()
     }
     
     

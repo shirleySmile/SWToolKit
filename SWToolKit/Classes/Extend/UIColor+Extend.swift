@@ -58,14 +58,14 @@ extension UIColor{
             )
         }
     }
-
+    
     /// 十六进制字符串转换UIColor
     /// - Parameters:
     ///   - hex: 十六进制字符串
     ///   - a: 透明度(默认透明度为1)
     /// - Returns: UIColor
     
-   public static func color(hex: String, a:CGFloat = 1.0) -> UIColor {
+    public static func color(hex: String, a:CGFloat = 1.0) -> UIColor {
         var cString : String = hex.trimmingCharacters(in: NSCharacterSet.whitespacesAndNewlines)
         // String should be 6 or 8 characters
         if cString.count < 6 {
@@ -93,36 +93,19 @@ extension UIColor{
         let red: CGFloat
         let green: CGFloat
         let blue: CGFloat
-        if #available(iOS 13.0, *) {
-            // 系统版本高于13.0
-            var color: UInt64 = 0
-            let scanner = Scanner(string: cString)
-            scanner.scanHexInt64(&color)
-            
-            
-            r = Int(color >> 16) & mask
-            g = Int(color >> 8) & mask
-            b = Int(color) & mask
-            
-            red   = CGFloat(r)
-            green = CGFloat(g)
-            blue  = CGFloat(b)
-            
-        } else {
-            // 系统版本低于13.0
-            var color: UInt32 = 0
-            let scanner = Scanner(string: cString)
-            scanner.scanHexInt32(&color)
-            
-            r = Int(color >> 16) & mask
-            g = Int(color >> 8) & mask
-            b = Int(color) & mask
-            
-            red   = CGFloat(r)
-            green = CGFloat(g)
-            blue  = CGFloat(b)
-            
-        }
+        // 系统版本高于13.0
+        var color: UInt64 = 0
+        let scanner = Scanner(string: cString)
+        scanner.scanHexInt64(&color)
+        
+        
+        r = Int(color >> 16) & mask
+        g = Int(color >> 8) & mask
+        b = Int(color) & mask
+        
+        red   = CGFloat(r)
+        green = CGFloat(g)
+        blue  = CGFloat(b)
         return UIColor.init(red: (red / 255.0), green: (green / 255.0), blue: (blue / 255.0), alpha: a)
     }
     
