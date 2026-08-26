@@ -42,9 +42,16 @@ class ApplyPaymentNew: NSObject, ApplePayService {
     
     override init() {
         super.init()
-        /// 添加监听观察者（仅用于处理 AppStore 促销点击购买）
+    }
+    
+    /// 是否已启动监听
+    private var isStarted = false
+    
+    /// 注册观察者并开始监听交易更新
+    func start() {
+        guard !isStarted else { return }
+        isStarted = true
         SKPaymentQueue.default().add(self)
-        /// 开始监听交易更新，处理应用购买过程中被挂起后恢复等场景
         updatesTask = Task { [weak self] in
             await self?.listenForTransactionUpdates()
         }

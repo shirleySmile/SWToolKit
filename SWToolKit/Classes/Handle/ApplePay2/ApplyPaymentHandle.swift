@@ -28,7 +28,15 @@ class ApplyPaymentHandle: NSObject, ApplePayService {
     
     override init() {
         super.init()
-        /// 添加监听观察者
+    }
+    
+    /// 是否已注册观察者
+    private var isStarted = false
+    
+    /// 注册交易队列观察者
+    func start() {
+        guard !isStarted else { return }
+        isStarted = true
         SKPaymentQueue.default().add(self)
     }
     
@@ -107,25 +115,21 @@ extension ApplyPaymentHandle: SKPaymentTransactionObserver {
     
     // 恢复成功后的回调
     func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
-        if queue.transactions.count > 0 {
-            /// 说明有可恢复购买的产品
-            if let receiptURL = Bundle.main.appStoreReceiptURL, FileManager.default.fileExists(atPath: receiptURL.path) {
-                let receptInfo = getReceipt()
-                if let receiptStr = receptInfo.receiptStr {
-                    applePayLog.add(type: .end, title: "恢复购买", des: "本地有票据")
-                    self.serviceDelegate?.applePayServiceRestore(receipt: receiptStr)
-                    self.clearData()
-                } else {
-                    failResultHandle(type: .restoreFail, msg: receptInfo.msg)
-                }
+        /// 说明有可恢复购买的产品
+        if let receiptURL = Bundle.main.appStoreReceiptURL, FileManager.default.fileExists(atPath: receiptURL.path) {
+            let receptInfo = getReceipt()
+            if let receiptStr = receptInfo.receiptStr {
+                applePayLog.add(type: .end, title: "恢复购买", des: "本地有票据")
+                self.serviceDelegate?.applePayServiceRestore(receipt: receiptStr)
+                self.clearData()
             } else {
-                // 没有可恢复的购买项
-                failResultHandle(type: .restoreFail, msg: "没有可恢复的购买项")
+                failResultHandle(type: .restoreFail, msg: receptInfo.msg)
             }
         } else {
             // 没有可恢复的购买项
             failResultHandle(type: .restoreFail, msg: "没有可恢复的购买项")
         }
+
     }
     
     // 恢复失败后的回调
@@ -153,15 +157,16 @@ extension ApplyPaymentHandle: SKPaymentTransactionObserver {
             case .purchasing:
                 applePayLog.add(type: .statusChange, title: "购买事物变更", des: "商品添加进列表")
             case .purchased:
-                // 订阅特殊处理
                 if trans.original != nil {
-                    // 如果是自动续费的订单originalTransaction会有内容
+                    // 自动续费订单，交服务器验签，不当作新购买发货
                     applePayLog.add(type: .statusChange, title: "购买事物变更", des: "自动续费的订单")
+                } else if trans.payment.applicationUsername == nil {
+                    // AppStore 促销购买，发货，orderId 为空
+                    applePayLog.add(type: .statusChange, title: "购买事物变更", des: "AppStore 促销购买")
+                    completeTransaction(trans)
                 } else {
+                    // 主动购买，发货
                     applePayLog.add(type: .statusChange, title: "购买事物变更", des: "一次购买交易完成")
-                }
-                if let currPaymentType, currPaymentType == .purchase {
-                    /// 用户购买，并且不是恢复购买的按钮，app启动后的回调不处理
                     completeTransaction(trans)
                 }
                 SKPaymentQueue.default().finishTransaction(trans)
@@ -171,10 +176,7 @@ extension ApplyPaymentHandle: SKPaymentTransactionObserver {
                 SKPaymentQueue.default().finishTransaction(trans)
             case .restored:
                 applePayLog.add(type: .statusChange, title: "购买事物变更", des: "恢复购买")
-                if let error = trans.error as? SKError {
-                    SKPaymentQueue.default().finishTransaction(trans)
-                    failResultHandle(type: .restoreFail, msg: error.localizedDescription)
-                }
+                SKPaymentQueue.default().finishTransaction(trans)
             case .deferred:
                 applePayLog.add(type: .statusChange, title: "购买事物变更", des: "交易延期")
             default:

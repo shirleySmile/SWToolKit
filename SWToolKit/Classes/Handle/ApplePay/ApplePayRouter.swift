@@ -18,6 +18,9 @@ protocol ApplePayService: AnyObject {
     /// 检测是否可以使用内购
     func checkCanPayment() -> Bool
     
+    /// 开始监听（注册观察者）
+    func start()
+    
     /// 开始支付（内部负责获取商品信息并发起购买）
     func startPay(productId: String, orderId: String)
     

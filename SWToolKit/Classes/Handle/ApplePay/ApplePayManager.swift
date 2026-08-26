@@ -46,16 +46,18 @@ public class ApplePayManager: NSObject {
     
   
     ///支付代理
-    public weak var delegate: ApplePayManagerDelegate?
+    public weak var delegate: ApplePayManagerDelegate? {
+        didSet {
+            if delegate != nil {
+                self.service.start()
+            }
+        }
+    }
     
     /// 超时时间
     public var timeoutInterval: TimeInterval = 150.0
     
     
-    public func initData() {
-        debugPrint("==SWToolKit==" + "苹果内购开始处理....")
-    }
-
     ///开始支付
     public func pay(productId: String) -> ApplePayManager.StartFailType? {
         return self.pay(productId: productId, orderId: productId)
@@ -63,6 +65,7 @@ public class ApplePayManager: NSObject {
 
     ///开始支付
     public func pay(productId: String, orderId: String) -> ApplePayManager.StartFailType? {
+        self.service.start()
         guard self.service.checkCanPayment() else {
             let type: ApplePayManager.StartFailType = .cannotPayments
             applePayLog.add(type: .start, title: "开始购买失败", des: type.des())
@@ -89,6 +92,7 @@ public class ApplePayManager: NSObject {
     
     ///恢复购买
     public func restore() -> ApplePayManager.StartFailType? {
+        self.service.start()
         if let currPaymentType {
             let type: ApplePayManager.StartFailType = ((currPaymentType == .restore) ? .restoring : .purchasing)
             applePayLog.add(type: .start, title: "开始恢复失败", des: "当前正在进行" + type.des())
