@@ -9,94 +9,267 @@ import StoreKit
 import Foundation
 
 
-
-// 定义一个主类来管理内购相关逻辑 最低支持iOS 15.0
-@MainActor
-private final class ApplyPaymentNew {
+/// 使用 StoreKit 2 实现的苹果内购（iOS 15 ~ 25 使用）
+class ApplyPaymentNew: NSObject, ApplePayService {
     
-    // 发布产品列表，供UI监听
-    @Published private(set) var products: [Product] = []
-    // 发布当前有效的交易，用于解锁内容
-    @Published private(set) var activeTransactions: Set<StoreKit.Transaction> = []
+    /// 当前支付类型 购买or恢复
+    private var currPaymentType: ApplePayManager.PaymentType?
     
-    // 初始化时开始监听交易更新
-    init() {
-        Task {
-            await listenForTransactionUpdates()
+    /// 数据回调
+    weak var serviceDelegate: ApplePayServiceDelegate?
+    
+    /// 交易更新监听任务
+    private var updatesTask: Task<Void, Never>?
+    
+    /// 购买任务
+    private var purchaseTask: Task<Void, Never>?
+    
+    /// 恢复任务
+    private var restoreTask: Task<Void, Never>?
+    
+    /// 订单号与 token 的映射（StoreKit 2 的 appAccountToken 仅支持 UUID）
+    private var orderMap: [UUID: String] = [:]
+    
+    /// 当前购买使用的 token
+    private var currentOrderToken: UUID?
+    
+    deinit {
+        /// 删除交易队列观察者
+        SKPaymentQueue.default().remove(self)
+        updatesTask?.cancel()
+        updatesTask = nil
+    }
+    
+    override init() {
+        super.init()
+        /// 添加监听观察者（仅用于处理 AppStore 促销点击购买）
+        SKPaymentQueue.default().add(self)
+        /// 开始监听交易更新，处理应用购买过程中被挂起后恢复等场景
+        updatesTask = Task { [weak self] in
+            await self?.listenForTransactionUpdates()
         }
     }
     
-    // 1. 从App Store获取产品信息
-    func fetchProducts() async {
+    /// 检测是否可以使用内购
+    func checkCanPayment() -> Bool {
+        return SKPaymentQueue.canMakePayments()
+    }
+    
+    /// 开始支付
+    /// - Parameters:
+    ///   - productId: 商品Id
+    ///   - orderId: 订单Id（StoreKit 2 不支持自定义字符串，忽略该参数）
+    func startPay(productId: String, orderId: String) {
+        self.currPaymentType = .purchase
+        applePayLog.add(type: .start, title: "开始购买", des: "发送购买请求")
+        let token = UUID()
+        self.currentOrderToken = token
+        self.orderMap[token] = orderId
+        self.purchaseTask = Task { [weak self] in
+            await self?.fetchAndPurchase(productId: productId, token: token)
+        }
+    }
+    
+    /// 恢复购买
+    func restore() {
+        self.currPaymentType = .restore
+        applePayLog.add(type: .start, title: "开始恢复", des: "开始请求恢复数据")
+        self.restoreTask = Task { [weak self] in
+            await self?.restoreEntitlements()
+        }
+    }
+    
+    /// 获取本地购买凭证
+    func getLocalReceiptInfo() -> String? {
+        let info = Self.receiptInfo()
+        if let receiptStr = info.receiptStr {
+            applePayLog.add(type: .end, title: "获取本地票据", des: "本地有票据")
+            return receiptStr
+        } else {
+            applePayLog.add(type: .end, title: "获取本地票据", des: "本地无票据\(info.msg)")
+            return nil
+        }
+    }
+    
+    func cancel() {
+        applePayLog.add(type: .end, title: "applePayment", des: "外部调用取消")
+        self.purchaseTask?.cancel()
+        self.restoreTask?.cancel()
+        self.purchaseTask = nil
+        self.restoreTask = nil
+        self.clearData()
+    }
+    
+    private func clearData() {
+        if let token = self.currentOrderToken {
+            self.orderMap.removeValue(forKey: token)
+        }
+        self.currentOrderToken = nil
+        self.currPaymentType = nil
+    }
+    
+    //MARK: ---------------购买-----------------
+    
+    /// 获取商品信息并发起购买
+    private func fetchAndPurchase(productId: String, token: UUID) async {
         do {
-            // 这里的字符串数组对应你在App Store Connect设置的产品ID
-            let productIds = ["com.yourapp.consumable.coin", "com.yourapp.premium.membership"]
-            products = try await Product.products(for: productIds)
+            let products = try await Product.products(for: [productId])
+            guard let product = products.first else {
+                applePayLog.add(type: .product, title: "产品回调", des: "苹果商品内购产品Id与用户申请购买Id不匹配")
+                self.failResultHandle(type: .noOrder, msg: "没有找到指定商品")
+                return
+            }
+            try await self.purchase(product, token: token)
         } catch {
-            print("Failed to fetch products: \(error)")
-            products = []
+            guard !Task.isCancelled else { return }
+            applePayLog.add(type: .product, title: "产品回调", des: "获取产品信息失败\(error.localizedDescription)")
+            self.failResultHandle(type: .noOrder, msg: error.localizedDescription)
         }
     }
     
-    // 2. 发起购买
-    func purchase(_ product: Product) async throws {
-        // 调用购买接口
-        let result = try await product.purchase()
-        
+    /// 发起购买
+    private func purchase(_ product: Product, token: UUID) async throws {
+        let result = try await product.purchase(options: [.appAccountToken(token)])
         switch result {
-            case .success(let verificationResult):
-                // 购买成功，需要对交易凭证进行验证
-                if let transaction = try? verificationResult.payloadValue {
-                    // 验证通过，解锁用户购买的内容或服务
-                    await unlockPurchasedContent(for: transaction)
-                    // 完成交易，告诉App Store此次购买已处理完毕
-                    await transaction.finish()
+        case .success(let verificationResult):
+            let transaction: StoreKit.Transaction
+            do {
+                /// 校验交易凭证
+                transaction = try verificationResult.payloadValue
+            } catch {
+                self.failResultHandle(type: .buyFail, msg: error.localizedDescription)
+                return
+            }
+            let info = Self.receiptInfo()
+            if let receiptStr = info.receiptStr {
+                applePayLog.add(type: .end, title: "购买新产品", des: "本地有票据")
+                let txToken = transaction.appAccountToken ?? token
+                let orderId = self.orderMap.removeValue(forKey: txToken)
+                self.callbackMain { delegate in
+                    delegate.applePayServiceSuccess(receipt: receiptStr, orderId: orderId)
                 }
-            case .userCancelled:
-                // 用户取消了购买
-                break
-            case .pending:
-                // 交易挂起，可能需要家长同意等
-                break
-            @unknown default:
-                break
+                self.clearData()
+            } else {
+                self.failResultHandle(type: .buyFail, msg: info.msg)
+            }
+            /// 完成交易，告诉App Store此次购买已处理完毕
+            await transaction.finish()
+        case .userCancelled:
+            /// 用户取消了购买
+            self.failResultHandle(type: .buyCancel, msg: "交易已取消")
+        case .pending:
+            /// 交易挂起，可能需要家长同意等
+            applePayLog.add(type: .statusChange, title: "购买事物变更", des: "交易延期")
+        @unknown default:
+            self.failResultHandle(type: .other, msg: "未知问题")
         }
     }
     
+    //MARK: ---------------恢复购买-----------------
     
-    
-    // 3. 处理交易结果并更新应用状态
-    private func unlockPurchasedContent(for transaction: StoreKit.Transaction) async {
-        // 将交易存入活跃交易集合，UI可以据此更新
-        activeTransactions.insert(transaction)
-        // 这里可以根据transaction.productID来判断具体购买的是哪个商品，然后解锁对应的功能。
-        // 例如，将购买状态持久化到UserDefaults或你的服务器。
-    }
-    
-    
-    
-    // 4. 监听交易更新（非常重要！用于处理例如应用在购买过程中被挂起后恢复的场景）
-    private func listenForTransactionUpdates() async {
-        for await update in Transaction.updates {
-            // 同样需要验证交易
-            if let transaction = try? update.payloadValue {
-                await unlockPurchasedContent(for: transaction)
+    /// 恢复购买
+    private func restoreEntitlements() async {
+        var hasEntitlement = false
+        /// 遍历用户当前的所有权益（已购买且未退款的有效非消耗型商品和订阅）
+        for await result in Transaction.currentEntitlements {
+            if let transaction = try? result.payloadValue {
+                hasEntitlement = true
                 await transaction.finish()
             }
         }
+        if hasEntitlement {
+            let info = Self.receiptInfo()
+            if let receiptStr = info.receiptStr {
+                applePayLog.add(type: .end, title: "恢复购买", des: "本地有票据")
+                self.callbackMain { delegate in
+                    delegate.applePayServiceRestore(receipt: receiptStr)
+                }
+                self.clearData()
+            } else {
+                self.failResultHandle(type: .restoreFail, msg: info.msg)
+            }
+        } else {
+            /// 没有可恢复的购买项
+            self.failResultHandle(type: .restoreFail, msg: "没有可恢复的购买项")
+        }
     }
     
+    //MARK: ---------------交易更新监听-----------------
     
-    // 5. 恢复购买（针对非消耗型商品和订阅）
-    func restorePurchases() async throws {
-        // 遍历用户当前的所有权益（即已购买且未退款的有效非消耗型商品和订阅）
-        for await verificationResult in Transaction.currentEntitlements {
-            if let transaction = try? verificationResult.payloadValue {
-                await unlockPurchasedContent(for: transaction)
+    /// 监听交易更新（用于处理例如应用在购买过程中被挂起后恢复的场景）
+    private func listenForTransactionUpdates() async {
+        for await update in Transaction.updates {
+            switch update {
+            case .verified(let transaction):
+                applePayLog.add(type: .statusChange, title: "购买事物变更", des: "监听到交易更新(\(transaction.productID))")
+                await transaction.finish()
+            case .unverified(_, let error):
+                applePayLog.add(type: .statusChange, title: "购买事物变更", des: "未验证交易(\(error.localizedDescription))")
             }
+        }
+    }
+    
+    //MARK: ---------------结果处理-----------------
+    
+    /// 结果处理并将支付结果返回给调用端
+    private func failResultHandle(type: ApplePayManager.ResultFailType, msg: String) {
+        applePayLog.add(type: .end, title: (currPaymentType?.des() ?? "未知") + "失败", des: type.des() + ":\(msg)")
+        self.clearData()
+        self.callbackMain { delegate in
+            delegate.applePayServiceFail(type: type, message: msg)
+        }
+    }
+    
+    /// 保证代理回调在主线程执行
+    private func callbackMain(_ block: @escaping (ApplePayServiceDelegate) -> Void) {
+        DispatchQueue.main.async { [weak self] in
+            guard let delegate = self?.serviceDelegate else { return }
+            block(delegate)
+        }
+    }
+    
+    /// 获取凭证
+    private static func receiptInfo() -> (msg: String, receiptStr: String?) {
+        guard let receiptURL = Bundle.main.appStoreReceiptURL else {
+            return ("没有购买凭证", nil)
+        }
+        do {
+            let receiptData = try Data(contentsOf: receiptURL)
+            let encodeStr = receiptData.base64EncodedString()
+            if encodeStr.count > 0 {
+                return ("苹果内购成功获取数据", encodeStr)
+            } else {
+                return ("苹果服务器解析出错", nil)
+            }
+        } catch {
+            return (error.localizedDescription, nil)
         }
     }
     
 }
 
 
+//MARK: ---------------SKPaymentTransactionObserver-----------------
+/// 仅用于处理 AppStore 促销点击购买
+extension ApplyPaymentNew: SKPaymentTransactionObserver {
+    
+    /// 当用户从应用商店发起应用内购买操作时发送此消息
+    func paymentQueue(_ queue: SKPaymentQueue, shouldAddStorePayment payment: SKPayment, for product: SKProduct) -> Bool {
+        return serviceDelegate?.applePayServiceShouldAddStorePayment() ?? false
+    }
+    
+    /// 处理经由旧队列回调的交易
+    /// StoreKit 2 的主要逻辑在 Transaction.updates 中处理，这里仅结束交易，避免卡住交易队列
+    func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
+        for trans in transactions {
+            switch trans.transactionState {
+            case .purchased, .failed, .restored:
+                applePayLog.add(type: .statusChange, title: "购买事物变更", des: "旧队列交易结束(\(trans.transactionState.rawValue))")
+                SKPaymentQueue.default().finishTransaction(trans)
+            default:
+                break
+            }
+        }
+    }
+    
+}

@@ -5,16 +5,16 @@
 import Foundation
 
 
-public protocol ApplePayManagerDelegate:NSObject {
+public protocol ApplePayManagerDelegate: NSObject {
     
     /// 支付失败结果的代理
-    func applePayFail(pay:ApplePayManager, type:ApplePayManager.ResultFailType, errorMsg:String)
+    func applePayFail(pay: ApplePayManager, type: ApplePayManager.ResultFailType, errorMsg: String)
     
     /// 支付成功的代理
-    func applePaySuccess(pay:ApplePayManager, productId: String, encode: String)
+    func applePaySuccess(pay: ApplePayManager, productId: String, orderId: String?, encode: String)
 
     /// 恢复购买
-    func applePayRestore(pay:ApplePayManager, encode: String)
+    func applePayRestore(pay: ApplePayManager, encode: String)
     
     /// 检测是否可以从AppStore促销点击购买处理
     func shouldAddStorePayment() -> Bool
@@ -27,27 +27,26 @@ public class ApplePayManager: NSObject {
     
     public static let share = ApplePayManager()
     /// 刷新本地数据
-    private var refreshInfo:ApplyPayRefresh?
-    /// 苹果产品信息
-    private var appleProducts:AppleProducts = .init()
-    /// 内购处理
-    private var appleSKHandle:ApplyPaymentHandle = .init()
+    private var refreshInfo: ApplyPayRefresh?
+    /// 内购处理（根据系统版本选择 StoreKit 1 或 StoreKit 2）
+    private let service: ApplePayService
 
     fileprivate override init() {
+        self.service = ApplePayServiceFactory.makeService()
         super.init()
-        self.appleSKHandle.delegate = self
+        self.service.serviceDelegate = self
     }
  
     /// 苹果内购Id
-    private var aProductId:String?
-    private var currPaymentType:PaymentType?
+    private var aProductId: String?
+    private var currPaymentType: PaymentType?
     
     /// 超时定时器
-    private var paymentTimer:Timer?
+    private var paymentTimer: Timer?
     
- 
+  
     ///支付代理
-    public weak var delegate:ApplePayManagerDelegate?
+    public weak var delegate: ApplePayManagerDelegate?
     
     /// 超时时间
     public var timeoutInterval: TimeInterval = 150.0
@@ -58,20 +57,25 @@ public class ApplePayManager: NSObject {
     }
 
     ///开始支付
-    public func pay(productId:String) -> ApplePayManager.StartFailType? {
-        guard self.appleSKHandle.checkCanPayment() else {
-            let type:ApplePayManager.StartFailType = .cannotPayments
+    public func pay(productId: String) -> ApplePayManager.StartFailType? {
+        return self.pay(productId: productId, orderId: productId)
+    }
+
+    ///开始支付
+    public func pay(productId: String, orderId: String) -> ApplePayManager.StartFailType? {
+        guard self.service.checkCanPayment() else {
+            let type: ApplePayManager.StartFailType = .cannotPayments
             applePayLog.add(type: .start, title: "开始购买失败", des: type.des())
             return type
         }
         guard productId.count > 0 else {
-            let type:ApplePayManager.StartFailType = .productIdNull
+            let type: ApplePayManager.StartFailType = .productIdNull
             applePayLog.add(type: .start, title: "开始购买失败", des: type.des())
             return type
         }
         /// 有产品ID  (说明不是在购买中就是在恢复中)
         if let currPaymentType {
-            let type:ApplePayManager.StartFailType = ((currPaymentType == .restore) ? .restoring : .purchasing)
+            let type: ApplePayManager.StartFailType = ((currPaymentType == .restore) ? .restoring : .purchasing)
             applePayLog.add(type: .start, title: "开始购买失败", des: "当前正在进行" + type.des())
             return type
         }
@@ -79,14 +83,14 @@ public class ApplePayManager: NSObject {
         applePayLog.add(type: .start, title: "开始购买", des: "1")
         self.currPaymentType = .purchase
         
-        self.requestProduct(pId: productId)
+        self.requestProduct(pId: productId, orderId: orderId)
         return nil
     }
     
     ///恢复购买
     public func restore() -> ApplePayManager.StartFailType? {
         if let currPaymentType {
-            let type:ApplePayManager.StartFailType = ((currPaymentType == .restore) ? .restoring : .purchasing)
+            let type: ApplePayManager.StartFailType = ((currPaymentType == .restore) ? .restoring : .purchasing)
             applePayLog.add(type: .start, title: "开始恢复失败", des: "当前正在进行" + type.des())
             return type
         }
@@ -103,21 +107,21 @@ public class ApplePayManager: NSObject {
     }
 
     /// 获取本地购买凭证
-    public func getLocalReceiptInfo(back:((String?)->Void)?) {
+    public func getLocalReceiptInfo(back: ((String?) -> Void)?) {
         if self.refreshInfo == nil {
             applePayLog.add(type: .start, title: "本地票据", des: "开始")
             self.refreshInfo = ApplyPayRefresh()
             self.refreshInfo?.refreshLocalReceiptInfo { [weak self] error in
                 applePayLog.add(type: .start, title: "本地票据", des: "刷新本地票据(\((error as? NSError)?.domain ?? "成功"))")
                 self?.refreshInfo = nil
-                let receiptStr = self?.appleSKHandle.getLocalReceiptInfo()
+                let receiptStr = self?.service.getLocalReceiptInfo()
                 back?(receiptStr)
             }
         }
     }
 
     /// 仅刷新本地票据
-    public func refreshLocalReceiptInfo(back:((Bool)->Void)?) {
+    public func refreshLocalReceiptInfo(back: ((Bool) -> Void)?) {
         if self.refreshInfo == nil {
             self.refreshInfo = ApplyPayRefresh()
             self.refreshInfo?.refreshLocalReceiptInfo { [weak self] error in
@@ -128,8 +132,8 @@ public class ApplePayManager: NSObject {
     }
     
     /// 刷新苹果内购的数据
-    public func reloadProductInfo(ids:[String]) {
-        self.appleProducts.reloadData(ids)
+    public func reloadProductInfo(ids: [String]) {
+        applePayLog.add(type: .product, title: "刷新本地票据", des: "票据Id:\(ids.toJson())")
     }
     
     /// 日志
@@ -149,14 +153,13 @@ extension ApplePayManager {
         self.paymentTimer?.invalidate()
         self.paymentTimer = nil
         self.aProductId = nil
-        self.appleProducts.cancel()
-        self.appleSKHandle.cancel()
+        self.service.cancel()
         self.currPaymentType = nil
         applePayLog.add(type: .clear, title: "清理数据", des: "清空所有数据")
     }
     
     ///结果处理并将支付结果返回给调用端
-    private func failResultHandle(type:ResultFailType, msg:String){
+    private func failResultHandle(type: ResultFailType, msg: String) {
         applePayLog.add(type: .end, title: currPaymentType?.des() ?? "未知", des: type.des() + ":\(msg)" )
         self.clearDataHandle()
         delegate?.applePayFail(pay: self, type: type, errorMsg: msg)
@@ -164,7 +167,6 @@ extension ApplePayManager {
     
     /// 超时
     @objc private func paymentTimeOut() {
-        self.appleProducts.cancel()
         self.failResultHandle(type: .timeout, msg: "超时未处理")
     }
     
@@ -174,50 +176,40 @@ extension ApplePayManager {
     private func startRestore() {
         self.paymentTimer?.invalidate()
         self.paymentTimer = Timer.scheduledTimer(timeInterval: timeoutInterval, target: self, selector: #selector(paymentTimeOut), userInfo: nil, repeats: false)
-        self.appleSKHandle.restore()
+        self.service.restore()
     }
 
     ///获得购买的产品信息
-    private func requestProduct(pId:String) {
+    private func requestProduct(pId: String, orderId: String) {
         self.aProductId = pId
         self.paymentTimer?.invalidate()
         self.paymentTimer = Timer.scheduledTimer(timeInterval: timeoutInterval, target: self, selector: #selector(paymentTimeOut), userInfo: nil, repeats: false)
         applePayLog.add(type: .start, title: "开始购买", des: "开始获得本地票据，若没有会从网络上请求")
-        self.appleProducts.getProducts(productId: pId) { [weak self] product in
-            guard let product else {
-                applePayLog.add(type: .product, title: "产品回调", des: "苹果商品内购产品Id与用户申请购买Id不匹配")
-                self?.failResultHandle(type: .noOrder, msg: "没有找到指定商品")
-                return
-            }
-            self?.appleSKHandle.startPay(product: product, orderId: pId)
-        }
+        self.service.startPay(productId: pId, orderId: orderId)
     }
     
 }
 
 
-extension ApplePayManager:ApplyPaymentHandleDelegate {
+extension ApplePayManager: ApplePayServiceDelegate {
     
-    func shouldAddStorePayment() -> Bool {
+    func applePayServiceShouldAddStorePayment() -> Bool {
         return self.delegate?.shouldAddStorePayment() ?? false
     }
     
-    func applePayment(handle: ApplyPaymentHandle, payNew receipt: String) {
-        self.delegate?.applePaySuccess(pay: self, productId: self.aProductId ?? "", encode: receipt)
+    func applePayServiceSuccess(receipt: String, orderId: String?) {
+        self.delegate?.applePaySuccess(pay: self, productId: self.aProductId ?? "", orderId: orderId, encode: receipt)
         self.clearDataHandle()
     }
     
-    func applePayment(handle: ApplyPaymentHandle, retoreNew receipt: String) {
+    func applePayServiceRestore(receipt: String) {
         self.delegate?.applePayRestore(pay: self, encode: receipt)
         self.clearDataHandle()
     }
     
-    func applePayment(handle: ApplyPaymentHandle, failType: ResultFailType, message: String) {
-        self.delegate?.applePayFail(pay: self, type: failType, errorMsg: message)
+    func applePayServiceFail(type: ResultFailType, message: String) {
+        self.delegate?.applePayFail(pay: self, type: type, errorMsg: message)
         self.clearDataHandle()
     }
 
 }
-
-
-
