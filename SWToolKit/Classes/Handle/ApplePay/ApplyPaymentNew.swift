@@ -184,7 +184,7 @@ class ApplyPaymentNew: NSObject, ApplePayService {
                 self.failResultHandle(type: .noOrder, msg: "没有找到指定商品", token: token)
                 return
             }
-            try await self.purchase(product, token: token)
+            await self.purchase(product, token: token)
         } catch {
             guard !Task.isCancelled else { return }
             applePayLog.add(type: .product, title: "产品回调", des: "获取产品信息失败\(error.localizedDescription)")
@@ -193,8 +193,16 @@ class ApplyPaymentNew: NSObject, ApplePayService {
     }
     
     /// 发起购买
-    private func purchase(_ product: Product, token: UUID) async throws {
-        let result = try await product.purchase(options: [.appAccountToken(token)])
+    private func purchase(_ product: Product, token: UUID) async {
+        let result: Product.PurchaseResult
+        do {
+            result = try await product.purchase(options: [.appAccountToken(token)])
+        } catch {
+            guard !Task.isCancelled else { return }
+            applePayLog.add(type: .product, title: "产品回调", des: "发起购买失败\(error.localizedDescription)")
+            self.failResultHandle(type: .buyFail, msg: error.localizedDescription, token: token)
+            return
+        }
         switch result {
         case .success(let verificationResult):
             do {

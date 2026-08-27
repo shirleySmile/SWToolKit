@@ -114,7 +114,7 @@ public class ApplePayManager: NSObject {
             applePayLog.add(type: .start, title: "本地票据", des: "开始")
             self.refreshInfo = ApplyPayRefresh()
             self.refreshInfo?.refreshLocalReceiptInfo { [weak self] error in
-                MainActor.assumeIsolated {
+                Task { @MainActor in
                     applePayLog.add(type: .start, title: "本地票据", des: "刷新本地票据(\((error as? NSError)?.domain ?? "成功"))")
                     self?.refreshInfo = nil
                     let receiptStr = self?.service.getLocalReceiptInfo()
@@ -129,7 +129,7 @@ public class ApplePayManager: NSObject {
         if self.refreshInfo == nil {
             self.refreshInfo = ApplyPayRefresh()
             self.refreshInfo?.refreshLocalReceiptInfo { [weak self] error in
-                MainActor.assumeIsolated {
+                Task { @MainActor in
                     self?.refreshInfo = nil
                     back?((error == nil))
                 }
