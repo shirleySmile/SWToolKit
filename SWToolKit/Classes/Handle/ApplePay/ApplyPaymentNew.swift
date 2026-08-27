@@ -232,9 +232,9 @@ class ApplyPaymentNew: NSObject, ApplePayService {
         var hasEntitlement = false
         /// 遍历用户当前的所有权益（已购买且未退款的有效非消耗型商品和订阅）
         for await result in Transaction.currentEntitlements {
-            if let transaction = try? result.payloadValue {
+            if (try? result.payloadValue) != nil {
                 hasEntitlement = true
-                await transaction.finish()
+//                await transaction.finish()
             }
         }
         if hasEntitlement {
