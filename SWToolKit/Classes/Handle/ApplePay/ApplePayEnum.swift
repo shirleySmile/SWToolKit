@@ -29,6 +29,9 @@ public extension ApplePayManager {
         /// 其他 (未知错误)
         case other
         
+        /// 交易挂起（Ask to Buy 等，等待批准）
+        case pending
+        
     }
 
     /// 开始支付时错误的类型

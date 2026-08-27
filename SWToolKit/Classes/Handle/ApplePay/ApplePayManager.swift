@@ -8,10 +8,10 @@ import Foundation
 public protocol ApplePayManagerDelegate: NSObject {
     
     /// 支付失败结果的代理
-    func applePayFail(pay: ApplePayManager, type: ApplePayManager.ResultFailType, errorMsg: String)
+    func applePayResult(pay: ApplePayManager, type: ApplePayManager.ResultFailType, errorMsg: String)
     
     /// 支付成功的代理
-    func applePaySuccess(pay: ApplePayManager, productId: String, orderId: String?, encode: String)
+    func applePaySuccess(pay: ApplePayManager, orderId: String?, encode: String)
 
     /// 恢复购买
     func applePayRestore(pay: ApplePayManager, encode: String)
@@ -22,6 +22,7 @@ public protocol ApplePayManagerDelegate: NSObject {
 }
 
 
+@MainActor
 public class ApplePayManager: NSObject {
     
     
@@ -37,10 +38,7 @@ public class ApplePayManager: NSObject {
         self.service.serviceDelegate = self
     }
  
-    /// 苹果内购Id
-    private var aProductId: String?
     private var currPaymentType: PaymentType?
-    
     /// 超时定时器
     private var paymentTimer: Timer?
     
@@ -116,10 +114,12 @@ public class ApplePayManager: NSObject {
             applePayLog.add(type: .start, title: "本地票据", des: "开始")
             self.refreshInfo = ApplyPayRefresh()
             self.refreshInfo?.refreshLocalReceiptInfo { [weak self] error in
-                applePayLog.add(type: .start, title: "本地票据", des: "刷新本地票据(\((error as? NSError)?.domain ?? "成功"))")
-                self?.refreshInfo = nil
-                let receiptStr = self?.service.getLocalReceiptInfo()
-                back?(receiptStr)
+                MainActor.assumeIsolated {
+                    applePayLog.add(type: .start, title: "本地票据", des: "刷新本地票据(\((error as? NSError)?.domain ?? "成功"))")
+                    self?.refreshInfo = nil
+                    let receiptStr = self?.service.getLocalReceiptInfo()
+                    back?(receiptStr)
+                }
             }
         }
     }
@@ -129,8 +129,10 @@ public class ApplePayManager: NSObject {
         if self.refreshInfo == nil {
             self.refreshInfo = ApplyPayRefresh()
             self.refreshInfo?.refreshLocalReceiptInfo { [weak self] error in
-                self?.refreshInfo = nil
-                back?((error == nil))
+                MainActor.assumeIsolated {
+                    self?.refreshInfo = nil
+                    back?((error == nil))
+                }
             }
         }
     }
@@ -156,7 +158,6 @@ extension ApplePayManager {
     private func clearDataHandle() {
         self.paymentTimer?.invalidate()
         self.paymentTimer = nil
-        self.aProductId = nil
         self.service.cancel()
         self.currPaymentType = nil
         applePayLog.add(type: .clear, title: "清理数据", des: "清空所有数据")
@@ -166,7 +167,7 @@ extension ApplePayManager {
     private func failResultHandle(type: ResultFailType, msg: String) {
         applePayLog.add(type: .end, title: currPaymentType?.des() ?? "未知", des: type.des() + ":\(msg)" )
         self.clearDataHandle()
-        delegate?.applePayFail(pay: self, type: type, errorMsg: msg)
+        delegate?.applePayResult(pay: self, type: type, errorMsg: msg)
     }
     
     /// 超时
@@ -185,7 +186,6 @@ extension ApplePayManager {
 
     ///获得购买的产品信息
     private func requestProduct(pId: String, orderId: String) {
-        self.aProductId = pId
         self.paymentTimer?.invalidate()
         self.paymentTimer = Timer.scheduledTimer(timeInterval: timeoutInterval, target: self, selector: #selector(paymentTimeOut), userInfo: nil, repeats: false)
         applePayLog.add(type: .start, title: "开始购买", des: "开始获得本地票据，若没有会从网络上请求")
@@ -202,7 +202,7 @@ extension ApplePayManager: ApplePayServiceDelegate {
     }
     
     func applePayServiceSuccess(receipt: String, orderId: String?) {
-        self.delegate?.applePaySuccess(pay: self, productId: self.aProductId ?? "", orderId: orderId, encode: receipt)
+        self.delegate?.applePaySuccess(pay: self, orderId: orderId, encode: receipt)
         self.clearDataHandle()
     }
     
@@ -212,8 +212,12 @@ extension ApplePayManager: ApplePayServiceDelegate {
     }
     
     func applePayServiceFail(type: ResultFailType, message: String) {
-        self.delegate?.applePayFail(pay: self, type: type, errorMsg: message)
+        self.delegate?.applePayResult(pay: self, type: type, errorMsg: message)
         self.clearDataHandle()
+    }
+    
+    func applePayServicePending() {
+        self.failResultHandle(type: .pending, msg: "等待批准")
     }
 
 }

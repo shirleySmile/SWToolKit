@@ -9,7 +9,15 @@ import StoreKit
 import Foundation
 
 
+/// 订单映射记录（token → 订单号，附带创建时间用于过期清理）
+private struct OrderRecord: Codable {
+    let orderId: String
+    let createdAt: Date
+}
+
+
 /// 使用 StoreKit 2 实现的苹果内购（iOS 15 ~ 25 使用）
+@MainActor
 class ApplyPaymentNew: NSObject, ApplePayService {
     
     /// 当前支付类型 购买or恢复
@@ -28,7 +36,7 @@ class ApplyPaymentNew: NSObject, ApplePayService {
     private var restoreTask: Task<Void, Never>?
     
     /// 订单号与 token 的映射（StoreKit 2 的 appAccountToken 仅支持 UUID）
-    private var orderMap: [UUID: String] = [:]
+    private var orderMap: [UUID: OrderRecord] = [:]
     
     /// 当前购买使用的 token
     private var currentOrderToken: UUID?
@@ -40,8 +48,9 @@ class ApplyPaymentNew: NSObject, ApplePayService {
         updatesTask = nil
     }
     
-    override init() {
+    nonisolated override init() {
         super.init()
+        self.orderMap = Self.loadOrderMap()
     }
     
     /// 是否已启动监听
@@ -54,6 +63,9 @@ class ApplyPaymentNew: NSObject, ApplePayService {
         SKPaymentQueue.default().add(self)
         updatesTask = Task { [weak self] in
             await self?.listenForTransactionUpdates()
+        }
+        Task { [weak self] in
+            await self?.handleUnfinishedTransactions()
         }
     }
     
@@ -71,7 +83,8 @@ class ApplyPaymentNew: NSObject, ApplePayService {
         applePayLog.add(type: .start, title: "开始购买", des: "发送购买请求")
         let token = UUID()
         self.currentOrderToken = token
-        self.orderMap[token] = orderId
+        self.orderMap[token] = OrderRecord(orderId: orderId, createdAt: Date())
+        Self.persistOrderMap(self.orderMap)
         self.purchaseTask = Task { [weak self] in
             await self?.fetchAndPurchase(productId: productId, token: token)
         }
@@ -108,11 +121,56 @@ class ApplyPaymentNew: NSObject, ApplePayService {
     }
     
     private func clearData() {
-        if let token = self.currentOrderToken {
-            self.orderMap.removeValue(forKey: token)
-        }
-        self.currentOrderToken = nil
         self.currPaymentType = nil
+    }
+    
+    //MARK: ---------------订单持久化-----------------
+    
+    /// 持久化存储 key
+    private nonisolated static let orderMapKey = "SWToolKit.ApplePay.orderMap"
+
+    /// 订单映射过期时间（Ask to Buy 无苹果超时上限，超时后清理避免堆积）
+    private nonisolated static let maxOrderAge: TimeInterval = 30 * 24 * 3600
+
+    /// 从本地恢复订单映射（token → orderId），并清理过期条目
+    private nonisolated static func loadOrderMap() -> [UUID: OrderRecord] {
+        guard let raw = UserDefaults.standard.dictionary(forKey: orderMapKey) as? [String: String] else { return [:] }
+        let deadline = Date().addingTimeInterval(-maxOrderAge)
+        var map: [UUID: OrderRecord] = [:]
+        for (key, value) in raw {
+            guard let uuid = UUID(uuidString: key) else { continue }
+            let record: OrderRecord?
+            if let data = value.data(using: .utf8) {
+                record = try? JSONDecoder().decode(OrderRecord.self, from: data)
+            } else {
+                record = nil
+            }
+            if let record {
+                if record.createdAt >= deadline {
+                    map[uuid] = record
+                }
+            } else {
+                // 兼容旧格式（value 直接为 orderId 字符串）
+                let legacy = OrderRecord(orderId: value, createdAt: Date())
+                if legacy.createdAt >= deadline {
+                    map[uuid] = legacy
+                }
+            }
+        }
+        return map
+    }
+
+    /// 保存订单映射到本地，并清理过期条目
+    private nonisolated static func persistOrderMap(_ map: [UUID: OrderRecord]) {
+        let deadline = Date().addingTimeInterval(-maxOrderAge)
+        var raw: [String: String] = [:]
+        for (key, value) in map where value.createdAt >= deadline {
+            if let data = try? JSONEncoder().encode(value),
+               let json = String(data: data, encoding: .utf8) {
+                raw[key.uuidString] = json
+            }
+        }
+        UserDefaults.standard.set(raw, forKey: orderMapKey)
     }
     
     //MARK: ---------------购买-----------------
@@ -123,14 +181,14 @@ class ApplyPaymentNew: NSObject, ApplePayService {
             let products = try await Product.products(for: [productId])
             guard let product = products.first else {
                 applePayLog.add(type: .product, title: "产品回调", des: "苹果商品内购产品Id与用户申请购买Id不匹配")
-                self.failResultHandle(type: .noOrder, msg: "没有找到指定商品")
+                self.failResultHandle(type: .noOrder, msg: "没有找到指定商品", token: token)
                 return
             }
             try await self.purchase(product, token: token)
         } catch {
             guard !Task.isCancelled else { return }
             applePayLog.add(type: .product, title: "产品回调", des: "获取产品信息失败\(error.localizedDescription)")
-            self.failResultHandle(type: .noOrder, msg: error.localizedDescription)
+            self.failResultHandle(type: .noOrder, msg: error.localizedDescription, token: token)
         }
     }
     
@@ -139,36 +197,23 @@ class ApplyPaymentNew: NSObject, ApplePayService {
         let result = try await product.purchase(options: [.appAccountToken(token)])
         switch result {
         case .success(let verificationResult):
-            let transaction: StoreKit.Transaction
             do {
                 /// 校验交易凭证
-                transaction = try verificationResult.payloadValue
+                let transaction = try verificationResult.payloadValue
+                await self.deliverVerifiedTransaction(transaction)
             } catch {
-                self.failResultHandle(type: .buyFail, msg: error.localizedDescription)
-                return
+                self.failResultHandle(type: .buyFail, msg: error.localizedDescription, token: token)
             }
-            let info = Self.receiptInfo()
-            if let receiptStr = info.receiptStr {
-                applePayLog.add(type: .end, title: "购买新产品", des: "本地有票据")
-                let txToken = transaction.appAccountToken ?? token
-                let orderId = self.orderMap.removeValue(forKey: txToken)
-                self.callbackMain { delegate in
-                    delegate.applePayServiceSuccess(receipt: receiptStr, orderId: orderId)
-                }
-                self.clearData()
-            } else {
-                self.failResultHandle(type: .buyFail, msg: info.msg)
-            }
-            /// 完成交易，告诉App Store此次购买已处理完毕
-            await transaction.finish()
         case .userCancelled:
             /// 用户取消了购买
-            self.failResultHandle(type: .buyCancel, msg: "交易已取消")
+            self.failResultHandle(type: .buyCancel, msg: "交易已取消", token: token)
         case .pending:
-            /// 交易挂起，可能需要家长同意等
+            /// 交易挂起，可能需要家长同意等（保留 orderMap 条目，晚到批准仍可发货）
             applePayLog.add(type: .statusChange, title: "购买事物变更", des: "交易延期")
+            self.currPaymentType = nil
+            self.callbackMain { $0.applePayServicePending() }
         @unknown default:
-            self.failResultHandle(type: .other, msg: "未知问题")
+            self.failResultHandle(type: .other, msg: "未知问题", token: token)
         }
     }
     
@@ -209,30 +254,88 @@ class ApplyPaymentNew: NSObject, ApplePayService {
             switch update {
             case .verified(let transaction):
                 applePayLog.add(type: .statusChange, title: "购买事物变更", des: "监听到交易更新(\(transaction.productID))")
-                await transaction.finish()
+                await self.deliverVerifiedTransaction(transaction)
             case .unverified(_, let error):
                 applePayLog.add(type: .statusChange, title: "购买事物变更", des: "未验证交易(\(error.localizedDescription))")
             }
         }
     }
     
+    /// 处理启动时未完成的事务（购买完成但未 finish 的场景）
+    private func handleUnfinishedTransactions() async {
+        for await result in Transaction.unfinished {
+            if let transaction = try? result.payloadValue {
+                await self.deliverVerifiedTransaction(transaction)
+            }
+        }
+    }
+    
+    /// 处理已验证事务：能关联到本 App 发起的订单则发货，否则仅结束
+    private func deliverVerifiedTransaction(_ transaction: StoreKit.Transaction) async {
+        /// 自动续费（续订，非首次购买）：不发货，仅结束
+        if transaction.productType == .autoRenewable && transaction.originalID != transaction.id {
+            applePayLog.add(type: .statusChange, title: "购买事物变更", des: "自动续费续订，不发货")
+            await transaction.finish()
+            return
+        }
+        /// 关联订单：优先 appAccountToken，回退到当前购买 token
+        let token: UUID
+        if let appToken = transaction.appAccountToken {
+            token = appToken
+        } else if let current = self.currentOrderToken {
+            token = current
+        } else {
+            await transaction.finish()
+            return
+        }
+        guard let record = self.orderMap.removeValue(forKey: token) else {
+            await transaction.finish()
+            return
+        }
+        if self.currentOrderToken == token {
+            self.currentOrderToken = nil
+        }
+        Self.persistOrderMap(self.orderMap)
+        /// 撤销/退款/家庭共享移除：不发货，按取消处理
+        if transaction.revocationDate != nil {
+            applePayLog.add(type: .statusChange, title: "购买事物变更", des: "交易被撤销")
+            self.failResultHandle(type: .buyCancel, msg: "交易被撤销")
+            await transaction.finish()
+            return
+        }
+        let info = Self.receiptInfo()
+        if let receiptStr = info.receiptStr {
+            applePayLog.add(type: .end, title: "购买新产品", des: "本地有票据")
+            self.callbackMain { $0.applePayServiceSuccess(receipt: receiptStr, orderId: record.orderId) }
+        } else {
+            self.callbackMain { $0.applePayServiceFail(type: .buyFail, message: info.msg) }
+        }
+        self.clearData()
+        await transaction.finish()
+    }
+    
     //MARK: ---------------结果处理-----------------
     
     /// 结果处理并将支付结果返回给调用端
-    private func failResultHandle(type: ApplePayManager.ResultFailType, msg: String) {
+    private func failResultHandle(type: ApplePayManager.ResultFailType, msg: String, token: UUID? = nil) {
         applePayLog.add(type: .end, title: (currPaymentType?.des() ?? "未知") + "失败", des: type.des() + ":\(msg)")
+        if let token {
+            self.orderMap.removeValue(forKey: token)
+            if self.currentOrderToken == token {
+                self.currentOrderToken = nil
+            }
+            Self.persistOrderMap(self.orderMap)
+        }
         self.clearData()
         self.callbackMain { delegate in
             delegate.applePayServiceFail(type: type, message: msg)
         }
     }
     
-    /// 保证代理回调在主线程执行
+    /// 保证代理回调在主线程执行（类已 @MainActor，直接回调）
     private func callbackMain(_ block: @escaping (ApplePayServiceDelegate) -> Void) {
-        DispatchQueue.main.async { [weak self] in
-            guard let delegate = self?.serviceDelegate else { return }
-            block(delegate)
-        }
+        guard let delegate = self.serviceDelegate else { return }
+        block(delegate)
     }
     
     /// 获取凭证
@@ -258,7 +361,7 @@ class ApplyPaymentNew: NSObject, ApplePayService {
 
 //MARK: ---------------SKPaymentTransactionObserver-----------------
 /// 仅用于处理 AppStore 促销点击购买
-extension ApplyPaymentNew: SKPaymentTransactionObserver {
+extension ApplyPaymentNew: @preconcurrency SKPaymentTransactionObserver {
     
     /// 当用户从应用商店发起应用内购买操作时发送此消息
     func paymentQueue(_ queue: SKPaymentQueue, shouldAddStorePayment payment: SKPayment, for product: SKProduct) -> Bool {

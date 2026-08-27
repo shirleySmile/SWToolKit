@@ -97,6 +97,8 @@ extension ApplePayManager.ResultFailType {
             return "超时"
         case .other:
             return "其他问题"
+        case .pending:
+            return "交易挂起"
         }
     }
 }

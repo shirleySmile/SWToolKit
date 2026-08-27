@@ -10,7 +10,7 @@ import Foundation
 
 /// 内购服务统一接口
 /// 内部屏蔽了 StoreKit 1 与 StoreKit 2 的差异
-protocol ApplePayService: AnyObject {
+@MainActor protocol ApplePayService: AnyObject {
     
     /// 数据回调
     var serviceDelegate: ApplePayServiceDelegate? { get set }
@@ -36,7 +36,7 @@ protocol ApplePayService: AnyObject {
 
 
 /// 内购服务回调
-protocol ApplePayServiceDelegate: AnyObject {
+@MainActor protocol ApplePayServiceDelegate: AnyObject {
     
     /// 检测是否可以从AppStore促销点击购买处理
     func applePayServiceShouldAddStorePayment() -> Bool
@@ -49,10 +49,14 @@ protocol ApplePayServiceDelegate: AnyObject {
     
     /// 支付失败
     func applePayServiceFail(type: ApplePayManager.ResultFailType, message: String)
+    
+    /// 交易挂起（Ask to Buy 等），通知上层暂停超时
+    func applePayServicePending()
 }
 
 
 /// 根据系统版本选择使用的内购实现
+@MainActor
 enum ApplePayServiceFactory {
     
     static func makeService() -> ApplePayService {

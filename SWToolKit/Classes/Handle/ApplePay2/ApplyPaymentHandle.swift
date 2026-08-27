@@ -10,6 +10,7 @@ import Foundation
 
 
 /// 使用 StoreKit 1 实现的苹果内购（iOS 26 及以上使用）
+@MainActor
 class ApplyPaymentHandle: NSObject, ApplePayService {
     
     /// 当前支付类型 购买or恢复
@@ -106,7 +107,7 @@ extension ApplyPaymentHandle {
 
 
 //MARK: ---------------SKPaymentTransactionObserver-----------------
-extension ApplyPaymentHandle: SKPaymentTransactionObserver {
+extension ApplyPaymentHandle: @preconcurrency SKPaymentTransactionObserver {
     
     /// 当用户从应用商店发起应用内购买操作时发送此消息
     func paymentQueue(_ queue: SKPaymentQueue, shouldAddStorePayment payment: SKPayment, for product: SKProduct) -> Bool {
@@ -179,6 +180,8 @@ extension ApplyPaymentHandle: SKPaymentTransactionObserver {
                 SKPaymentQueue.default().finishTransaction(trans)
             case .deferred:
                 applePayLog.add(type: .statusChange, title: "购买事物变更", des: "交易延期")
+                self.currPaymentType = nil
+                self.serviceDelegate?.applePayServicePending()
             default:
                 applePayLog.add(type: .statusChange, title: "购买事物变更", des: "其他情况(\(trans.transactionState.rawValue)")
                 failResultHandle(type: .other, msg: "未知问题:\(trans.transactionState.rawValue)")
