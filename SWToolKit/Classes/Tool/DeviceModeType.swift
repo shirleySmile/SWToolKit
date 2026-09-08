@@ -650,22 +650,4 @@ extension DeviceModeType {
         }
     }
 
-    //MARK: 是否支持无线充电------------------------------------------------
-    public func isSupportWirelessCharging() -> Bool {
-        switch self {
-        case .iPhone_8, .iPhone_8_plus, .iPhone_x,
-             .iPhone_xr, .iPhone_xs, .iPhone_xs_max,
-             .iPhone_11, .iPhone_11_pro, .iPhone_11_pro_max, .iPhone_se_2nd,
-             .iPhone_12_mini, .iPhone_12, .iPhone_12_pro, .iPhone_12_pro_max,
-             .iPhone_13_mini, .iPhone_13, .iPhone_13_pro, .iPhone_13_pro_max, .iPhone_se_2022,
-             .iPhone_14, .iPhone_14_plus, .iPhone_14_pro, .iPhone_14_pro_max,
-             .iPhone_15, .iPhone_15_plus, .iPhone_15_pro, .iPhone_15_pro_max,
-             .iPhone_16, .iPhone_16_plus, .iPhone_16_pro, .iPhone_16_pro_max, .iPhone_16e,
-             .iPhone_17, .iPhone_17_air, .iPhone_17_pro, .iPhone_17_pro_max, .iPhone_17e:
-            return true
-        default:
-            return false
-        }
-    }
-
 }
