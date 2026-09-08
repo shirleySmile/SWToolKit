@@ -66,6 +66,7 @@ public enum DeviceModeType: String {
     case iPhone_17 = "iPhone 17"   /// 2025.9.9
     case iPhone_17_pro = "iPhone 17 Pro"   /// 2025.9.9
     case iPhone_17_pro_max = "iPhone 17 Pro Max"  /// 2025.9.9
+    case iPhone_17e = "iPhone 17e"    /// 2026.3.11
     
 
     /// iPad
@@ -80,6 +81,7 @@ public enum DeviceModeType: String {
     case iPad_9 = "iPad 9"
     case iPad_10 = "iPad 10"
     case iPad_16 = "iPad 16"
+    case iPad_a16 = "iPad (A16)"   /// 2025.3.4
 
     /// iPad Air
     case iPad_air = "iPad Air"
@@ -91,6 +93,8 @@ public enum DeviceModeType: String {
     case iPad_air_m2_13 = "iPad Air M2 (13-inch)"
     case iPad_air_m3_11 = "iPad Air M3 (11-inch)"
     case iPad_air_m3_13 = "iPad Air M3 (13-inch)"
+    case iPad_air_m4_11 = "iPad Air M4 (11-inch)"   /// 2026.3.11
+    case iPad_air_m4_13 = "iPad Air M4 (13-inch)"   /// 2026.3.11
 
     /// iPad Pro
     case iPad_pro_9_7 = "iPad Pro (9.7-inch)"
@@ -107,6 +111,8 @@ public enum DeviceModeType: String {
     case iPad_pro_m4_13 = "iPad Pro M4 (13-inch)"
     case iPad_pro_11_4th = "iPad Pro (11-inch) 4th"
     case iPad_pro_12_9_6th = "iPad Pro (12.9-inch) 6th"
+    case iPad_pro_m5_11 = "iPad Pro M5 (11-inch)"   /// 2025.10.22
+    case iPad_pro_m5_13 = "iPad Pro M5 (13-inch)"   /// 2025.10.22
      
     /// iPad mini
     case iPad_mini = "iPad Mini"
@@ -118,8 +124,6 @@ public enum DeviceModeType: String {
     case iPad_mini_a17_pro = "iPad Mini (A17 Pro)"
     
     /// mac 型号
-    
-    
 //    ///appleTV
 //    case appleTV_2 = "AppleTV2"
 //    case appleTV_3 = "AppleTV3"
@@ -129,9 +133,6 @@ public enum DeviceModeType: String {
     case simulator = "Simulator"
         
 }
-
-
-
 
 
 extension DeviceModeType {
@@ -201,6 +202,11 @@ extension DeviceModeType {
         case "iPhone17,1":  return .iPhone_16_pro
         case "iPhone17,2":  return .iPhone_16_pro_max
         case "iPhone17,5":  return .iPhone_16e
+        case "iPhone18,1":  return .iPhone_17_pro
+        case "iPhone18,2":  return .iPhone_17_pro_max
+        case "iPhone18,3":  return .iPhone_17
+        case "iPhone18,4":  return .iPhone_17_air
+        case "iPhone18,5":  return .iPhone_17e
 
             /// iPad
         case "iPad1,1", "iPad1,2": return .iPad_1
@@ -213,7 +219,7 @@ extension DeviceModeType {
         case "iPad11,6", "iPad11,7": return .iPad_8
         case "iPad12,1", "iPad12,2": return .iPad_9
         case "iPad13,18", "iPad13,19": return .iPad_10
-        case "iPad15,7", "iPad15,8":  return .iPad_16
+        case "iPad15,7", "iPad15,8":  return .iPad_a16
             
             /// iPad Air
         case "iPad4,1", "iPad4,2", "iPad4,3":  return .iPad_air
@@ -225,6 +231,8 @@ extension DeviceModeType {
         case "iPad14,10", "iPad14,11":  return .iPad_air_m2_13
         case "iPad15,3", "iPad15,4":  return .iPad_air_m3_11
         case "iPad15,5", "iPad15,6":  return .iPad_air_m3_13
+        case "iPad16,8", "iPad16,9":   return .iPad_air_m4_11
+        case "iPad16,10", "iPad16,11": return .iPad_air_m4_13
 
             /// iPad Pro
         case "iPad6,3", "iPad6,4":  return .iPad_pro_9_7
@@ -241,6 +249,8 @@ extension DeviceModeType {
         case "iPad16,5", "iPad16,6":  return .iPad_pro_m4_13
         case "iPad14,3", "iPad14,4":  return .iPad_pro_11_4th
         case "iPad14,5", "iPad14,6":  return .iPad_pro_12_9_6th
+        case "iPad17,1", "iPad17,2":  return .iPad_pro_m5_11
+        case "iPad17,3", "iPad17,4":  return .iPad_pro_m5_13
             
             
             /// iPad mini
@@ -267,17 +277,21 @@ extension DeviceModeType {
 }
 
 
-
 extension DeviceModeType {
     
     //MARK: 电池续航能力------------------------------------------------
     public func batteryUsageHours() -> Int {
         switch self {
-        case .iPod_touch_1, .iPod_touch_2, .iPod_touch_3, .iPod_touch_4, .iPod_touch_5, .iPod_touch_6, .iPod_touch_7: return 48
-        case .iPhone_4, .iPhone_4s, .iPhone_5, .iPhone_5c, .iPhone_5s: return 18
+        case .iPod_touch_1: return 6
+        case .iPod_touch_2, .iPod_touch_3: return 7
+        case .iPod_touch_4: return 7
+        case .iPod_touch_5, .iPod_touch_6, .iPod_touch_7: return 8
+        case .iPhone_4, .iPhone_4s, .iPhone_5, .iPhone_5c, .iPhone_5s: return 10
         case .iPhone_6, .iPhone_6s: return 11
-        case .iPhone_6_plus, .iPhone_6s_plus, .iPhone_se: return 14
-        case .iPhone_7, .iPhone_7_plus: return 14
+        case .iPhone_6_plus, .iPhone_6s_plus: return 14
+        case .iPhone_se: return 13
+        case .iPhone_7: return 13
+        case .iPhone_7_plus: return 14
         case .iPhone_8: return 13
         case .iPhone_8_plus: return 14
         case .iPhone_x: return 13
@@ -289,7 +303,7 @@ extension DeviceModeType {
         case .iPhone_11_pro_max: return 20
         case .iPhone_se_2nd: return 13
         case .iPhone_12_mini: return 15
-        case .iPhone_12: return 18
+        case .iPhone_12: return 17
         case .iPhone_12_pro: return 17
         case .iPhone_12_pro_max: return 20
         case .iPhone_13_mini: return 17
@@ -306,9 +320,9 @@ extension DeviceModeType {
         case .iPhone_15_pro: return 23
         case .iPhone_15_pro_max: return 29
         case .iPhone_16: return 22
-        case .iPhone_16_plus: return 24
-        case .iPhone_16_pro: return 24
-        case .iPhone_16_pro_max: return 30
+        case .iPhone_16_plus: return 27
+        case .iPhone_16_pro: return 27
+        case .iPhone_16_pro_max: return 33
         case .iPhone_16e: return 26
         case .iPad_1, .iPad_2, .iPad_3, .iPad_4, .iPad_5, .iPad_6, .iPad_7, .iPad_8, .iPad_9, .iPad_10, .iPad_16: return 10
         case .iPad_air, .iPad_air_2, .iPad_air_3, .iPad_air_4, .iPad_air_5, .iPad_air_m2_11, .iPad_air_m2_13, .iPad_air_m3_11, .iPad_air_m3_13: return 10
@@ -320,6 +334,8 @@ extension DeviceModeType {
         case .iPhone_17_air: return 27
         case .iPhone_17_pro: return 33
         case .iPhone_17_pro_max: return 37
+        case .iPhone_17e: return 26
+        case .iPad_a16, .iPad_air_m4_11, .iPad_air_m4_13, .iPad_pro_m5_11, .iPad_pro_m5_13: return 10
         }
     }
     
@@ -334,9 +350,9 @@ extension DeviceModeType {
         case .iPod_touch_6, .iPod_touch_7:  return 1043
         case .iPhone_4:  return 1419
         case .iPhone_4s:  return 1432
-        case .iPhone_5:  return 1434
+        case .iPhone_5:  return 1440
         case .iPhone_5c:  return 1508
-        case .iPhone_5s:  return 1508
+        case .iPhone_5s:  return 1560
         case .iPhone_6:  return 1809
         case .iPhone_6_plus:  return 2906
         case .iPhone_6s:  return 1715
@@ -362,7 +378,7 @@ extension DeviceModeType {
         case .iPhone_13:  return 3227
         case .iPhone_13_pro:  return 3095
         case .iPhone_13_pro_max:  return 4352
-        case .iPhone_se_2022:  return 2200
+        case .iPhone_se_2022:  return 2018
         case .iPhone_14:  return 3279
         case .iPhone_14_plus:  return 4325
         case .iPhone_14_pro:  return 3200
@@ -372,10 +388,10 @@ extension DeviceModeType {
         case .iPhone_15_pro:  return 3274
         case .iPhone_15_pro_max:  return 4422
         case .iPhone_16:  return 3561
-        case .iPhone_16_plus:  return 4006
-        case .iPhone_16_pro:  return 3355
+        case .iPhone_16_plus:  return 4674
+        case .iPhone_16_pro:  return 3582
         case .iPhone_16_pro_max:  return 4685
-        case .iPhone_16e:  return 3961
+        case .iPhone_16e:  return 4005
         case .iPad_1:  return 6600
         case .iPad_2:  return 6930
         case .iPad_3:  return 11560
@@ -422,6 +438,12 @@ extension DeviceModeType {
         case .iPhone_17_air: return 3149
         case .iPhone_17_pro:  return 4252
         case .iPhone_17_pro_max: return 5088
+        case .iPhone_17e: return 4005
+        case .iPad_a16: return 7606
+        case .iPad_air_m4_11: return 7606
+        case .iPad_air_m4_13: return 9889
+        case .iPad_pro_m5_11: return 8457
+        case .iPad_pro_m5_13: return 10538
 
         }
         
@@ -430,10 +452,26 @@ extension DeviceModeType {
     //MARK: cpu型号------------------------------------------------
     public func cpuMode() -> String {
         switch self {
-        case .iPod_touch_1, .iPod_touch_2, .iPod_touch_3, .iPod_touch_4, .iPod_touch_5, .iPod_touch_6, .iPod_touch_7:
-            return "A5-"
-        case .iPhone_4, .iPhone_4s, .iPhone_5, .iPhone_5c, .iPhone_5s:
-            return "A5-"
+        case .iPod_touch_1:
+            return "ARM11"
+        case .iPod_touch_2, .iPod_touch_3:
+            return "Cortex-A8"
+        case .iPod_touch_4:
+            return "A4"
+        case .iPod_touch_5:
+            return "A5"
+        case .iPod_touch_6:
+            return "A8"
+        case .iPod_touch_7:
+            return "A10 Fusion"
+        case .iPhone_4:
+            return "A4"
+        case .iPhone_4s:
+            return "A5"
+        case .iPhone_5, .iPhone_5c:
+            return "A6"
+        case .iPhone_5s:
+            return "A7"
         case .iPhone_6, .iPhone_6_plus:
             return "A8"
         case .iPhone_6s, .iPhone_6s_plus, .iPhone_se:
@@ -460,8 +498,20 @@ extension DeviceModeType {
             return "A18"
         case .iPhone_16_pro, .iPhone_16_pro_max:
             return "A18 Pro"
-        case .iPad_1, .iPad_2, .iPad_3, .iPad_4, .iPad_5, .iPad_6, .iPad_7, .iPad_8:
-            return "A5X-"
+        case .iPad_1:
+            return "A4"
+        case .iPad_2:
+            return "A5"
+        case .iPad_3:
+            return "A5X"
+        case .iPad_4:
+            return "A6X"
+        case .iPad_5:
+            return "A9"
+        case .iPad_6, .iPad_7:
+            return "A10 Fusion"
+        case .iPad_8:
+            return "A12 Bionic"
         case .iPad_9:
             return "A13 Bionic"
         case .iPad_10:
@@ -469,9 +519,13 @@ extension DeviceModeType {
         case .iPad_16:
             return "A15 Bionic"
         case .iPad_air:
-            return "A5X-"
-        case .iPad_air_2, .iPad_air_3, .iPad_air_4:
+            return "A7"
+        case .iPad_air_2:
             return "A8X"
+        case .iPad_air_3:
+            return "A12 Bionic"
+        case .iPad_air_4:
+            return "A14 Bionic"
         case .iPad_air_5:
             return "M1"
         case .iPad_air_m2_11, .iPad_air_m2_13:
@@ -481,15 +535,23 @@ extension DeviceModeType {
         case .iPad_pro_9_7:
             return "A9X"
         case .iPad_pro_12_9:
-            return "A12X Bionic"
+            return "A9X"
         case .iPad_pro_12_9_2nd:
-            return "A12X Bionic"
+            return "A10X Fusion"
         case .iPad_pro_10_5:
             return "A10X"
-        case .iPad_pro_11, .iPad_pro_11_3rd, .iPad_pro_11_2nd:
+        case .iPad_pro_11:
             return "A12X Bionic"
-        case .iPad_pro_12_9_3rd, .iPad_pro_12_9_4th, .iPad_pro_12_9_5th:
+        case .iPad_pro_11_2nd:
+            return "A12Z Bionic"
+        case .iPad_pro_11_3rd:
+            return "M1"
+        case .iPad_pro_12_9_3rd:
             return "A12X Bionic"
+        case .iPad_pro_12_9_4th:
+            return "A12Z Bionic"
+        case .iPad_pro_12_9_5th:
+            return "M1"
         case .iPad_pro_m4_11, .iPad_pro_m4_13:
             return "M4"
         case .iPad_pro_11_4th, .iPad_pro_12_9_6th:
@@ -512,10 +574,18 @@ extension DeviceModeType {
             return "A19"
         case .iPhone_17_air, .iPhone_17_pro, .iPhone_17_pro_max:
             return "A19 Pro"
+        case .iPhone_17e:
+            return "A19"
+        case .iPad_a16:
+            return "A16"
+        case .iPad_air_m4_11, .iPad_air_m4_13:
+            return "M4"
+        case .iPad_pro_m5_11, .iPad_pro_m5_13:
+            return "M5"
         }
     }
     
-    //MARK: cpu频率------------------------------------------------
+    //MARK: cpu频率--单位MHz（兆赫）----------------------------------------------
     public func cpuFrequency() -> Int {
         switch self {
         case .iPod_touch_1: return 400
@@ -524,10 +594,10 @@ extension DeviceModeType {
         case .iPod_touch_4: return 800
         case .iPod_touch_5: return 1000
         case .iPod_touch_6: return 1100
-        case .iPod_touch_7: return 2340
+        case .iPod_touch_7: return 1640
         case .iPhone_4, .iPhone_4s: return 800
         case .iPhone_5, .iPhone_5s: return 1300
-        case .iPhone_5c: return 1000
+        case .iPhone_5c: return 1300
         case .iPhone_6, .iPhone_6_plus: return 1400
         case .iPhone_6s, .iPhone_6s_plus, .iPhone_se: return 1850
         case .iPhone_7, .iPhone_7_plus: return 2340
@@ -538,19 +608,20 @@ extension DeviceModeType {
         case .iPhone_13_mini, .iPhone_13, .iPhone_13_pro, .iPhone_13_pro_max, .iPhone_se_2022: return 3230
         case .iPhone_14, .iPhone_14_plus: return 3230
         case .iPhone_14_pro, .iPhone_14_pro_max, .iPhone_15, .iPhone_15_plus: return 3460
-        case .iPhone_15_pro, .iPhone_15_pro_max: return 3700
+        case .iPhone_15_pro, .iPhone_15_pro_max: return 3780
         case .iPhone_16, .iPhone_16_plus: return 4040
         case .iPhone_16_pro, .iPhone_16_pro_max: return 4050
-        case .iPhone_16e: return 4050
-        case .iPhone_17, .iPhone_17_air, .iPhone_17_pro, .iPhone_17_pro_max: return 4362
+        case .iPhone_16e: return 4040
+        case .iPhone_17, .iPhone_17_air, .iPhone_17_pro, .iPhone_17_pro_max: return 4260
+        case .iPhone_17e: return 4260
         case .iPad_1, .iPad_2, .iPad_3: return 1000
         case .iPad_4: return 1400
         case .iPad_5: return 1850
         case .iPad_6: return 2310
         case .iPad_7: return 2310
         case .iPad_8: return 2490
-        case .iPad_9: return 2660
-        case .iPad_10: return 3100
+        case .iPad_9: return 2650
+        case .iPad_10: return 2990
         case .iPad_16: return 3500
         case .iPad_air: return 1400
         case .iPad_air_2: return 1500
@@ -564,7 +635,7 @@ extension DeviceModeType {
         case .iPad_pro_12_9_2nd, .iPad_pro_10_5: return 2380
         case .iPad_pro_11, .iPad_pro_12_9_3rd, .iPad_pro_11_2nd, .iPad_pro_12_9_4th, .iPad_pro_11_3rd: return 2490
         case .iPad_pro_12_9_5th: return 3200
-        case .iPad_pro_m4_11, .iPad_pro_m4_13: return 4510
+        case .iPad_pro_m4_11, .iPad_pro_m4_13: return 4400
         case .iPad_pro_11_4th, .iPad_pro_12_9_6th: return 3490
         case .iPad_mini: return 1000
         case .iPad_mini_2, .iPad_mini_3: return 1300
@@ -572,16 +643,29 @@ extension DeviceModeType {
         case .iPad_mini_5: return 2480
         case .iPad_mini_6: return 2930
         case .iPad_mini_a17_pro: return 3780
+        case .iPad_a16: return 3460
+        case .iPad_air_m4_11, .iPad_air_m4_13: return 4400
+        case .iPad_pro_m5_11, .iPad_pro_m5_13: return 4600
         case .simulator: return 1000
         }
     }
-    
+
+    //MARK: 是否支持无线充电------------------------------------------------
+    public func isSupportWirelessCharging() -> Bool {
+        switch self {
+        case .iPhone_8, .iPhone_8_plus, .iPhone_x,
+             .iPhone_xr, .iPhone_xs, .iPhone_xs_max,
+             .iPhone_11, .iPhone_11_pro, .iPhone_11_pro_max, .iPhone_se_2nd,
+             .iPhone_12_mini, .iPhone_12, .iPhone_12_pro, .iPhone_12_pro_max,
+             .iPhone_13_mini, .iPhone_13, .iPhone_13_pro, .iPhone_13_pro_max, .iPhone_se_2022,
+             .iPhone_14, .iPhone_14_plus, .iPhone_14_pro, .iPhone_14_pro_max,
+             .iPhone_15, .iPhone_15_plus, .iPhone_15_pro, .iPhone_15_pro_max,
+             .iPhone_16, .iPhone_16_plus, .iPhone_16_pro, .iPhone_16_pro_max, .iPhone_16e,
+             .iPhone_17, .iPhone_17_air, .iPhone_17_pro, .iPhone_17_pro_max, .iPhone_17e:
+            return true
+        default:
+            return false
+        }
+    }
+
 }
-
-
-
-
-
-
-
-
