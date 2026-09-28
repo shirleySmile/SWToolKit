@@ -61,7 +61,10 @@ extension String {
             NSAttributedString.DocumentReadingOptionKey.documentType : NSAttributedString.DocumentType.html,
         ]
         let htmlString = try? NSMutableAttributedString(data: data, options: options, documentAttributes: nil)
-        htmlString?.addAttribute(NSAttributedString.Key.backgroundColor, value: UIColor.clear, range: NSMakeRange(0, 1))
+        /// 空字符串解析结果长度为 0 时，NSMakeRange(0, 1) 会越界崩溃
+        if let htmlString = htmlString, htmlString.length > 0 {
+            htmlString.addAttribute(NSAttributedString.Key.backgroundColor, value: UIColor.clear, range: NSMakeRange(0, 1))
+        }
         return htmlString
         
     }

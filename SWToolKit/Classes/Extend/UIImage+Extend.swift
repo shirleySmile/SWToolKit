@@ -17,13 +17,11 @@ extension UIImage {
     /// - Returns: 图片
     public static func initWith(color: UIColor,_ size:CGSize = .init(width: 1, height: 1)) -> UIImage {
         let rect = CGRect(x: 0, y: 0, width: size.width, height: size.height)
-        UIGraphicsBeginImageContext(rect.size)
-        let context = UIGraphicsGetCurrentContext()
-        context!.setFillColor(color.cgColor)
-        context!.fill(rect)
-        let img = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        return img!
+        /// UIGraphicsBeginImageContext 自 iOS 15 起弃用且只输出 1x 图，改用 UIGraphicsImageRenderer（自动匹配屏幕 scale）
+        return UIGraphicsImageRenderer(size: rect.size).image { context in
+            context.cgContext.setFillColor(color.cgColor)
+            context.cgContext.fill(rect)
+        }
     }
     
     /// 截切图片

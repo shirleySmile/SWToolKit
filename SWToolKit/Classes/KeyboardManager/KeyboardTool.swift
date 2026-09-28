@@ -146,10 +146,6 @@ public class KeyboardTool:NSObject{
         kbInputViews?.addObserView()
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(notify:)), name: UIWindow.keyboardWillShowNotification , object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(notify:)), name: UIWindow.keyboardWillHideNotification , object: nil)
-        if #available(iOS 13, *) {  }else{
-            NotificationCenter.default.addObserver(self, selector: #selector(textFieldDidBeginEditing(notify:)), name: UITextField.textDidBeginEditingNotification , object: nil)
-            NotificationCenter.default.addObserver(self, selector: #selector(textViewDidBeginEditing(notify:)), name: UITextView.textDidBeginEditingNotification , object: nil)
-        }
     }
     
     private func removeObserverManager(){
@@ -163,10 +159,6 @@ public class KeyboardTool:NSObject{
         kbInputViews = nil
         NotificationCenter.default.removeObserver(self, name: UIWindow.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: UIWindow.keyboardWillHideNotification, object: nil)
-        if #available(iOS 13, *) {  }else{
-            NotificationCenter.default.removeObserver(self, name: UITextField.textDidBeginEditingNotification, object: nil)
-            NotificationCenter.default.removeObserver(self, name: UITextView.textDidBeginEditingNotification, object: nil)
-        }
     }
 
 
@@ -202,9 +194,8 @@ public class KeyboardTool:NSObject{
                 let scrollVFrame = becomingView.bView.superview?.convert(becomingView.bView.frame, to: abScrollView)
                 let y = max(0, (scrollVFrame?.maxY ?? 0) + safeSpace - abScrollView.height)
                 if abScrollView.contentOffset.y != y {
-                    UIView.animate(withDuration: max(time, 0.02)) {
-                        abScrollView.setContentOffset(.init(x: 0, y: y), animated: true)
-                    }
+                    /// setContentOffset(animated:) 自带动画，不需要包在 UIView.animate 里（嵌套会导致偏移动画异常）
+                    abScrollView.setContentOffset(.init(x: 0, y: y), animated: true)
                 }
                 kbInputViews.oldBecomingView = becomingView
                 kbInputViews.currentKBHeight = kbRect.height
@@ -340,33 +331,6 @@ extension KeyboardTool {
         self.kbInputViews?.oldBecomingView = nil
         let time = notify.userInfo?[UIWindow.keyboardAnimationDurationUserInfoKey] as! TimeInterval
         kbWillHide(abView: abView, time: time)
-    }
-    
-    /// textView的通知
-    @objc func textViewDidBeginEditing(notify:Notification){
-        if #available(iOS 13, *) {
-            debugPrint("==SWToolKit==" + "ios 13及以上")
-        }else{
-            if kbInputViews?.oldBecomingView != nil {
-                debugPrint("==SWToolKit==" + "textViewDidBeginEditing\n" + String(describing: notify.object) + "\n" + String(describing: notify.userInfo))
-                /// 先不处理，遇到再说
-            }
-        }
-    }
-    
-    /// textView的通知
-    @objc func textFieldDidBeginEditing(notify:Notification){
-        if #available(iOS 13, *) {
-            debugPrint("==SWToolKit==" + "ios 13及以上")
-        }else{
-            guard let abView = observerView else{
-                return
-            }
-            if let kbHeight = kbInputViews?.currentKBHeight, kbHeight > 0{
-                debugPrint("==SWToolKit==" + "textFieldDidBeginEditing\n" + String(describing: notify.object) + "\n" + String(describing: notify.userInfo))
-                kbWillShow(abView: abView, kbRect: .init(x: 0, y: kScreen.height-kbHeight, width: kScreen.width, height: kbHeight), time: 0.02)
-            }
-        }
     }
 }
 

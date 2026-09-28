@@ -159,7 +159,6 @@ extension ApplyPaymentHandle: @preconcurrency SKPaymentTransactionObserver {
                 applePayLog.add(type: .statusChange, title: "购买事物变更", des: "商品添加进列表")
             case .purchased:
                 if trans.original != nil {
-                    // 自动续费订单，交服务器验签，不当作新购买发货
                     applePayLog.add(type: .statusChange, title: "购买事物变更", des: "自动续费的订单")
                 } else if trans.payment.applicationUsername == nil {
                     // AppStore 促销购买，发货，orderId 为空

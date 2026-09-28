@@ -66,7 +66,8 @@ class ScreenPopupOnePiece: UIView {
     
     /// 显示
     func show(animation aType: ScreenPopupAnimationType, through:Bool = false, showCompletion:(()->Void)?, dismissCompletion:(()->Void)?) {
-        self.backgroundColor = bgColor?.withAlphaComponent(0.2)
+        /// 尊重调用方传入的遮罩色及其透明度（原实现强制覆盖为 0.2 导致 cover 参数失效）
+        self.backgroundColor = bgColor
         self.animationType = aType
         self.hitThrough = through
         self.dismissCompletion = dismissCompletion

@@ -42,6 +42,10 @@ class ApplePayLog: NSObject {
        
     func add(type:ProgressType, title:String, des:String) {
         infoList.append(.init(type: type, title: title, des: des, date: Date()))
+        /// 日志只增不减，长会话下会无限占用内存，限制最大条数
+        if infoList.count > 500 {
+            infoList.removeFirst(infoList.count - 500)
+        }
     }
     
     func getInfo() -> [String] {

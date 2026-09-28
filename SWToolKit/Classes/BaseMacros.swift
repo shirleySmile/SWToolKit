@@ -10,14 +10,24 @@ import UIKit
 import AVFoundation
 
 
-/// 底部安全区高度
-public let kSafeBtmH:CGFloat = kScreen.safeArea.bottom
-/// 状态栏高度
-public let kStatusBarH = UIApplication.shared.windows.first?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
+/// 底部安全区高度（动态读取，避免进程启动早期首次访问被定格为 0）
+public var kSafeBtmH:CGFloat {
+    kScreen.safeArea.bottom
+}
+/// 状态栏高度（动态读取；UIApplication.shared.windows 已弃用，改用 connectedScenes）
+public var kStatusBarH:CGFloat {
+    let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+    let scene = scenes.first(where: { $0.activationState == .foregroundActive }) ?? scenes.first
+    return scene?.statusBarManager?.statusBarFrame.height ?? 0.0
+}
 /// 导航栏高度
-public let kNaviH = (kStatusBarH + 44.0)
+public var kNaviH:CGFloat {
+    kStatusBarH + 44.0
+}
 /// tabbar切换视图控制器高度
-public let kTabBarH = (kSafeBtmH + 49.0)
+public var kTabBarH:CGFloat {
+    kSafeBtmH + 49.0
+}
 
 public let kIphoneXUp:Bool = kSafeBtmH > 0 ? true : false
 
@@ -53,12 +63,12 @@ public struct kScreen {
     /// UI水平方向对照比例
     public static let pt_x = Self.maxWidth/375.0
 
-    public static let safeArea:UIEdgeInsets = {
-        let scene = UIApplication.shared.connectedScenes.first
-        guard let windowScene = scene as? UIWindowScene else { return .zero }
-        guard let window = windowScene.windows.first else { return .zero }
+    public static var safeArea:UIEdgeInsets {
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        let scene = scenes.first(where: { $0.activationState == .foregroundActive }) ?? scenes.first
+        guard let window = scene?.keyWindow ?? scene?.windows.first else { return .zero }
         return window.safeAreaInsets
-    }()
+    }
 }
 
 
@@ -149,7 +159,7 @@ public var kCurrentVC:UIViewController? {
         //以下是原来的
         if result == nil,  var window = kHighWindow {
             if window.windowLevel != .normal {
-                for temWin in UIApplication.shared.windows {
+                for temWin in window.windowScene?.windows ?? [] {
                     if temWin.windowLevel == .normal {
                         window = temWin
                         break

@@ -118,13 +118,11 @@ extension UIColor {
     /// color转图片
     public func toImage(size:CGSize? = nil) -> UIImage {
         let rect = CGRect.init(x: 0, y: 0, width: size?.width ?? 1.0, height: size?.height ?? 1.0)
-        UIGraphicsBeginImageContext(rect.size)
-        let context = UIGraphicsGetCurrentContext()
-        context?.setFillColor(self.cgColor)
-        context?.fill(rect)
-        let image:UIImage? = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        return image!
+        /// UIGraphicsBeginImageContext 自 iOS 15 起弃用且只输出 1x 图，改用 UIGraphicsImageRenderer（自动匹配屏幕 scale）
+        return UIGraphicsImageRenderer(size: rect.size).image { context in
+            context.cgContext.setFillColor(self.cgColor)
+            context.cgContext.fill(rect)
+        }
     }
     
 }

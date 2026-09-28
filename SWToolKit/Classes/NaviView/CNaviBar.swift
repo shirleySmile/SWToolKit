@@ -221,6 +221,11 @@ public class CNaviBar: CNaviBarView {
     
     
     deinit {
+        /// 移除 KVO 观察，防止被观察 view 后续触发 frame 变化时访问已释放对象
+        if isRegKVO, let currVC = currentVC {
+            currVC.view.removeObserver(self, forKeyPath: "frame")
+        }
+        isRegKVO = false
         rightItemArr?.removeAll()
         leftItemArr?.removeAll()
         self.funcBar.dealloc()
@@ -348,7 +353,7 @@ public class CNaviBar: CNaviBarView {
     /// 是否隐藏返回按钮
     public var isHiddenBackBtn:Bool = false{
         willSet{
-            funcBar.isHiddenBackBtn = isHiddenBackBtn
+            funcBar.isHiddenBackBtn = newValue
             funcBar.backBtn?.isHidden = newValue
         }
     }

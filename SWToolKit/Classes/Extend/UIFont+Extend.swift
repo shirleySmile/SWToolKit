@@ -39,7 +39,8 @@ extension UIFont {
     
     ///< 自适配 加粗 字体大小
     public static func MBoldFont(_ size:CGFloat) -> UIFont {
-        return .init(name: "PingFangSC-Blod", size: kAutoConvertWithScreenW_Value(size)) ?? .boldSystemFont(ofSize: kAutoConvertWithScreenW_Value(size))
+        /// PingFang 没有-Bold字重，苹方粗体是 Semibold（原拼写 "Blod" 永远创建失败，一直走系统字体兜底）
+        return .init(name: "PingFangSC-Semibold", size: kAutoConvertWithScreenW_Value(size)) ?? .boldSystemFont(ofSize: kAutoConvertWithScreenW_Value(size))
 //        return .boldSystemFont(ofSize: kAutoConvertWithScreenW_Value(size))
     }
     

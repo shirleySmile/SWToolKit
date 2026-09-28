@@ -148,8 +148,6 @@ public class CNaviFuncBar: UIView{
         debugPrint("==SWToolKit==" + "===========hint CNaviBarView backBtnClick")
         self.backBlock?()
     }
-    
-    private lazy var backImg = UIImage(named: "")
 }
 
 
