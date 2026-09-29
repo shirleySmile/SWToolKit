@@ -7,6 +7,7 @@
 
 import Foundation
 import AVFoundation
+import AVFAudio
 
 
 public extension AudioRecord {
@@ -107,27 +108,19 @@ public class AudioRecord: NSObject, AVAudioRecorderDelegate{
         let audioAuthStatus = AVCaptureDevice.authorizationStatus(for: .audio)
         
         switch audioAuthStatus {
-        case .notDetermined: // 未询问用户是否授
+        case .notDetermined: // 未询问用户是否授权
             bCanRecord = false
-            //            if #available(iOS 17.0, *) {
-            //                AVAudioApplication.requestRecordPermission { allowed in
-            //                    if (allowed) {
-            //                        bCanRecord = true;
-            //                    } else {
-            //                        bCanRecord = false
-            //                    }
-            //                }
-            //            } else {
-            // Fallback on earlier versions
-            let audioSession = AVAudioSession.sharedInstance()
-            audioSession.requestRecordPermission { allowed in
-                if (allowed) {
-                    bCanRecord = true;
-                } else {
-                    bCanRecord = false
+            if #available(iOS 17.0, *) {
+                // iOS 17.0 起 AVAudioSession.requestRecordPermission 已弃用
+                AVAudioApplication.requestRecordPermission { allowed in
+                    bCanRecord = allowed
+                }
+            } else {
+                // Fallback on earlier versions
+                AVAudioSession.sharedInstance().requestRecordPermission { allowed in
+                    bCanRecord = allowed
                 }
             }
-            //            }
         case .restricted, .denied: ///未授权
             bCanRecord = false
         default:
@@ -240,72 +233,98 @@ extension AudioRecord {
     
     private func convetCafToM4a(cafUrlStr:String, complete:@escaping((_ error:Error?, _ newFilePath:URL?)->Void)) {
         
-        let composition = AVMutableComposition()
-        
         let audioLocalUrls = [cafUrlStr]
         
-        for i in 0 ..< audioLocalUrls.count {
+        Task {
+            let composition = AVMutableComposition()
             
-            let compositionAudioTrack : AVMutableCompositionTrack? = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: CMPersistentTrackID())
-            let asset = AVURLAsset(url: URL.init(fileURLWithPath: audioLocalUrls[i]))
-            let tracks = asset.tracks(withMediaType: .audio)
-            if tracks.count > 0{
-                let track = tracks[0]
-                var timeRange:CMTimeRange
-                timeRange = CMTimeRange(start: CMTime(value: 0, timescale: 600), duration: track.timeRange.duration)
+            for i in 0 ..< audioLocalUrls.count {
                 
+                let compositionAudioTrack : AVMutableCompositionTrack? = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: CMPersistentTrackID())
+                let asset = AVURLAsset(url: URL.init(fileURLWithPath: audioLocalUrls[i]))
                 do {
-                    try compositionAudioTrack?.insertTimeRange(timeRange, of: track, at: composition.duration)
+                    // iOS 16.0 起 tracks(withMediaType:) 已弃用，改用异步加载
+                    let tracks = try await asset.loadTracks(withMediaType: .audio)
+                    if let track = tracks.first {
+                        // iOS 16.0 起 track.timeRange 已弃用，改用异步加载
+                        let trackTimeRange = try await track.load(.timeRange)
+                        let timeRange = CMTimeRange(start: CMTime(value: 0, timescale: 600), duration: trackTimeRange.duration)
+                        
+                        do {
+                            try compositionAudioTrack?.insertTimeRange(timeRange, of: track, at: composition.duration)
+                        } catch {
+                            debugPrint("==SWToolKit==" + #file, "音轨插入失败:", error)
+                        }
+                    }
                 } catch {
-                    debugPrint("==SWToolKit==" + #file, "音轨插入失败:", error)
+                    debugPrint("==SWToolKit==" + #file, "音轨加载失败:", error)
+                    complete(error, nil)
+                    return
+                }
+            }
+            
+            
+            let fileName = "/"+self.getNowTimeTimestamp()+".m4a"
+            //获取Document目录
+            let docDir = NSSearchPathForDirectoriesInDomains(.documentDirectory,.userDomainMask, true)[0]
+            //组合录音文件路径
+            let newFilePath = docDir + fileName
+            ///NSUrl
+            let mergeAudioURL = NSURL.fileURL(withPath: newFilePath) as URL
+            
+            guard let assetExport = AVAssetExportSession.init(asset: composition, presetName: AVAssetExportPresetAppleM4A) else {
+                complete(NSError(domain: "AVAssetExportSession", code: -1, userInfo: [NSLocalizedDescriptionKey: "创建导出会话失败"]), nil)
+                return
+            }
+            
+            if #available(iOS 18.0, *) {
+                // iOS 18.0 起 exportAsynchronously(completionHandler:) 已弃用，改用 async 导出
+                do {
+                    try await assetExport.export(to: mergeAudioURL, as: .m4a)
+                    ///删除文件
+                    for i in 0..<audioLocalUrls.count{
+                        self.destructionRecordingFile(path: audioLocalUrls[i])
+                    }
+                    complete(nil, mergeAudioURL)
+                } catch {
+                    debugPrint("==SWToolKit==" + "failed \(error)")
+                    complete(error, nil)
+                }
+            } else {
+                // Fallback on earlier versions
+                assetExport.outputFileType = .m4a
+                assetExport.outputURL = mergeAudioURL
+                
+                // 用 continuation 桥接旧版回调，避免在 @Sendable 闭包中捕获 assetExport
+                await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                    assetExport.exportAsynchronously(completionHandler: {
+                        continuation.resume()
+                    })
+                }
+                
+                switch assetExport.status
+                {
+                case .completed:
+                    ///删除文件
+                    for i in 0..<audioLocalUrls.count{
+                        self.destructionRecordingFile(path: audioLocalUrls[i])
+                    }
+                    complete(nil, mergeAudioURL)
+                case .failed:
+                    debugPrint("==SWToolKit==" + "failed \(String(describing: assetExport.error))")
+                    complete(assetExport.error, nil)
+                case .cancelled:
+                    debugPrint("==SWToolKit==" + "cancelled\(String(describing: assetExport.error))")
+                    complete(assetExport.error ?? NSError(domain: "AVAssetExportSession", code: -2), nil)
+                default:
+                    /// unknown / waiting / exporting 等状态均视为导出未完成，不再当作成功处理
+                    debugPrint("==SWToolKit==" + "unfinished(\(assetExport.status.rawValue))")
+                    complete(NSError(domain: "AVAssetExportSession", code: -3), nil)
                 }
             }
         }
-        
-        
-        let fileName = "/"+getNowTimeTimestamp()+".m4a"
-        //获取Document目录
-        let docDir = NSSearchPathForDirectoriesInDomains(.documentDirectory,.userDomainMask, true)[0]
-        //组合录音文件路径
-        let newFilePath = docDir + fileName
-        ///NSUrl
-        let mergeAudioURL = NSURL.fileURL(withPath: newFilePath) as URL
-        
-        guard let assetExport = AVAssetExportSession.init(asset: composition, presetName: AVAssetExportPresetAppleM4A) else {
-            complete(NSError(domain: "AVAssetExportSession", code: -1, userInfo: [NSLocalizedDescriptionKey: "创建导出会话失败"]), nil)
-            return
-        }
-        assetExport.outputFileType = .m4a
-        assetExport.outputURL = mergeAudioURL
-        
-        assetExport.exportAsynchronously(completionHandler: {
-            switch assetExport.status
-            {
-            case .completed:
-                ///删除文件
-                for i in 0..<audioLocalUrls.count{
-                    self.destructionRecordingFile(path: audioLocalUrls[i])
-                }
-                complete(nil, mergeAudioURL)
-            case .failed:
-                debugPrint("==SWToolKit==" + "failed \(String(describing: assetExport.error))")
-                complete(assetExport.error, nil)
-            case .cancelled:
-                debugPrint("==SWToolKit==" + "cancelled\(String(describing: assetExport.error))")
-                complete(assetExport.error ?? NSError(domain: "AVAssetExportSession", code: -2), nil)
-            default:
-                /// unknown / waiting / exporting 等状态均视为导出未完成，不再当作成功处理
-                debugPrint("==SWToolKit==" + "unfinished(\(assetExport.status.rawValue))")
-                complete(NSError(domain: "AVAssetExportSession", code: -3), nil)
-            }
-        })
     }
     
-    
-    //caf转换成mp3
-    private func convertMp3(cafUrlStr:String, complete:@escaping((_ error:Error?, _ newFilePath:String?)->Void)){
-        
-    }
     
     /// 获得当前时间戳
     private func getNowTimeTimestamp() -> String{
