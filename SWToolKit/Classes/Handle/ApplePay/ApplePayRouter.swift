@@ -60,12 +60,12 @@ import Foundation
 enum ApplePayServiceFactory {
     
     static func makeService() -> ApplePayService {
-        if #available(iOS 26.0, *) {
-            /// iOS 26 及以上使用 StoreKit 1
-            return ApplyPaymentHandle()
-        } else {
-            /// iOS 15 ~ 25（含 iOS 18 及以下）使用 StoreKit 2
+        if #available(iOS 18.1, *) {
+            /// iOS 18.1 ~ 25 使用 StoreKit 2（新代码）
             return ApplyPaymentNew()
+        } else {
+            /// iOS 15 ~ 18.0（含 18.0）使用 StoreKit 1（老代码）
+            return ApplyPaymentHandle()
         }
     }
 }
