@@ -96,38 +96,40 @@ public class PushManager: NSObject, UNUserNotificationCenterDelegate,VoipRingDel
         
         //        self.registerVOIP()
         
-        //iOS 10 later   注册推送
-        if #available(iOS 10.0, *) {
-            let center = UNUserNotificationCenter.current()
-            center.delegate = self
-            center.getNotificationSettings { (setting) in
-                if setting.authorizationStatus == .notDetermined {
-                    center.requestAuthorization(options: [.badge,.sound,.alert]) { (result, error) in
-                        if(result){
-                            if !(error != nil){
-                                // 注册成功
-                                DispatchQueue.main.async {
-                                    application.registerForRemoteNotifications()
-                                }
-                            }
-                        } else{
-                            //用户不允许推送
-                        }
+        //注册推送
+        let center = UNUserNotificationCenter.current()
+        center.delegate = self
+        center.getNotificationSettings { (setting) in
+            switch setting.authorizationStatus {
+            case .notDetermined:
+                center.requestAuthorization(options: [.badge, .sound, .alert]) { (granted, error) in
+                    if let error = error {
+                        debugPrint("==SWToolKit==" + "ApplePush推送请求授权失败:\(error.localizedDescription)")
+                        return
                     }
-                } else if (setting.authorizationStatus == .denied){
-                    // 申请用户权限被拒
-                } else if (setting.authorizationStatus == .authorized){
-                    // 用户已授权（再次获取dt）
+                    guard granted else {
+                        // 用户不允许推送
+                        return
+                    }
+                    // 注册成功
                     DispatchQueue.main.async {
                         application.registerForRemoteNotifications()
                     }
-                } else {
-                    // 未知错误
                 }
+            case .denied:
+                // 申请用户权限被拒
+                break
+            case .authorized:
+                // 用户已授权（再次获取dt）
+                DispatchQueue.main.async {
+                    application.registerForRemoteNotifications()
+                }
+            default:
+                // 未知错误
+                break
             }
         }
         
-        ///10版本以前的系统不管
         application.registerForRemoteNotifications()
     }
     
@@ -203,7 +205,7 @@ public class PushManager: NSObject, UNUserNotificationCenterDelegate,VoipRingDel
         
         let content = response.notification.request.content;
         let userInfo = content.userInfo;
-        if ((response.notification.request.trigger?.isKind(of: UNPushNotificationTrigger.self)) != nil) {
+        if response.notification.request.trigger is UNPushNotificationTrigger {
             debugPrint("==SWToolKit==" + "ApplePush推送iOS10 收到远程通知")
         }else{
             debugPrint("==SWToolKit==" + "ApplePush推送iOS10 收到本地通知")

@@ -41,6 +41,7 @@ extension String {
     /// String使用下标截取字符串
     /// string[index] 例如："abcdefg"[3] // c
     subscript (i:Int)->String {
+        guard i >= 0, i < self.count else { return "" }
         let startIndex = self.index(self.startIndex, offsetBy: i)
         let endIndex = self.index(startIndex, offsetBy: 1)
         return String(self[startIndex..<endIndex])
@@ -128,8 +129,9 @@ extension String {
     /// 用浏览器打开网址
     public func openURL(){
         let open:String = self.trimmingWhitespace()
-        if open.count > 0 && UIApplication.shared.canOpenURL(URL.init(string: open)!) {
-            UIApplication.shared.open(URL.init(string: open)!)
+        guard !open.isEmpty, let url = URL.init(string: open) else { return }
+        if UIApplication.shared.canOpenURL(url) {
+            UIApplication.shared.open(url)
         }
     }
     
@@ -245,15 +247,20 @@ extension String {
         //校验码
         let sChecker: [Int8] = [49,48,88, 57, 56, 55, 54, 53, 52, 51, 50]
         
+        //前17位（15位号则全部）必须是 ASCII 数字
+        if !self.utf8.prefix(17).allSatisfy({ $0 >= 48 && $0 <= 57 }) {
+            return false
+        }
+        
         //将15位身份证号转换成18位
         let mString = NSMutableString.init(string: self)
         
         if self.count == 15 {
             mString.insert("19", at: 6)
             var p = 0
-            let pid = mString.utf8String
+            guard let pid = mString.utf8String else { return false }
             for i in 0...16 {
-                let t = Int(pid![i])
+                let t = Int(pid[i])
                 p += (t - 48) * R[i]
             }
             let o = p % 11
@@ -281,6 +288,13 @@ extension String {
         let dEndIndex = carid.index(dStartIndex, offsetBy: 2)
         let strDay = Int(carid[dStartIndex..<dEndIndex])
         
+        /// 年月日必须是有效数字（原实现直接强解包，非数字输入会崩溃）
+        /// 月、日合法性由下方 DateFormatter 校验（非宽松模式会拒绝 13 月 / 32 日 / 2 月 30 日等），不重复做范围检查
+        guard let strYear = strYear, let strMonth = strMonth, let strDay = strDay,
+              (1900...2100).contains(strYear) else {
+            return false
+        }
+        
         let localZone = NSTimeZone.local
         
         let dateFormatter = DateFormatter()
@@ -289,7 +303,7 @@ extension String {
         dateFormatter.timeZone = localZone
         dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         
-        let date = dateFormatter.date(from: "\(String(format: "%02d",strYear!))-\(String(format: "%02d",strMonth!))-\(String(format: "%02d",strDay!)) 12:01:01")
+        let date = dateFormatter.date(from: "\(String(format: "%02d",strYear))-\(String(format: "%02d",strMonth))-\(String(format: "%02d",strDay)) 12:01:01")
         
         if date == nil {
             return false
@@ -299,22 +313,20 @@ extension String {
         if 18 != carid.count {
             return false
         }
-        //校验数字
-        func isDigit(c: Int) -> Bool {
-            return 0 <= c && c <= 9
-        }
-        for i in 0...18 {
-            let id = Int(paperId[i])
-            if isDigit(c: id) && !(88 == id || 120 == id) && 17 == i {
-                return false
-            }
+        /// 第 18 位必须是数字或 X/x（原实现条件写反；注意 paperId 是 utf8CString，元素为 ASCII 码，'0'-'9' 对应 48-57）
+        let last = Int(paperId[17])
+        let isX = (last == 88 || last == 120) // 'X' / 'x'
+        if !(48...57).contains(last) && !isX {
+            return false
         }
         //验证最末的校验码
         for i in 0...16 {
             let v = Int(paperId[i])
             lSumQT += (v - 48) * R[i]
         }
-        if sChecker[lSumQT%11] != paperId[17] {
+        /// 小写 x 归一化为大写 X 后比较
+        let normalizedLast: Int = (last == 120) ? 88 : last
+        if sChecker[lSumQT%11] != normalizedLast {
             return false
         }
         return true
@@ -465,6 +477,12 @@ extension Int {
     ///   - to: 最大整数 >= 0
     ///   - callBack: 返回
     public static func getRandNumArray(arr:[Int] = [],totalNum:Int = 1,from:Int = 0,to:Int = 0,callBack:((_ nums:Array<Int>)-> Void)){
+        /// 参数不合法时直接返回（from >= to 时 Int.random(in:) 会崩溃；totalNum 超过可选数量时递归无法收敛）
+        guard from < to, totalNum > 0, totalNum <= to - from else {
+            debugPrint("==SWToolKit==" + #file, "getRandNumArray 参数不合法: from=\(from), to=\(to), totalNum=\(totalNum)")
+            callBack(arr)
+            return
+        }
         let num = Int.random(in:from..<to)
         var array = arr
         var haveNum = false

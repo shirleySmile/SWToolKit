@@ -23,7 +23,6 @@ extension UIViewController {
     /// 开关侧滑
     /// - Parameter open: 开关
     public func interactivePop(open:Bool){
-        UIApplication.shared.isIdleTimerDisabled = !open
         self.navigationController?.interactivePopGestureRecognizer?.isEnabled = open;
     }
     
