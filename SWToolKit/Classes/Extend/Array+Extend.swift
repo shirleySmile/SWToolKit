@@ -30,9 +30,11 @@ extension Array {
     
     //打乱数组
     public static func shuffleArray(arr:[Int]) -> [Int] {
+        /// 空数组 / 单元素时 1..<count 会越界崩溃，直接原样返回
+        guard arr.count > 1 else { return arr }
         var data:[Int] = arr
         for i in 1..<arr.count {
-            let index:Int = Int(arc4random()) % i
+            let index:Int = Int(arc4random()) % (i + 1)
             if index != i {
                 data.swapAt(i, index)
             }

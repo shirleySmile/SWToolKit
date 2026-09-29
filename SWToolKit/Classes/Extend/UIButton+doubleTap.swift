@@ -9,8 +9,8 @@ import Foundation
 public extension UIButton {
     
     private struct AssociatedKeys {
-        static var eventInterval = "eventInterval"
-        static var eventUnavailable = "eventUnavailable"
+        static var eventInterval: UInt8 = 0
+        static var eventUnavailable: UInt8 = 0
     }
 
     /// 重复点击的时间 属性设置

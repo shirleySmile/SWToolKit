@@ -167,7 +167,8 @@ extension UIView {
 extension UIView {
     
     private struct tapViewAssociatedKeys {
-        @MainActor static var tapClosure = "tapClosure"
+        @MainActor static var tapClosure: UInt8 = 0
+        @MainActor static var tapGestureRecognizer: UInt8 = 0
     }
     
     ///点击事件的回调
@@ -180,20 +181,37 @@ extension UIView {
         }
     }
     
+    ///已添加的点击手势（防止重复调用 tapView 时手势累积）
+    private var tapGestureRecognizer:UITapGestureRecognizer?{
+        set{
+            objc_setAssociatedObject(self, &tapViewAssociatedKeys.tapGestureRecognizer, newValue, objc_AssociationPolicy.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        }
+        get{
+            return objc_getAssociatedObject(self, &tapViewAssociatedKeys.tapGestureRecognizer) as? UITapGestureRecognizer
+        }
+    }
+    
     ///点击事件，返回指定的view
     @discardableResult
     public func tapView<T:UIView>(_ tap: @escaping ()->Void) -> T {
         tapClosure = tap
         if let controlV = self as? UIControl {
+            /// 先移除旧事件，防止重复调用 tapView 时事件被触发多次
+            controlV.removeTarget(self, action: #selector(viewWhenTapControlBlock(control:)), for: .touchUpInside)
             controlV.addTarget(self, action: #selector(viewWhenTapControlBlock(control:)), for: .touchUpInside)
         }
         else{
+            /// 先移除旧手势，防止重复调用 tapView 时手势累积
+            if let oldTapGR = tapGestureRecognizer {
+                self.removeGestureRecognizer(oldTapGR)
+            }
             let tap = UITapGestureRecognizer.init(target: self, action: #selector(viewWhenTapGRBlock(tapGR:)))
             tap.numberOfTapsRequired = 1
             tap.cancelsTouchesInView = false
             tap.delaysTouchesBegan = false
             tap.delaysTouchesEnded = false
             self.addGestureRecognizer(tap)
+            tapGestureRecognizer = tap
         }
         return self as! T
     }
@@ -201,15 +219,22 @@ extension UIView {
     @discardableResult
     public func tapView<T:UIView>(target:Any?, action:Selector) -> T{
         if let controlV = self as? UIControl {
+            /// 先移除旧事件，防止重复调用 tapView 时事件被触发多次
+            controlV.removeTarget(target, action: action, for: .touchUpInside)
             controlV.addTarget(target, action: action, for: .touchUpInside)
         }
         else{
+            /// 先移除旧手势，防止重复调用 tapView 时手势累积
+            if let oldTapGR = tapGestureRecognizer {
+                self.removeGestureRecognizer(oldTapGR)
+            }
             let tap = UITapGestureRecognizer.init(target: target, action: action)
             tap.numberOfTapsRequired = 1
             tap.cancelsTouchesInView = false
             tap.delaysTouchesBegan = false
             tap.delaysTouchesEnded = false
             self.addGestureRecognizer(tap)
+            tapGestureRecognizer = tap
         }
         return self as! T
     }

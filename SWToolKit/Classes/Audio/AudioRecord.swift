@@ -12,6 +12,8 @@ import AVFoundation
 public extension AudioRecord {
     @objc enum AudioRecordFailType: Int{
         case timeShort = 1
+        /// 录音文件导出失败
+        case exportFail = 2
     }
 }
 
@@ -48,28 +50,35 @@ public class AudioRecord: NSObject, AVAudioRecorderDelegate{
     private var recorder:AVAudioRecorder?
     // 创建
     private func createRecorde() -> AVAudioRecorder?{
-//        //初始化录音器
+        //初始化录音器
         let session:AVAudioSession = AVAudioSession.sharedInstance()
-//        //设置录音类型
-        try! session.setCategory(AVAudioSession.Category.playAndRecord)
-//        //设置支持后台
-        try! session.setActive(true)
-        //初始化字典并添加设置参数
-        let recorderSeetingsDic:[String : Any]? = //录音器设置参数数组
-        [
-            AVFormatIDKey: NSNumber(value: kAudioFormatAppleIMA4),
-            AVNumberOfChannelsKey: 2, //录音的声道数，立体声为双声道
-            AVEncoderAudioQualityKey : AVAudioQuality.max.rawValue,
-            AVEncoderBitRateKey : 320000,
-            AVSampleRateKey : 44100.0, //录音器每秒采集的录音样本数
-            AVLinearPCMBitDepthKey : 16,
-        ]
-        
-        let recorder = try? AVAudioRecorder(url: URL(string: cafPath)!, settings: recorderSeetingsDic!)
-        recorder?.delegate = self
-        return recorder
+        do {
+            //设置录音类型
+            try session.setCategory(AVAudioSession.Category.playAndRecord)
+            //设置支持后台
+            try session.setActive(true)
+            
+            //初始化字典并添加设置参数
+            let recorderSeetingsDic:[String : Any] = //录音器设置参数数组
+            [
+                AVFormatIDKey: NSNumber(value: kAudioFormatAppleIMA4),
+                AVNumberOfChannelsKey: 2, //录音的声道数，立体声为双声道
+                AVEncoderAudioQualityKey : AVAudioQuality.max.rawValue,
+                AVEncoderBitRateKey : 320000,
+                AVSampleRateKey : 44100.0, //录音器每秒采集的录音样本数
+                AVLinearPCMBitDepthKey : 16,
+            ]
+            
+            let recorder = try AVAudioRecorder(url: URL(fileURLWithPath: cafPath), settings: recorderSeetingsDic)
+            recorder.delegate = self
+            return recorder
+            
+        } catch {
+            debugPrint("==SWToolKit==" + #file, "AudioSession 设置失败:", error)
+            return nil
+        }
     }
-
+    
     private var player:AVAudioPlayer? //播放器
     private var playerVolume:Float = 0.8 ///播放器的播放音量
     
@@ -81,7 +90,7 @@ public class AudioRecord: NSObject, AVAudioRecorderDelegate{
         //组合录音文件路径
         return docDir + "/vieoRecord.caf"
     }()
-
+    
     public weak var recordDelegate:AudioRecordDelegate? ///录制代理
     public weak var playDelegate:AudioPlayingDelegate? ///播放代理
     
@@ -100,25 +109,25 @@ public class AudioRecord: NSObject, AVAudioRecorderDelegate{
         switch audioAuthStatus {
         case .notDetermined: // 未询问用户是否授
             bCanRecord = false
-//            if #available(iOS 17.0, *) {
-//                AVAudioApplication.requestRecordPermission { allowed in
-//                    if (allowed) {
-//                        bCanRecord = true;
-//                    } else {
-//                        bCanRecord = false
-//                    }
-//                }
-//            } else {
-                // Fallback on earlier versions
-                let audioSession = AVAudioSession.sharedInstance()
-                audioSession.requestRecordPermission { allowed in
-                    if (allowed) {
-                        bCanRecord = true;
-                    } else {
-                        bCanRecord = false
-                    }
+            //            if #available(iOS 17.0, *) {
+            //                AVAudioApplication.requestRecordPermission { allowed in
+            //                    if (allowed) {
+            //                        bCanRecord = true;
+            //                    } else {
+            //                        bCanRecord = false
+            //                    }
+            //                }
+            //            } else {
+            // Fallback on earlier versions
+            let audioSession = AVAudioSession.sharedInstance()
+            audioSession.requestRecordPermission { allowed in
+                if (allowed) {
+                    bCanRecord = true;
+                } else {
+                    bCanRecord = false
                 }
-//            }
+            }
+            //            }
         case .restricted, .denied: ///未授权
             bCanRecord = false
         default:
@@ -126,7 +135,7 @@ public class AudioRecord: NSObject, AVAudioRecorderDelegate{
         }
         return bCanRecord
     }
-
+    
     
     ///开始录音
     public func startRecording(){
@@ -153,8 +162,10 @@ public class AudioRecord: NSObject, AVAudioRecorderDelegate{
                 recorder!.prepareToRecord()
                 //开始录音
                 recorder!.record()
-                //启动定时器，定时更新录音音量
-                volumeTimer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(levelTimer), userInfo: nil, repeats: true)
+                //启动定时器，定时更新录音音量（block + weak，避免 Timer 强引用 self 造成泄漏）
+                volumeTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+                    self?.levelTimer()
+                }
                 
                 recordDelegate?.audioRecord?(audioRecord: self, start: true)
             }
@@ -170,7 +181,7 @@ public class AudioRecord: NSObject, AVAudioRecorderDelegate{
             volumeTimer?.invalidate()
             volumeTimer = nil
             
-//            try? AVAudioSession.sharedInstance().setCategory(.playback)
+            //            try? AVAudioSession.sharedInstance().setCategory(.playback)
             
             if recorder1.currentTime >= minTime {
                 convertM4a(totalTime: recorder1.currentTime)
@@ -185,11 +196,13 @@ public class AudioRecord: NSObject, AVAudioRecorderDelegate{
     
     ///销毁录制的音频文件
     public func destruction() {
+        volumeTimer?.invalidate()
+        volumeTimer = nil
         destructionRecordingFile(path: cafPath)
         recorder?.deleteRecording()
         recorder = nil
     }
-
+    
 }
 
 
@@ -209,13 +222,14 @@ extension AudioRecord {
     }
     
     //定时检测录音音量
-    @objc private func levelTimer(){
-        recorder!.updateMeters() // 刷新音量数据
-        //        let averageV:Float = recorder!.averagePower(forChannel: 0) //获取音量的平均值
-        let maxV:Float = recorder!.peakPower(forChannel: 0) //获取音量最大值
+    private func levelTimer(){
+        guard let recorder = self.recorder else { return }
+        recorder.updateMeters() // 刷新音量数据
+        //        let averageV:Float = recorder.averagePower(forChannel: 0) //获取音量的平均值
+        let maxV:Float = recorder.peakPower(forChannel: 0) //获取音量最大值
         let lowPassResult:Double = pow(Double(10), Double(0.05*maxV)) ///录音的音量
         ///回到当前音量
-        let recordTime = self.recorder?.currentTime ?? 0
+        let recordTime = recorder.currentTime
         self.recordDelegate?.audioRecord?(audioRecord: self, recordingTime: recordTime, volum: lowPassResult)
         if recordTime >= maxTime && recordTime >= minTime{
             stopRecording()
@@ -223,7 +237,7 @@ extension AudioRecord {
     }
     
     
-
+    
     private func convetCafToM4a(cafUrlStr:String, complete:@escaping((_ error:Error?, _ newFilePath:URL?)->Void)) {
         
         let composition = AVMutableComposition()
@@ -240,7 +254,11 @@ extension AudioRecord {
                 var timeRange:CMTimeRange
                 timeRange = CMTimeRange(start: CMTime(value: 0, timescale: 600), duration: track.timeRange.duration)
                 
-                try! compositionAudioTrack?.insertTimeRange(timeRange, of: track, at: composition.duration)
+                do {
+                    try compositionAudioTrack?.insertTimeRange(timeRange, of: track, at: composition.duration)
+                } catch {
+                    debugPrint("==SWToolKit==" + #file, "音轨插入失败:", error)
+                }
             }
         }
         
@@ -253,34 +271,36 @@ extension AudioRecord {
         ///NSUrl
         let mergeAudioURL = NSURL.fileURL(withPath: newFilePath) as URL
         
-        let assetExport = AVAssetExportSession.init(asset: composition, presetName: AVAssetExportPresetAppleM4A)
-        assetExport?.outputFileType = .m4a
-        assetExport?.outputURL = mergeAudioURL
+        guard let assetExport = AVAssetExportSession.init(asset: composition, presetName: AVAssetExportPresetAppleM4A) else {
+            complete(NSError(domain: "AVAssetExportSession", code: -1, userInfo: [NSLocalizedDescriptionKey: "创建导出会话失败"]), nil)
+            return
+        }
+        assetExport.outputFileType = .m4a
+        assetExport.outputURL = mergeAudioURL
         
-        assetExport?.exportAsynchronously(completionHandler: {
-            switch assetExport!.status
+        assetExport.exportAsynchronously(completionHandler: {
+            switch assetExport.status
             {
-            case .failed:
-                debugPrint("==SWToolKit==" + "failed \(String(describing: assetExport?.error))")
-            case .cancelled:
-                debugPrint("==SWToolKit==" + "cancelled\(String(describing: assetExport?.error))")
-            case .unknown:
-                debugPrint("==SWToolKit==" + "unknown\(String(describing: assetExport?.error))")
-            case .waiting:
-                debugPrint("==SWToolKit==" + "waiting\(String(describing: assetExport?.error))")
-            case .exporting:
-                debugPrint("==SWToolKit==" + "exporting\(String(describing: assetExport?.error))")
-            default:
-                debugPrint("==SWToolKit==" + "success\(String(describing: assetExport?.error))")
+            case .completed:
                 ///删除文件
                 for i in 0..<audioLocalUrls.count{
                     self.destructionRecordingFile(path: audioLocalUrls[i])
                 }
+                complete(nil, mergeAudioURL)
+            case .failed:
+                debugPrint("==SWToolKit==" + "failed \(String(describing: assetExport.error))")
+                complete(assetExport.error, nil)
+            case .cancelled:
+                debugPrint("==SWToolKit==" + "cancelled\(String(describing: assetExport.error))")
+                complete(assetExport.error ?? NSError(domain: "AVAssetExportSession", code: -2), nil)
+            default:
+                /// unknown / waiting / exporting 等状态均视为导出未完成，不再当作成功处理
+                debugPrint("==SWToolKit==" + "unfinished(\(assetExport.status.rawValue))")
+                complete(NSError(domain: "AVAssetExportSession", code: -3), nil)
             }
-            complete(assetExport?.error, mergeAudioURL)
         })
     }
-
+    
     
     //caf转换成mp3
     private func convertMp3(cafUrlStr:String, complete:@escaping((_ error:Error?, _ newFilePath:String?)->Void)){
@@ -320,16 +340,27 @@ extension AudioRecord {
     //MARK:  音频转换
     private func convertM4a(totalTime:TimeInterval) -> Void {
         convetCafToM4a(cafUrlStr: cafPath) {[weak self] error, newFilePath in
-            if let fileP = newFilePath {
-                DispatchQueue.main.async {
-                    if let strongSelf = self {
-                        self?.recordDelegate?.audioRecord?(audioRecord: strongSelf, resultRecordPath: fileP, recordTime: totalTime)
-                    }
+            DispatchQueue.main.async {
+                self?.callback(newFilePath, totalTime)
+                if let error {
+                    debugPrint("==SWToolKit==" + "录音导出失败:\(String(describing: error))")
                 }
             }
         }
     }
     
+    private func callback(_ filePath:URL?, _ totalTime:TimeInterval) {
+        if let fileP = filePath {
+            self.recordDelegate?.audioRecord?(audioRecord: self, resultRecordPath: fileP, recordTime: totalTime)
+        } else {
+            self.recordDelegate?.audioRecord?(audioRecord: self, failType: .exportFail)
+        }
+    }
+    
 }
+
+
+
+
 
 

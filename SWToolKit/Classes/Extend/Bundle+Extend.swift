@@ -34,15 +34,5 @@ extension UIImage {
     static func bundle(imageNamed: String) -> UIImage? {
         return Bundle.image(named: imageNamed)
     }
-
-    private static func bundleImage(named imageName: String) -> UIImage {
-        let imagePath = "SWToolKit.bundle/\(imageName)"
-#if SWIFT_PACKAGE
-        return UIImage(named: imagePath, in: .module, compatibleWith: nil) ?? UIImage()
-#else
-        let bundle = Bundle(for: CBundleName.self)
-        return UIImage(named: imagePath, in: bundle, compatibleWith: nil) ?? UIImage()
-#endif
-    }
     
 }

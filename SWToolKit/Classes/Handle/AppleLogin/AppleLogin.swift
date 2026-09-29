@@ -47,15 +47,14 @@ public class AppleLogin: NSObject, ASAuthorizationControllerDelegate, ASAuthoriz
     
     
     //MARK: ASAuthorizationControllerPresentationContextProviding
-    @available(iOS 13.0, *)
     public func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
-        return UIApplication.shared.windows.last!
+        /// 原实现 UIApplication.shared.windows.last! 已弃用且无窗口时会崩溃
+        return kHighWindow ?? ASPresentationAnchor()
     }
     
     
     //MARK: ASAuthorizationControllerDelegate
     // 授权失败
-    @available(iOS 13.0, *)
     public func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
         
         if let e = error as? ASAuthorizationError {
@@ -95,12 +94,20 @@ public class AppleLogin: NSObject, ASAuthorizationControllerDelegate, ASAuthoriz
                     self.userInfoBlock = nil
                 }
             }
+        } else {
+            /// 非 ASAuthorizationError 的错误也必须回调，否则调用方的 callback 永远不会被触发
+            debugPrint("==SWToolKit==" + #file, error.localizedDescription)
+            DispatchQueue.main.async {
+                if self.userInfoBlock != nil {
+                    self.userInfoBlock!(.fail, nil)
+                    self.userInfoBlock = nil
+                }
+            }
         }
     }
     
     
     /// Apple登录授权成功
-    @available(iOS 13.0, *)
     public func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
         
         var aUser:AppleUser?

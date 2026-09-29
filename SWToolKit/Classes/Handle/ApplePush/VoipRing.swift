@@ -45,41 +45,37 @@ class VoipRing : NSObject, PKPushRegistryDelegate {
             break;
         }
         NotificationCenter.default.post(name: NSNotification.Name.init(rawValue: "PKPushIncomingCallReportedNotification"), object: nil)
-        weak var weakself = self
-        bgTask = UIApplication.shared.beginBackgroundTask(withName: "MyTask", expirationHandler: {
-            weakself?.onCancelRing()
-            if weakself?.bgTask != nil && weakself != nil {
-                UIApplication.shared.endBackgroundTask(weakself!.bgTask!)
+        bgTask = UIApplication.shared.beginBackgroundTask(withName: "MyTask", expirationHandler: { [weak self] in
+            guard let self = self else { return }
+            self.onCancelRing()
+            if let taskID = self.bgTask, taskID != .invalid {
+                UIApplication.shared.endBackgroundTask(taskID)
             }
-            weakself?.bgTask = .invalid
+            self.bgTask = .invalid
         })
         
         ///添加通知
         addNotification()
         
-        let apnDic:[String:Any] = param["aps"] as! Dictionary
-        let alertDic:[String:Any] = apnDic["alert"] as! Dictionary
+        let apnDic:[String:Any]? = param["aps"] as? Dictionary
+        let alertDic:[String:Any]? = apnDic?["alert"] as? Dictionary
         
-        if #available(iOS 10, *) {
-            let center = UNUserNotificationCenter.current()
-            center.delegate = notificationDelegate
-            
-            let content = UNMutableNotificationContent()
-            content.title = alertDic["title"] as! String
-            content.body = alertDic["subTitle"] as! String
-            
-            let customSound = UNNotificationSound.init(named: UNNotificationSoundName.init(rawValue: "call.wav"))
-            content.sound = customSound
-            content.userInfo = param
-            
-            let trigger = UNTimeIntervalNotificationTrigger.init(timeInterval: 1, repeats: false)
-            let request = UNNotificationRequest(identifier: "Voip_Push", content: content, trigger: trigger)
-            
-            center.add(request) { error in
-            }
-            
+        let center = UNUserNotificationCenter.current()
+        center.delegate = notificationDelegate
+        
+        let content = UNMutableNotificationContent()
+        content.title = alertDic?["title"] as? String ?? ""
+        content.body = alertDic?["subTitle"] as? String ?? ""
+        
+        let customSound = UNNotificationSound.init(named: UNNotificationSoundName.init(rawValue: "call.wav"))
+        content.sound = customSound
+        content.userInfo = param
+        
+        let trigger = UNTimeIntervalNotificationTrigger.init(timeInterval: 1, repeats: false)
+        let request = UNNotificationRequest(identifier: "Voip_Push", content: content, trigger: trigger)
+        
+        center.add(request) { error in
         }
-        ///小于10 不管
     }
     
     
@@ -124,12 +120,11 @@ class VoipRing : NSObject, PKPushRegistryDelegate {
             
             ///循环次数
             var param:Int = 50
-            weak var weakSelf = self
-            timer?.setEventHandler(handler: {
+            timer?.setEventHandler(handler: { [weak self] in
                 param = param-1
                 AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
                 if param == 0 {
-                    weakSelf?.onCancelRing()
+                    self?.onCancelRing()
                 }
             })
             
@@ -138,9 +133,11 @@ class VoipRing : NSObject, PKPushRegistryDelegate {
     }
     
     private func stopPlaySystemSound(){
-        if timer != nil {
-            timer = nil
+        if let timer = timer {
+            /// 已 resume 的 DispatchSourceTimer 被系统强持有，必须 cancel 才会停止触发
+            timer.cancel()
         }
+        timer = nil
     }
     
     
@@ -163,17 +160,17 @@ class VoipRing : NSObject, PKPushRegistryDelegate {
         debugPrint("==SWToolKit==" + "ApplePush推送收到---voip推送 ----实现客户端逻辑~~~\(payload.dictionaryPayload)~~~\(type)")
         
         ///通话
-        let extraMap:String? = payload.dictionaryPayload["extraMap"] as? String
-        let data:Data? = extraMap?.data(using: .utf8)
-        if data != nil {
-            let param = try?JSONSerialization.jsonObject(with: data!, options: .mutableContainers) as? Dictionary<String, Any>
-            if (param?["pushType"] as! Int) == 10 {
+        if let extraMap:String = payload.dictionaryPayload["extraMap"] as? String,
+           let data:Data = extraMap.data(using: .utf8),
+           let param = (try? JSONSerialization.jsonObject(with: data, options: .mutableContainers)) as? Dictionary<String, Any>,
+           let pushType = param["pushType"] as? Int {
+            if pushType == 10 {
                 if timer == nil {
                     onStartRing(param: payload.dictionaryPayload)
                 }
             }
             
-            if (param?["pushType"] as! Int) == 11 {
+            if pushType == 11 {
                 onCancelRing()
             }
         }

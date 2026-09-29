@@ -140,7 +140,9 @@ public class UIPickerManager: UIView {
             for i in 0..<pickerShowInfoList.count {
                 let list = pickerShowInfoList[i];
                 let selectRow = pickerV.selectedRow(inComponent: i)
-                selList.append(PickerSelectInfo.init(list[selectRow], index: selectRow))
+                /// 数据 reload 后选中行可能超出新数据范围
+                let info:PickerShowInfo? = list.indices.contains(selectRow) ? list[selectRow] : nil
+                selList.append(PickerSelectInfo.init(info, index: selectRow))
             }
         }
         return selList
@@ -180,6 +182,8 @@ extension UIPickerManager : UIPickerViewDelegate, UIPickerViewDataSource {
                 if let list = list, list.count > 0  {
                     let oneRow = pickerView.selectedRow(inComponent: 0)
                     //                    let oneRow  = selectedRows[0]
+                    /// 数据 reload 后选中行可能超出新数据范围
+                    guard list.indices.contains(oneRow) else { return 0 }
                     let PickerShowInfo = list[oneRow]
                     return PickerShowInfo.subList?.count ?? 0
                 }else{
@@ -189,6 +193,8 @@ extension UIPickerManager : UIPickerViewDelegate, UIPickerViewDataSource {
                 if let list = list, list.count > 0 {
                     let oneRow = pickerView.selectedRow(inComponent: 0)
                     //                    let oneRow = selectedRows[1]
+                    /// 数据 reload 后选中行可能超出新数据范围
+                    guard list.indices.contains(oneRow) else { return 0 }
                     let oneInfo = list[Int(oneRow)]
                     if let subList = oneInfo.subList , subList.count > 0 {
                         let twoRow = pickerView.selectedRow(inComponent: 1)
@@ -236,21 +242,29 @@ extension UIPickerManager : UIPickerViewDelegate, UIPickerViewDataSource {
                         showString = ""
                     }
                 case 1: /// 第二层
-                    let selOnePicInfo = list[pickerView.selectedRow(inComponent: 0)]
-                    if let subList = selOnePicInfo.subList, subList.count > row {
-                        let picInfo = subList[row]
-                        showString = picInfo.showStr
+                    /// 数据 reload 后选中行可能超出新数据范围
+                    if let selOnePicInfo = (list.indices.contains(pickerView.selectedRow(inComponent: 0)) ? list[pickerView.selectedRow(inComponent: 0)] : nil) {
+                        if let subList = selOnePicInfo.subList, subList.count > row {
+                            let picInfo = subList[row]
+                            showString = picInfo.showStr
+                        }else{
+                            showString = ""
+                        }
                     }else{
                         showString = ""
                     }
                 case 2: /// 第三层
-                    let selOnePicInfo = list[pickerView.selectedRow(inComponent: 0)]
-                    let selTwoRow = pickerView.selectedRow(inComponent: 1)
-                    if let twoList = selOnePicInfo.subList, twoList.count > selTwoRow {
-                        let selTwoPicInfo = twoList[selTwoRow]
-                        if selTwoPicInfo.subList?.count ?? 0 > row {
-                            let picInfo = selTwoPicInfo.subList?[row]
-                            showString = picInfo?.showStr
+                    /// 数据 reload 后选中行可能超出新数据范围
+                    if let selOnePicInfo = (list.indices.contains(pickerView.selectedRow(inComponent: 0)) ? list[pickerView.selectedRow(inComponent: 0)] : nil) {
+                        let selTwoRow = pickerView.selectedRow(inComponent: 1)
+                        if let twoList = selOnePicInfo.subList, twoList.count > selTwoRow {
+                            let selTwoPicInfo = twoList[selTwoRow]
+                            if selTwoPicInfo.subList?.count ?? 0 > row {
+                                let picInfo = selTwoPicInfo.subList?[row]
+                                showString = picInfo?.showStr
+                            }else{
+                                showString = ""
+                            }
                         }else{
                             showString = ""
                         }
