@@ -16,7 +16,7 @@ private struct OrderRecord: Codable {
 }
 
 
-/// 使用 StoreKit 2 实现的苹果内购（iOS 15 ~ 25 使用）
+/// 使用 StoreKit 2 实现的苹果内购
 @MainActor
 class ApplyPaymentNew: NSObject, ApplePayService {
     
@@ -71,7 +71,7 @@ class ApplyPaymentNew: NSObject, ApplePayService {
     
     /// 检测是否可以使用内购
     func checkCanPayment() -> Bool {
-        return SKPaymentQueue.canMakePayments()
+        return AppStore.canMakePayments
     }
     
     /// 开始支付
@@ -278,7 +278,11 @@ class ApplyPaymentNew: NSObject, ApplePayService {
         }
     }
     
-    /// 处理已验证事务：能关联到本 App 发起的订单则发货，否则仅结束
+    /// 已发货的交易（防止 purchase 结果与 Transaction.updates / unfinished 监听对同一交易重复发货）
+    private var deliveredTransactionIDs: Set<UInt64> = []
+    
+    /// 处理已验证事务：能关联到本 App 发起的订单则带订单号发货；
+    /// 无关联订单的交易（AppStore 促销购买、本地订单记录丢失等）orderId 传空发货，与 StoreKit 1 路径行为一致
     private func deliverVerifiedTransaction(_ transaction: StoreKit.Transaction) async {
         /// 自动续费（续订，非首次购买）：不发货，仅结束
         if transaction.productType == .autoRenewable && transaction.originalID != transaction.id {
@@ -286,35 +290,36 @@ class ApplyPaymentNew: NSObject, ApplePayService {
             await transaction.finish()
             return
         }
-        /// 关联订单：优先 appAccountToken，回退到当前购买 token
-        let token: UUID
-        if let appToken = transaction.appAccountToken {
-            token = appToken
-        } else if let current = self.currentOrderToken {
-            token = current
-        } else {
+        /// 同一交易可能同时从 purchase 结果与交易监听中拿到，防止重复发货
+        guard !deliveredTransactionIDs.contains(transaction.id) else {
             await transaction.finish()
             return
         }
-        guard let record = self.orderMap.removeValue(forKey: token) else {
-            await transaction.finish()
-            return
-        }
-        if self.currentOrderToken == token {
-            self.currentOrderToken = nil
-        }
-        Self.persistOrderMap(self.orderMap)
-        /// 撤销/退款/家庭共享移除：不发货，按取消处理
+        deliveredTransactionIDs.insert(transaction.id)
+        /// 撤销/退款/家庭共享移除：不发货、不清理进行中的会话，仅通知上层记录
         if transaction.revocationDate != nil {
             applePayLog.add(type: .statusChange, title: "购买事物变更", des: "交易被撤销")
-            self.failResultHandle(type: .buyCancel, msg: "交易被撤销")
+            self.callbackMain { $0.applePayServiceFail(type: .revoked, message: "交易被撤销") }
             await transaction.finish()
             return
+        }
+        /// 关联订单：优先 appAccountToken，回退到当前购买 token
+        let token: UUID? = transaction.appAccountToken ?? self.currentOrderToken
+        if let token, self.currentOrderToken == token {
+            self.currentOrderToken = nil
+        }
+        let orderId: String?
+        if let token {
+            orderId = self.orderMap.removeValue(forKey: token)?.orderId
+            Self.persistOrderMap(self.orderMap)
+        } else {
+            /// 无关联订单（如 AppStore 促销点击购买）：orderId 为空发货
+            orderId = nil
         }
         let info = Self.receiptInfo()
         if let receiptStr = info.receiptStr {
             applePayLog.add(type: .end, title: "购买新产品", des: "本地有票据")
-            self.callbackMain { $0.applePayServiceSuccess(receipt: receiptStr, orderId: record.orderId) }
+            self.callbackMain { $0.applePayServiceSuccess(receipt: receiptStr, orderId: orderId) }
         } else {
             self.callbackMain { $0.applePayServiceFail(type: .buyFail, message: info.msg) }
         }

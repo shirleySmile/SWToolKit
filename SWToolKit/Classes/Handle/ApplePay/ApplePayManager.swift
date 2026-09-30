@@ -213,7 +213,10 @@ extension ApplePayManager: ApplePayServiceDelegate {
     
     func applePayServiceFail(type: ResultFailType, message: String) {
         self.delegate?.applePayResult(pay: self, type: type, errorMsg: message)
-        self.clearDataHandle()
+        /// 撤销通知仅记录，不清进行中的购买会话
+        if type != .revoked {
+            self.clearDataHandle()
+        }
     }
     
     func applePayServicePending() {

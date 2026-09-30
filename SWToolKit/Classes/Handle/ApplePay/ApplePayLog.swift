@@ -103,6 +103,8 @@ extension ApplePayManager.ResultFailType {
             return "其他问题"
         case .pending:
             return "交易挂起"
+        case .revoked:
+            return "交易被撤销"
         }
     }
 }

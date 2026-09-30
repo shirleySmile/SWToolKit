@@ -32,6 +32,9 @@ public extension ApplePayManager {
         /// 交易挂起（Ask to Buy 等，等待批准）
         case pending
         
+        /// 交易被撤销（退款/家庭共享移除），仅用于通知记录，不代表购买流程失败
+        case revoked
+        
     }
 
     /// 开始支付时错误的类型
