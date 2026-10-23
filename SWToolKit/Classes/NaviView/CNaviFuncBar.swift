@@ -165,7 +165,7 @@ extension CNaviFuncBar {
                     make.width.equalTo(cTitleV.width)
                     make.height.equalTo(cTitleV.height)
                 }else{
-                    make.width.lessThanOrEqualTo(kScreen.width - 100)
+                    make.width.lessThanOrEqualTo(self).offset(-100)
                     make.width.greaterThanOrEqualTo(1)
                 }
             }

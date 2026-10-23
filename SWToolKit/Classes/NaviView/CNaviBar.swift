@@ -57,6 +57,12 @@ class CNaviBgView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        navBgImgV.frame = bounds
+        blurView?.frame = bounds
+    }
+    
     fileprivate var bgImage:UIImage?{
         didSet{
             if let img = bgImage {
@@ -123,7 +129,12 @@ public class CNaviBarView: UIControl {
     
     public override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
         if let view = object as? UIView, currentVC?.view == view, let bgView = navBarBgView {
-            //            self.superview?.bringSubviewToFront(self)
+            /// 宿主 view 尺寸变化（折叠/展开、半屏、分屏拖动）时，导航栏同步跟随
+            let targetSize = CGSize(width: view.bounds.width, height: kNaviH)
+            if bgView.frame.size != targetSize {
+                bgView.frame.size = targetSize
+                bgView.setNeedsLayout()
+            }
             view.bringSubviewToFront(bgView)
         }
     }
@@ -135,6 +146,8 @@ public class CNaviBarView: UIControl {
         navBarBgView = bgView
         
         bgView.addSubview(self)
+        /// 跟随背景层尺寸变化（折叠/展开、半屏）
+        self.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         
         self.addGestureRecognizer(UITapGestureRecognizer.init(target: self, action:nil))
         
@@ -164,6 +177,13 @@ public class CNaviBarView: UIControl {
         fatalError("init(coder:) has not been implemented")
     }
     
+    public override func layoutSubviews() {
+        super.layoutSubviews()
+        let top = kStatusBarH
+        funcBar.frame = CGRect(x: 0, y: top, width: bounds.width, height: max(0, bounds.height - top))
+        navBtmLineV.frame = CGRect(x: 0, y: bounds.height - 0.6, width: bounds.width, height: 0.1)
+    }
+    
     public override var alpha: CGFloat {
         didSet{
             navBarBgView?.alpha = alpha
@@ -182,7 +202,9 @@ extension CNaviBar {
     func showNaviView(show showBackBtn:Bool) {
         funcBar.isHiddenBackBtn = !showBackBtn
         navBarBgView?.superview?.bringSubviewToFront(navBarBgView!)
-        navBarBgView?.frame.size = CGSize(width: kScreen.width, height: kNaviH)
+        let superWidth = navBarBgView?.superview?.bounds.width ?? 0
+        let width = superWidth > 0 ? superWidth : kScreen.width
+        navBarBgView?.frame.size = CGSize(width: width, height: kNaviH)
         navBarBgView?.isHidden = false
     }
     
@@ -191,7 +213,9 @@ extension CNaviBar {
     func hiddenNaviView() {
         navBarBgView?.isHidden = true
         navBarBgView?.contentMode = .scaleToFill
-        navBarBgView?.frame.size = CGSize(width: kScreen.width, height: 0);
+        let superWidth = navBarBgView?.superview?.bounds.width ?? 0
+        let width = superWidth > 0 ? superWidth : kScreen.width
+        navBarBgView?.frame.size = CGSize(width: width, height: 0);
     }
     
     
@@ -199,7 +223,8 @@ extension CNaviBar {
     static func getNaviView(currVC:UIViewController) -> CNaviBar{
         var navBar:CNaviBar? = currVC.view.viewWithTag(cNaviBarTag) as? CNaviBar
         if navBar == nil {
-            let bgView = CNaviBgView.init(frame: .init(x: 0, y: 0, width: kScreen.width, height: kNaviH))
+            let width = currVC.view.bounds.width > 0 ? currVC.view.bounds.width : kScreen.width
+            let bgView = CNaviBgView.init(frame: .init(x: 0, y: 0, width: width, height: kNaviH))
             navBar = CNaviBar.init(bgView: bgView)
             navBar!.tag = cNaviBarTag
             currVC.view.addSubview(bgView)

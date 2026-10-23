@@ -13,8 +13,12 @@ import UIKit
 //let kAutoSizeScale_X = ((kScreenH == 667.0) ? 1.0 : (kMaxWidth / 375.0))
 //let kAutoSizeScale_Y = ((kScreenH == 667.0) ? 1.0 : (kMaxHeight / 667.0))
  
-let kAutoSizeScale_X = ((kScreen.height == 667.0) ? 1.0 : (kScreen.maxWidth / 375.0))
-let kAutoSizeScale_Y = ((kScreen.height == 667.0) ? 1.0 : (kScreen.maxHeight / 667.0))
+var kAutoSizeScale_X: CGFloat {
+    (kScreen.height == 667.0) ? 1.0 : (kScreen.maxWidth / 375.0)
+}
+var kAutoSizeScale_Y: CGFloat {
+    (kScreen.height == 667.0) ? 1.0 : (kScreen.maxHeight / 667.0)
+}
 
 /**
  *floor 向下取整

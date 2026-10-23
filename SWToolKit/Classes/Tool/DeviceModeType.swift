@@ -67,6 +67,12 @@ public enum DeviceModeType: String {
     case iPhone_17_pro = "iPhone 17 Pro"   /// 2025.9.9
     case iPhone_17_pro_max = "iPhone 17 Pro Max"  /// 2025.9.9
     case iPhone_17e = "iPhone 17e"    /// 2026.3.11
+    case iPhone_18 = "iPhone 18"    /// 2026.9 (iPhone19,1)
+    case iPhone_18_pro = "iPhone 18 Pro"    /// 2026.9.10 (iPhone19,2)
+    case iPhone_18_pro_max = "iPhone 18 Pro Max"    /// 2026.9.10 (iPhone19,3/19,7)
+    case iPhone_duo = "iPhone Duo"    /// 2026.9.10 首款折叠屏 (iPhone19,4)
+    case iPhone_air_2 = "iPhone Air 2"    /// 待确认 (iPhone19,5)
+    case iPhone_18e = "iPhone 18e"    /// 待确认 (iPhone19,6)
     
 
     /// iPad
@@ -207,6 +213,12 @@ extension DeviceModeType {
         case "iPhone18,3":  return .iPhone_17
         case "iPhone18,4":  return .iPhone_17_air
         case "iPhone18,5":  return .iPhone_17e
+        case "iPhone19,1":  return .iPhone_18
+        case "iPhone19,2":  return .iPhone_18_pro
+        case "iPhone19,3", "iPhone19,7":  return .iPhone_18_pro_max
+        case "iPhone19,4":  return .iPhone_duo
+        case "iPhone19,5":  return .iPhone_air_2
+        case "iPhone19,6":  return .iPhone_18e
 
             /// iPad
         case "iPad1,1", "iPad1,2": return .iPad_1
@@ -335,6 +347,12 @@ extension DeviceModeType {
         case .iPhone_17_pro: return 33
         case .iPhone_17_pro_max: return 37
         case .iPhone_17e: return 26
+        case .iPhone_18_pro: return 34
+        case .iPhone_18_pro_max: return 43
+        case .iPhone_duo: return 31
+        case .iPhone_18: return 30
+        case .iPhone_air_2: return 27
+        case .iPhone_18e: return 26
         case .iPad_a16, .iPad_air_m4_11, .iPad_air_m4_13, .iPad_pro_m5_11, .iPad_pro_m5_13: return 10
         }
     }
@@ -439,6 +457,12 @@ extension DeviceModeType {
         case .iPhone_17_pro:  return 4252
         case .iPhone_17_pro_max: return 5088
         case .iPhone_17e: return 4005
+        case .iPhone_18_pro: return 4082
+        case .iPhone_18_pro_max: return 5220
+        case .iPhone_duo: return 5424
+        case .iPhone_18: return 3692
+        case .iPhone_air_2: return 3149
+        case .iPhone_18e: return 4005
         case .iPad_a16: return 7606
         case .iPad_air_m4_11: return 7606
         case .iPad_air_m4_13: return 9889
@@ -576,6 +600,10 @@ extension DeviceModeType {
             return "A19 Pro"
         case .iPhone_17e:
             return "A19"
+        case .iPhone_18_pro, .iPhone_18_pro_max, .iPhone_duo:
+            return "A20 Pro"
+        case .iPhone_18, .iPhone_air_2, .iPhone_18e:
+            return "A20"
         case .iPad_a16:
             return "A16"
         case .iPad_air_m4_11, .iPad_air_m4_13:
@@ -614,6 +642,8 @@ extension DeviceModeType {
         case .iPhone_16e: return 4040
         case .iPhone_17, .iPhone_17_air, .iPhone_17_pro, .iPhone_17_pro_max: return 4260
         case .iPhone_17e: return 4260
+        case .iPhone_18_pro, .iPhone_18_pro_max, .iPhone_duo: return 4500
+        case .iPhone_18, .iPhone_air_2, .iPhone_18e: return 4260
         case .iPad_1, .iPad_2, .iPad_3: return 1000
         case .iPad_4: return 1400
         case .iPad_5: return 1850

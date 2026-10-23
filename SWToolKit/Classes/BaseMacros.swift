@@ -10,15 +10,19 @@ import UIKit
 import AVFoundation
 
 
+/// 当前活跃窗口场景（多窗口 / iPhone Duo 半屏时以活跃 scene 为准）
+func kActiveWindowScene() -> UIWindowScene? {
+    let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+    return scenes.first(where: { $0.activationState == .foregroundActive }) ?? scenes.first
+}
+
 /// 底部安全区高度（动态读取，避免进程启动早期首次访问被定格为 0）
 public var kSafeBtmH:CGFloat {
     kScreen.safeArea.bottom
 }
 /// 状态栏高度（动态读取；UIApplication.shared.windows 已弃用，改用 connectedScenes）
 public var kStatusBarH:CGFloat {
-    let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-    let scene = scenes.first(where: { $0.activationState == .foregroundActive }) ?? scenes.first
-    return scene?.statusBarManager?.statusBarFrame.height ?? 0.0
+    kActiveWindowScene()?.statusBarManager?.statusBarFrame.height ?? 0.0
 }
 /// 导航栏高度
 public var kNaviH:CGFloat {
@@ -29,7 +33,7 @@ public var kTabBarH:CGFloat {
     kSafeBtmH + 49.0
 }
 
-public let kIphoneXUp:Bool = kSafeBtmH > 0 ? true : false
+public var kIphoneXUp:Bool { kSafeBtmH > 0 }
 
 public let kIphone14ProUp:Bool = {
     let modeId = kDevice.modelIdentifier
@@ -47,26 +51,31 @@ public let kIphone14ProUp:Bool = {
 
 public struct kScreen {
     /// 屏幕分辨率
-    public static let scale = UIScreen.main.scale
+    public static var scale: CGFloat {
+        kActiveWindowScene()?.screen.scale ?? UIScreen.main.scale
+    }
     
-    public static let width = UIScreen.main.bounds.size.width
+    public static var width: CGFloat {
+        kActiveWindowScene()?.coordinateSpace.bounds.width ?? UIScreen.main.bounds.size.width
+    }
     
-    public static let height = UIScreen.main.bounds.size.height
+    public static var height: CGFloat {
+        kActiveWindowScene()?.coordinateSpace.bounds.height ?? UIScreen.main.bounds.size.height
+    }
     
-    public static let maxL = max(Self.width, Self.height)
+    public static var maxL: CGFloat { max(width, height) }
     
-    public static let minL = min(Self.width, Self.height)
-    /// 最大宽度
-    public static let maxWidth = (kDevice.isPad ? 414 : Self.minL)
+    public static var minL: CGFloat { min(width, height) }
+    /// 最大宽度（iPhone Duo 内屏/横屏不放大，半屏按比例缩）
+    public static var maxWidth: CGFloat { kDevice.isPad ? 414 : min(minL, 466) }
     /// 最大高度
-    public static let maxHeight = (kDevice.isPad ? 896 : Self.minL)
+    public static var maxHeight: CGFloat { kDevice.isPad ? 896 : minL }
     /// UI水平方向对照比例
-    public static let pt_x = Self.maxWidth/375.0
+    public static var pt_x: CGFloat { maxWidth/375.0 }
 
     public static var safeArea:UIEdgeInsets {
-        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-        let scene = scenes.first(where: { $0.activationState == .foregroundActive }) ?? scenes.first
-        guard let window = scene?.keyWindow ?? scene?.windows.first else { return .zero }
+        guard let scene = kActiveWindowScene() else { return .zero }
+        guard let window = scene.keyWindow ?? scene.windows.first else { return .zero }
         return window.safeAreaInsets
     }
 }
@@ -128,7 +137,7 @@ public extension Notification.Name {
 /// window
 public var kHighWindow:UIWindow? {
     get{
-        if let window = UIApplication.shared.connectedScenes.map({$0 as? UIWindowScene}).compactMap({$0}).first?.windows.first {
+        if let window = kActiveWindowScene()?.keyWindow ?? kActiveWindowScene()?.windows.first {
             return window
         }else{
             return UIApplication.shared.delegate?.window ?? nil
@@ -141,8 +150,7 @@ public var kHighWindow:UIWindow? {
 public var kCurrentVC:UIViewController? {
     get{
         var result:UIViewController?
-        let delegate  = UIApplication.shared.delegate
-        result = delegate?.window??.rootViewController
+        result = kHighWindow?.rootViewController
         
         while (result?.presentedViewController != nil)  {
             result = result?.presentedViewController
