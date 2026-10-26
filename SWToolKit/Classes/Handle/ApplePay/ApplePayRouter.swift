@@ -68,7 +68,7 @@ enum ApplePayServiceFactory {
 //            return ApplyPaymentHandle()
 //        }
         
-        if #available(iOS 27.0, *) {
+        if #available(iOS 26.0, *) {
             /// iOS 27.0  使用 StoreKit 2（新代码）
             return ApplyPaymentNew()
         } else {
