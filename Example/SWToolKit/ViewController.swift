@@ -11,6 +11,9 @@ import SWToolKit
 
 class ViewController: UIViewController {
 
+    /// 自动打开内购测试页只做一次（关闭后 viewDidAppear 会再次触发）
+    private var didAutoOpenIAPDemo = false
+
     override func viewDidLoad() {
         super.viewDidLoad()
        
@@ -59,6 +62,24 @@ class ViewController: UIViewController {
         btn3.setTitleColor(.red, for: .normal)
         self.view.addSubview(btn3)
         btn3.addTarget(self, action: #selector(click3), for: .touchUpInside)
+        
+        let btn4 = UIButton(type: .custom)
+        btn4.frame = .init(x: 20, y: 560, width: 100, height: 20)
+        btn4.setTitle("内购测试", for: .normal)
+        btn4.setTitleColor(.blue, for: .normal)
+        self.view.addSubview(btn4)
+        btn4.addTarget(self, action: #selector(clickIAPDemo), for: .touchUpInside)
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        /// 自动化调试用：Xcode 里给 Scheme 加启动参数 -IAPDemoAutoOpen 可直接进内购测试页
+        if ProcessInfo.processInfo.arguments.contains("-IAPDemoAutoOpen"),
+           !self.didAutoOpenIAPDemo,
+           self.presentedViewController == nil {
+            self.didAutoOpenIAPDemo = true
+            self.clickIAPDemo()
+        }
     }
     
     
@@ -76,6 +97,13 @@ class ViewController: UIViewController {
     @objc func click3() {
         let vc = ScreenViewController()
         self.present(vc, animated: true)
+    }
+    
+    @objc func clickIAPDemo() {
+        let vc = IAPDemoViewController()
+        let nav = UINavigationController(rootViewController: vc)
+        nav.modalPresentationStyle = .fullScreen
+        self.present(nav, animated: true)
     }
     
     override func didReceiveMemoryWarning() {

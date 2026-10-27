@@ -87,6 +87,9 @@
             ReferencedContainer = "container:SWToolKit.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <StoreKitConfigurationFileReference
+         identifier = "../SWToolKit/IAPDemo/IAPDemo.storekit">
+      </StoreKitConfigurationFileReference>
       <AdditionalOptions>
       </AdditionalOptions>
    </LaunchAction>
