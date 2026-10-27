@@ -266,7 +266,7 @@ extension ApplePayManager: ApplePayEngineDelegate {
         return sessionId != nil && sessionId == self.currentSession?.id
     }
     
-    func engineSuccess(_ engine: ApplePayEngine, sessionId: UUID?, productId: String, orderId: String?, receipt: String) {
+    func engineSuccess(_ engine: ApplePayEngine, sessionId: UUID?, productId: String, orderId: String?, receipt: String) -> Bool {
         let session = self.currentSession
         let isCurrent = self.isCurrentSession(sessionId)
         /// 下单商品必须与回调商品一致；不一致时记录日志，并继续交付实际商品
@@ -280,7 +280,14 @@ extension ApplePayManager: ApplePayEngineDelegate {
         if isCurrent {
             self.resetSession()
         }
-        self.delegate?.applePaySuccess(pay: self, orderId: orderId, encode: receipt)
+        guard let delegate = self.delegate else {
+            /// 宿主代理为空无法投递：让引擎保留交易，等下次启动（unfinished/队列）重试
+            applePayLog.add(type: .end, title: "投递失败",
+                            des: "宿主代理为空，保留交易待重试 流程Id:\(sessionId?.uuidString ?? "-") 订单:\(orderId ?? "-")")
+            return false
+        }
+        delegate.applePaySuccess(pay: self, orderId: orderId, encode: receipt)
+        return true
     }
     
     func engineRestore(_ engine: ApplePayEngine, sessionId: UUID?, receipt: String) {

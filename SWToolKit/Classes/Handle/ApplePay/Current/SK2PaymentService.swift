@@ -279,28 +279,38 @@ class SK2PaymentService: NSObject, ApplePayEngine {
             await transaction.finish()
             return
         }
-        let orderId: String?
-        if let sessionId {
-            orderId = self.orderStore.removeOrderId(for: sessionId)
-        } else {
-            /// 无关联订单（如 AppStore 促销点击购买）：orderId 为空发货
-            orderId = nil
-        }
+        /// 先只读订单映射；确认成功交付后才删除（票据缺失/投递失败时交易要保留重试，映射不能先丢）
+        let orderId = sessionId.flatMap { self.orderStore.orderId(for: $0) }
         let info = AppReceipt.read()
-        applePayLog.add(type: .end, title: info.receiptStr != nil ? "购买新产品" : "票据缺失",
+        guard let receiptStr = info.receiptStr else {
+            /// 票据读取失败：交易不 finish、订单映射不删，否则用户已付款却永远拿不到货；
+            /// 交易保持未结束，下次启动会通过 unfinished 再次投递
+            self.deliveredTransactionIDs.remove(transaction.id)
+            applePayLog.add(type: .end, title: "票据缺失",
+                            des: "交易Id:\(transaction.id) 保留交易待重试 流程Id:\(sessionId?.uuidString ?? "-") 订单:\(orderId ?? "-")")
+            self.failResultHandle(type: .buyFail, msg: info.msg, sessionId: sessionId,
+                                  productId: transaction.productID, orderId: orderId, keepOrder: true)
+            return
+        }
+        applePayLog.add(type: .end, title: "购买新产品",
                         des: "交易Id:\(transaction.id) 流程Id:\(sessionId?.uuidString ?? "-") 订单:\(orderId ?? "-") 商品:\(transaction.productID)")
         /// 先清理会话再回调：上层可能在回调里立即发起下一笔
         self.clearSession(sessionId)
-        if let receiptStr = info.receiptStr {
-            self.callbackMain { delegate in
-                delegate.engineSuccess(self, sessionId: sessionId, productId: transaction.productID,
-                                       orderId: orderId, receipt: receiptStr)
-            }
-        } else {
-            self.callbackMain { delegate in
-                delegate.engineFail(self, sessionId: sessionId, productId: transaction.productID,
-                                    orderId: orderId, type: .buyFail, message: info.msg)
-            }
+        guard let delegate = self.engineDelegate else {
+            /// 引擎代理丢失（理论不会发生）：按未投递处理，保留交易
+            applePayLog.add(type: .end, title: "投递失败", des: "引擎代理为空，保留交易待重试 交易Id:\(transaction.id)")
+            return
+        }
+        let delivered = delegate.engineSuccess(self, sessionId: sessionId, productId: transaction.productID,
+                                               orderId: orderId, receipt: receiptStr)
+        guard delivered else {
+            /// 宿主代理为空未投递：保留交易与订单映射，等待下次启动重试
+            applePayLog.add(type: .end, title: "投递失败", des: "宿主代理为空，保留交易待重试 交易Id:\(transaction.id)")
+            return
+        }
+        /// 投递成功才消费订单映射并结束交易
+        if let sessionId {
+            _ = self.orderStore.removeOrderId(for: sessionId)
         }
         await transaction.finish()
     }

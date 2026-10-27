@@ -126,30 +126,47 @@ extension SK1PaymentService {
     /// - UUID 但映射不存在：过期/迟到流程，订单号返回空
     /// - 非 UUID：老版本交易，整串就是订单号
     /// - 为空：App Store 促销交易
-    private func resolveSession(_ transaction: SKPaymentTransaction) -> (sessionId: UUID?, orderId: String?) {
+    /// - Parameter removeOrder: false 时只读订单号不删除（发货失败时交易要保留重试，映射不能先丢）
+    private func resolveSession(_ transaction: SKPaymentTransaction, removeOrder: Bool = true) -> (sessionId: UUID?, orderId: String?) {
         guard let raw = transaction.payment.applicationUsername else { return (nil, nil) }
         guard let sessionId = UUID(uuidString: raw) else { return (nil, raw) }
-        return (sessionId, self.orderStore.removeOrderId(for: sessionId))
+        let orderId = removeOrder ? self.orderStore.removeOrderId(for: sessionId) : self.orderStore.orderId(for: sessionId)
+        return (sessionId, orderId)
     }
     
     // 交易结束,当交易结束后还要去appstore上验证支付信息是否都正确,只有所有都正确后,我们就可以给用户方法我们的虚拟物品了。
-    private func completeTransaction(_ transaction: SKPaymentTransaction) {
-        let (sessionId, orderId) = self.resolveSession(transaction)
+    /// - Returns: 是否已投递宿主；false 时调用方不得 finish 交易
+    private func completeTransaction(_ transaction: SKPaymentTransaction) -> Bool {
+        /// 先只读订单映射；确认成功交付后才删除（票据缺失/投递失败时交易要保留重试）
+        let parsed = self.resolveSession(transaction, removeOrder: false)
         let receptInfo = AppReceipt.read()
-        if let receiptStr = receptInfo.receiptStr {
-            applePayLog.add(type: .end, title: "购买新产品",
-                            des: "本地有票据 交易Id:\(transaction.transactionIdentifier ?? "-") 流程Id:\(sessionId?.uuidString ?? "-") 订单:\(orderId ?? "-") 商品:\(transaction.payment.productIdentifier)")
-            /// 先清理会话再回调，避免上层在回调里立即发起新操作时被清掉
-            self.clearSession(sessionId)
-            self.engineDelegate?.engineSuccess(self, sessionId: sessionId,
-                                               productId: transaction.payment.productIdentifier,
-                                               orderId: orderId, receipt: receiptStr)
-        } else {
-            // 如果凭证为空，则再发一次凭证请求
+        guard let receiptStr = receptInfo.receiptStr else {
+            /// 票据读取失败：交易不 finish、订单映射不删，否则用户已付款却永远拿不到货；
+            /// 交易保持在队列中，下次启动会重新投递
+            applePayLog.add(type: .end, title: "票据缺失",
+                            des: "交易Id:\(transaction.transactionIdentifier ?? "-") 保留交易待重试 流程Id:\(parsed.sessionId?.uuidString ?? "-") 订单:\(parsed.orderId ?? "-")")
             self.failResultHandle(type: .buyFail, msg: receptInfo.msg,
-                                  sessionId: sessionId, productId: transaction.payment.productIdentifier,
-                                  orderId: orderId)
+                                  sessionId: parsed.sessionId, productId: transaction.payment.productIdentifier,
+                                  orderId: parsed.orderId)
+            return false
         }
+        applePayLog.add(type: .end, title: "购买新产品",
+                        des: "本地有票据 交易Id:\(transaction.transactionIdentifier ?? "-") 流程Id:\(parsed.sessionId?.uuidString ?? "-") 订单:\(parsed.orderId ?? "-") 商品:\(transaction.payment.productIdentifier)")
+        /// 先清理会话再回调，避免上层在回调里立即发起新操作时被清掉
+        self.clearSession(parsed.sessionId)
+        let delivered = self.engineDelegate?.engineSuccess(self, sessionId: parsed.sessionId,
+                                                           productId: transaction.payment.productIdentifier,
+                                                           orderId: parsed.orderId, receipt: receiptStr) ?? false
+        guard delivered else {
+            /// 宿主代理为空未投递：保留交易与订单映射，等待下次启动重试
+            applePayLog.add(type: .end, title: "投递失败", des: "宿主代理为空，保留交易待重试 交易Id:\(transaction.transactionIdentifier ?? "-")")
+            return false
+        }
+        /// 投递成功才消费订单映射
+        if let sessionId = parsed.sessionId {
+            _ = self.orderStore.removeOrderId(for: sessionId)
+        }
+        return true
     }
     
     /// 购买失败
@@ -240,16 +257,20 @@ extension SK1PaymentService: @preconcurrency SKPaymentTransactionObserver {
             case .purchased:
                 if trans.original != nil {
                     applePayLog.add(type: .statusChange, title: "购买事物变更", des: "自动续费的订单")
-                } else if trans.payment.applicationUsername == nil {
-                    // AppStore 促销购买，发货，orderId 为空
-                    applePayLog.add(type: .statusChange, title: "购买事物变更", des: "AppStore 促销购买")
-                    completeTransaction(trans)
+                    SKPaymentQueue.default().finishTransaction(trans)
                 } else {
-                    // 主动购买，发货
-                    applePayLog.add(type: .statusChange, title: "购买事物变更", des: "一次购买交易完成")
-                    completeTransaction(trans)
+                    if trans.payment.applicationUsername == nil {
+                        // AppStore 促销购买，发货，orderId 为空
+                        applePayLog.add(type: .statusChange, title: "购买事物变更", des: "AppStore 促销购买")
+                    } else {
+                        // 主动购买，发货
+                        applePayLog.add(type: .statusChange, title: "购买事物变更", des: "一次购买交易完成")
+                    }
+                    /// 只有成功投递宿主后才结束交易；票据缺失或宿主代理为空时保留交易，等待下次启动重试
+                    if completeTransaction(trans) {
+                        SKPaymentQueue.default().finishTransaction(trans)
+                    }
                 }
-                SKPaymentQueue.default().finishTransaction(trans)
             case .failed:
                 applePayLog.add(type: .statusChange, title: "购买事物变更", des: "交易失败")
                 failedTransaction(trans)

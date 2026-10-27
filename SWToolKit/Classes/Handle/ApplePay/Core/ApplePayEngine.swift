@@ -54,7 +54,9 @@ protocol ApplePayEngineDelegate: AnyObject {
     ///   - productId: 苹果回调里的商品 Id（用于和下单时的商品 Id 校验）
     ///   - orderId: 关联订单号（无关联交易，例如 AppStore 促销购买、映射过期时为空）
     ///   - receipt: 本地购买凭证
-    func engineSuccess(_ engine: ApplePayEngine, sessionId: UUID?, productId: String, orderId: String?, receipt: String)
+    /// - Returns: 是否已投递给宿主。false 表示宿主代理为空，引擎必须保留交易
+    ///   （不 finish、不删订单映射），等待下次启动重新投递
+    func engineSuccess(_ engine: ApplePayEngine, sessionId: UUID?, productId: String, orderId: String?, receipt: String) -> Bool
 
     /// 恢复购买成功
     /// - Parameter sessionId: 发起恢复时的流程 Id（无法归属的回调为 nil）
