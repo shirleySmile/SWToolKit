@@ -1,5 +1,5 @@
 //
-//  AppleProducts.swift
+//  SK1ProductCache.swift
 //  Pods
 //
 //  Created by muwa on 2025/10/30.
@@ -8,7 +8,8 @@
 import Foundation
 import StoreKit
 
-class AppleProducts:NSObject {
+/// 旧版支付的商品信息缓存（StoreKit 1）
+class SK1ProductCache:NSObject {
     
     
     private var productDict:[String:SKProduct] = Dictionary()
@@ -67,7 +68,7 @@ class AppleProducts:NSObject {
 }
 
 
-extension AppleProducts: SKProductsRequestDelegate {
+extension SK1ProductCache: SKProductsRequestDelegate {
     
     // 收到产品反馈消息
     public func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {

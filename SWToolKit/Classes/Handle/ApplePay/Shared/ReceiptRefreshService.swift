@@ -1,5 +1,5 @@
 //
-//  ApplyPayRefresh.swift
+//  ReceiptRefreshService.swift
 //  Pods
 //
 //  Created by admin on 2025/8/12.
@@ -8,7 +8,9 @@
 import StoreKit
 
 
-class ApplyPayRefresh:NSObject {
+/// 本地票据刷新
+/// 两条链路共用：iOS 18+ 使用 AppStore.sync()，以下使用 SKReceiptRefreshRequest
+class ReceiptRefreshService:NSObject {
     
     private var callback:((Error?)->Void)?
     /// iOS 18+ 的 AppStore.sync() 任务
@@ -89,7 +91,7 @@ class ApplyPayRefresh:NSObject {
 //MARK: ---------------SKRequestDelegate-----------------
 /// 仅 iOS 18 以下走此代理回调（iOS 18+ 走 AppStore.sync()）
 @available(iOS, deprecated: 18.0)
-extension ApplyPayRefresh:SKRequestDelegate {
+extension ReceiptRefreshService:SKRequestDelegate {
     
     public func request(_ request: SKRequest, didFailWithError error: Error) {
         debugPrint("==SWToolKit==" + "-------请求失败-------\(error)")
