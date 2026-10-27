@@ -19,14 +19,20 @@ public protocol ApplePayManagerDelegate: NSObject {
     /// 检测是否可以从AppStore促销点击购买处理
     func shouldAddStorePayment() -> Bool
     
+    /// 支付失败结果（带订单号/商品号，便于宿主对账，迟到失败也能知道是哪一单）
+    /// 恢复失败、商品请求失败、促销交易等场景 orderId/productId 可能为空。
+    ///
+    /// 必须声明成协议要求：协议扩展里的方法通过协议存在体调用时是静态派发，
+    /// 宿主的实现不会被调用（只会走下面的默认实现）。
+    func applePayResult(pay: ApplePayManager, type: ApplePayManager.ResultFailType,
+                        errorMsg: String, orderId: String?, productId: String?)
+    
 }
 
 
 public extension ApplePayManagerDelegate {
     
-    /// 支付失败结果（带订单号/商品号，便于宿主对账，迟到失败也能知道是哪一单）
-    /// 恢复失败、商品请求失败、促销交易等场景 orderId/productId 可能为空。
-    /// 老宿主无需实现，默认转发到旧方法。
+    /// 老宿主无需实现带订单号的重载，默认转发到旧方法
     func applePayResult(pay: ApplePayManager, type: ApplePayManager.ResultFailType,
                         errorMsg: String, orderId: String?, productId: String?) {
         applePayResult(pay: pay, type: type, errorMsg: errorMsg)

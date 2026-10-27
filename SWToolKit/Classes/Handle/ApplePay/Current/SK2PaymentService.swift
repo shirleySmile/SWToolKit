@@ -47,7 +47,7 @@ class SK2PaymentService: NSObject, ApplePayEngine {
         updatesTask = nil
     }
     
-    nonisolated init(orderStore: PaymentOrderStore) {
+    init(orderStore: PaymentOrderStore) {
         self.orderStore = orderStore
         super.init()
     }
@@ -289,7 +289,7 @@ class SK2PaymentService: NSObject, ApplePayEngine {
             applePayLog.add(type: .end, title: "票据缺失",
                             des: "交易Id:\(transaction.id) 保留交易待重试 流程Id:\(sessionId?.uuidString ?? "-") 订单:\(orderId ?? "-")")
             self.failResultHandle(type: .buyFail, msg: info.msg, sessionId: sessionId,
-                                  productId: transaction.productID, orderId: orderId, keepOrder: true)
+                                  productId: transaction.productID, keepOrder: true)
             return
         }
         applePayLog.add(type: .end, title: "购买新产品",
