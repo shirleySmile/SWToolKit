@@ -10,13 +10,13 @@
       "internalID" : "1000000001",
       "localizations" : [
         {
-          "description" : "Demo non-consumable product",
-          "displayName" : "Demo Non Consumable",
+          "description" : "Non-consumable sandbox test",
+          "displayName" : "非消耗测试",
           "locale" : "zh_CN"
         }
       ],
-      "productID" : "demo_nonconsumable",
-      "referenceName" : "Demo Non Consumable",
+      "productID" : "mw_900002",
+      "referenceName" : "MW Non Consumable",
       "type" : "NonConsumable"
     },
     {
@@ -25,19 +25,19 @@
       "internalID" : "1000000002",
       "localizations" : [
         {
-          "description" : "Demo consumable product",
-          "displayName" : "Demo Consumable",
+          "description" : "Consumable sandbox test",
+          "displayName" : "消耗测试",
           "locale" : "zh_CN"
         }
       ],
-      "productID" : "demo_consumable",
-      "referenceName" : "Demo Consumable",
+      "productID" : "mw_900001",
+      "referenceName" : "MW Consumable",
       "type" : "Consumable"
     }
   ],
   "settings" : {
     "_applicationInternalID" : "",
-    "_developerTeamID" : "CJP2LU6JZC",
+    "_developerTeamID" : "HF9XYS5M5Y",
     "_failTransactionsEnabled" : false,
     "_lastSynchronizedDate" : 0,
     "_locale" : "zh_CN",
@@ -52,7 +52,7 @@
       "localizations" : [
 
       ],
-      "name" : "Demo Subscriptions",
+      "name" : "MW Subscriptions",
       "subscriptions" : [
         {
           "adHocOffers" : [
@@ -68,14 +68,14 @@
           "introductoryOffer" : null,
           "localizations" : [
             {
-              "description" : "Demo monthly subscription",
-              "displayName" : "Demo Monthly",
+              "description" : "Monthly subscription sandbox test",
+              "displayName" : "订阅测试",
               "locale" : "zh_CN"
             }
           ],
-          "productID" : "demo_subscription_monthly",
+          "productID" : "mw_100001",
           "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "Demo Monthly",
+          "referenceName" : "MW Monthly",
           "subscriptionGroupID" : "2000000001",
           "type" : "RecurringSubscription"
         }

@@ -12,18 +12,21 @@ private class CBundleName: NSObject {}
 /// 与Bundle相关的方法
 extension Bundle {
 
-    static func image(named:String) -> UIImage? {
-        guard let path = Bundle(for: CBundleName.self).resourceURL ?? Bundle.main.resourceURL else {
+    static func image(named: String) -> UIImage? {
+        // 注意：CocoaPods 生成的 SWToolKit.bundle 里还嵌套了一层 SWToolKit.bundle
+        // （podspec 直接打包了 Assets 下现成的 bundle），所以这里要带上前缀。
+        guard let resourceBundleURL = Bundle(for: CBundleName.self).url(forResource: "SWToolKit", withExtension: "bundle"),
+              let resourceBundle = Bundle(url: resourceBundleURL) else {
             return nil
         }
-        let mainBundle = Bundle.init(url: path)
-        if let resourceBundlePath = mainBundle?.path(forResource: "SWToolKit", ofType: "bundle") {
-            let imagePath = "SWToolKit.bundle/\(named)"
-            let imgBundle = Bundle(path: resourceBundlePath)
-            let img1 = UIImage(named: imagePath, in: imgBundle, compatibleWith: nil)
-            return img1
+        // 调用方传的名字有的带 .png 后缀、有的不带，这里统一补全。
+        let fileName = named.hasSuffix(".png") ? named : "\(named).png"
+        guard let imagePath = resourceBundle.path(forResource: "SWToolKit.bundle/\(fileName)", ofType: nil) else {
+            return nil
         }
-        return nil
+        // 用 contentsOfFile 而不是 UIImage(named:in:)，避免 UIKit 去没有 Assets.car 的
+        // resource bundle 里找 asset catalog，从而打印 CoreUI 的 "unable to find bundle" 警告。
+        return UIImage(contentsOfFile: imagePath)
     }
     
 }

@@ -15,17 +15,22 @@ final class IAPDemoViewController: UIViewController {
     private let host = IAPDemoHost.shared
 
     private let statusLabel = UILabel()
-    private let productSegment = UISegmentedControl(items: ["非消耗型", "消耗型", "订阅"])
+    private let productIdField = UITextField()
+    private let productStateLabel = UILabel()
+    private let productStack = UIStackView()
+    private let selectedProductLabel = UILabel()
     private let orderField = UITextField()
     private let timeoutField = UITextField()
     private let mockSegment = UISegmentedControl(items: IAPDemoHost.MockMode.allCases.map { $0.title })
     private let delegateSwitch = UISwitch()
     private let promoSwitch = UISwitch()
+    private let promoSimulationSwitch = UISwitch()
     private let logView = UITextView()
 
-    private var products: [String] {
-        return [IAPDemoConfig.nonConsumable, IAPDemoConfig.consumable, IAPDemoConfig.subscription]
-    }
+    /// 当前选中的商品
+    private var selectedProductId: String?
+    /// 模拟促销交易按钮行（调试开关关闭时隐藏）
+    private var promoButtonRow: UIStackView?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -42,8 +47,13 @@ final class IAPDemoViewController: UIViewController {
 
         self.host.applyDelegateSetting()
         self.host.setTimeout(IAPDemoConfig.defaultTimeout)
+
+        self.host.onProductsChanged = { [weak self] in
+            self?.renderProducts()
+        }
+
         self.reloadLog()
-        self.host.checkLocalProducts()
+        self.host.refreshProducts()
     }
 
     // MARK: - UI
@@ -78,8 +88,36 @@ final class IAPDemoViewController: UIViewController {
         self.statusLabel.textColor = .darkGray
         stack.addArrangedSubview(self.statusLabel)
 
-        stack.addArrangedSubview(self.caption("商品（.storekit 本地配置）"))
-        stack.addArrangedSubview(self.productSegment)
+        stack.addArrangedSubview(self.caption("商品（StoreKit 直连，本地 .storekit 生效时取本地）"))
+
+        self.productIdField.borderStyle = .roundedRect
+        self.productIdField.font = .systemFont(ofSize: 12)
+        self.productIdField.autocorrectionType = .no
+        self.productIdField.autocapitalizationType = .none
+        self.productIdField.placeholder = "逗号分隔的 productId"
+        let refreshButton = self.button("刷新", #selector(tapRefreshProducts))
+        let idRow = UIStackView(arrangedSubviews: [self.productIdField, refreshButton])
+        idRow.axis = .horizontal
+        idRow.spacing = 8
+        idRow.alignment = .fill
+        refreshButton.setContentHuggingPriority(.required, for: .horizontal)
+        refreshButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        refreshButton.widthAnchor.constraint(equalToConstant: 84).isActive = true
+        stack.addArrangedSubview(idRow)
+
+        self.productStateLabel.numberOfLines = 0
+        self.productStateLabel.font = .systemFont(ofSize: 11)
+        self.productStateLabel.textColor = .gray
+        stack.addArrangedSubview(self.productStateLabel)
+
+        self.productStack.axis = .vertical
+        self.productStack.spacing = 6
+        stack.addArrangedSubview(self.productStack)
+
+        self.selectedProductLabel.font = .systemFont(ofSize: 12)
+        self.selectedProductLabel.textColor = .darkGray
+        self.selectedProductLabel.numberOfLines = 0
+        stack.addArrangedSubview(self.selectedProductLabel)
 
         self.orderField.borderStyle = .roundedRect
         self.orderField.font = .systemFont(ofSize: 13)
@@ -125,10 +163,14 @@ final class IAPDemoViewController: UIViewController {
         stack.addArrangedSubview(self.caption("模拟后台校验"))
         stack.addArrangedSubview(self.mockSegment)
 
-        stack.addArrangedSubview(self.row([
-            self.button("模拟促销交易(SK1)", #selector(tapPromo)),
-            self.button("加载商品", #selector(tapLoadProducts)),
-        ]))
+        // TODO: 内购测试专用：模拟促销交易，全部测试完成后删除下面这个开关和按钮
+        self.promoSimulationSwitch.addTarget(self, action: #selector(tapPromoSimulationSwitch), for: .valueChanged)
+        stack.addArrangedSubview(self.switchRow("调试：模拟促销交易（测试后删除）", self.promoSimulationSwitch))
+
+        let promoRow = self.row([self.button("模拟促销交易(SK1)", #selector(tapPromo))])
+        promoRow.isHidden = !self.host.promoSimulationEnabled
+        self.promoButtonRow = promoRow
+        stack.addArrangedSubview(promoRow)
 
         stack.addArrangedSubview(self.caption("日志"))
         self.logView.isEditable = false
@@ -152,10 +194,12 @@ final class IAPDemoViewController: UIViewController {
     }
 
     private func setupValues() {
+        self.productIdField.text = self.host.storedProductIds.joined(separator: ",")
         self.orderField.text = self.host.currentOrder?.orderId ?? self.newOrderId()
         self.timeoutField.text = String(Int(IAPDemoConfig.defaultTimeout))
         self.delegateSwitch.isOn = self.host.delegateEnabled
         self.promoSwitch.isOn = self.host.allowPromotedPurchase
+        self.promoSimulationSwitch.isOn = self.host.promoSimulationEnabled
     }
 
     private func caption(_ text: String) -> UILabel {
@@ -224,9 +268,104 @@ final class IAPDemoViewController: UIViewController {
         return "demo-\(formatter.string(from: Date()))"
     }
 
-    private var selectedProductId: String {
-        let index = max(0, min(self.productSegment.selectedSegmentIndex, self.products.count - 1))
-        return self.products[index]
+    // MARK: - 商品列表
+
+    private func renderProducts() {
+        self.productStack.arrangedSubviews.forEach {
+            self.productStack.removeArrangedSubview($0)
+            $0.removeFromSuperview()
+        }
+
+        switch self.host.productLoadState {
+        case .idle:
+            self.productStateLabel.text = ""
+            self.productStateLabel.textColor = .gray
+        case .loading:
+            self.productStateLabel.text = "正在加载商品…"
+            self.productStateLabel.textColor = .gray
+        case .failed(let message):
+            self.productStateLabel.text = "加载失败：\(message)"
+            self.productStateLabel.textColor = .systemRed
+        case .loaded:
+            if self.host.products.isEmpty {
+                self.productStateLabel.text = "未获取到商品。当前环境可能没有这些商品 ID（本地 .storekit 未生效或 App Store Connect 未配置）"
+                self.productStateLabel.textColor = .systemOrange
+            } else {
+                let groupTitles = IAPDemoProductGroup.allCases
+                    .filter { group in self.host.products.contains { $0.group == group } }
+                    .map { $0.title }
+                self.productStateLabel.text = "共 \(self.host.products.count) 个商品：\(groupTitles.joined(separator: " / "))"
+                self.productStateLabel.textColor = .gray
+            }
+        }
+
+        // 选中项失效（换了一批 ID）时自动选第一个
+        if let selected = self.selectedProductId,
+           !self.host.products.contains(where: { $0.id == selected }) {
+            self.selectedProductId = nil
+        }
+        if self.selectedProductId == nil {
+            self.selectedProductId = self.host.products.first?.id
+        }
+
+        for group in IAPDemoProductGroup.allCases {
+            let items = self.host.products.filter { $0.group == group }
+            guard !items.isEmpty else { continue }
+
+            let header = UILabel()
+            header.text = "\(group.title)（\(items.count)）"
+            header.font = .systemFont(ofSize: 12, weight: .semibold)
+            header.textColor = .secondaryLabel
+            self.productStack.addArrangedSubview(header)
+
+            for item in items {
+                self.productStack.addArrangedSubview(self.productRow(item))
+            }
+        }
+
+        self.updateSelectedProductLabel()
+    }
+
+    private func productRow(_ product: IAPDemoProduct) -> UIButton {
+        let isSelected = product.id == self.selectedProductId
+        var config = isSelected ? UIButton.Configuration.tinted() : UIButton.Configuration.gray()
+        config.title = product.name
+        config.subtitle = "\(product.id) · \(product.priceText)"
+        config.titleAlignment = .leading
+        config.image = UIImage(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+        config.imagePlacement = .trailing
+        config.imagePadding = 8
+        config.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12)
+        config.subtitleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = .systemFont(ofSize: 11)
+            return outgoing
+        }
+        let button = UIButton(configuration: config)
+        button.contentHorizontalAlignment = .fill
+        button.addAction(UIAction { [weak self] _ in
+            self?.selectProduct(product.id)
+        }, for: .touchUpInside)
+        return button
+    }
+
+    private func selectProduct(_ id: String) {
+        self.selectedProductId = id
+        self.renderProducts()
+        if let product = self.host.products.first(where: { $0.id == id }) {
+            IAPDemoLog.shared.add("已选择商品：\(product.id) [\(product.group.title)]")
+        }
+    }
+
+    private func updateSelectedProductLabel() {
+        guard let id = self.selectedProductId,
+              let product = self.host.products.first(where: { $0.id == id }) else {
+            self.selectedProductLabel.text = "已选商品：未选择"
+            self.selectedProductLabel.textColor = .systemOrange
+            return
+        }
+        self.selectedProductLabel.text = "已选商品：\(product.name) [\(product.group.title)] \(product.id) \(product.priceText)"
+        self.selectedProductLabel.textColor = .darkGray
     }
 
     private func currentOrderId() -> String {
@@ -266,7 +405,11 @@ final class IAPDemoViewController: UIViewController {
 
     @objc private func tapBuy() {
         self.host.setTimeout(self.appliedTimeout())
-        self.host.buy(productId: self.selectedProductId, orderId: self.currentOrderId())
+        guard let productId = self.selectedProductId else {
+            IAPDemoLog.shared.add("请先选择商品")
+            return
+        }
+        self.host.buy(productId: productId, orderId: self.currentOrderId())
         self.refreshStatus()
     }
 
@@ -323,11 +466,25 @@ final class IAPDemoViewController: UIViewController {
     }
 
     @objc private func tapPromo() {
-        self.host.simulatePromotedPurchase(productId: self.selectedProductId)
+        guard let productId = self.selectedProductId else {
+            IAPDemoLog.shared.add("请先选择商品")
+            return
+        }
+        self.host.simulatePromotedPurchase(productId: productId)
     }
 
-    @objc private func tapLoadProducts() {
-        self.host.checkLocalProducts()
+    // TODO: 内购测试专用：模拟促销交易，全部测试完成后删除该方法
+    @objc private func tapPromoSimulationSwitch() {
+        self.host.promoSimulationEnabled = self.promoSimulationSwitch.isOn
+        self.promoButtonRow?.isHidden = !self.promoSimulationSwitch.isOn
+        IAPDemoLog.shared.add("模拟促销交易开关：\(self.promoSimulationSwitch.isOn ? "开" : "关")")
+    }
+
+    @objc private func tapRefreshProducts() {
+        let ids = IAPDemoConfig.parseProductIds(self.productIdField.text ?? "")
+        self.host.storedProductIds = ids
+        self.view.endEditing(true)
+        self.host.refreshProducts(ids: ids)
     }
 
     @objc private func tapPodLog() {

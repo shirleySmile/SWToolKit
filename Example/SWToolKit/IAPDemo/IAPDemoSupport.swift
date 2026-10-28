@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import StoreKit
 
 
 /// Demo 日志：控制台 + 页面面板 + 导出文件
@@ -156,17 +157,67 @@ enum IAPDemoReceipt {
 }
 
 
+/// 商品类型分组：订阅包含自动续期与非续期
+enum IAPDemoProductGroup: Int, CaseIterable {
+    case nonConsumable
+    case consumable
+    case subscription
+
+    var title: String {
+        switch self {
+        case .nonConsumable: return "非消耗型"
+        case .consumable:    return "消耗型"
+        case .subscription:  return "订阅"
+        }
+    }
+
+    /// Product.ProductType 是结构体（不是枚举），只能逐个比较
+    static func group(for type: Product.ProductType) -> IAPDemoProductGroup {
+        if type == .consumable { return .consumable }
+        if type == .nonConsumable { return .nonConsumable }
+        return .subscription
+    }
+}
+
+
+/// StoreKit 拉回来的商品，只用于展示和选择
+struct IAPDemoProduct {
+    let id: String
+    let name: String
+    let priceText: String
+    let group: IAPDemoProductGroup
+}
+
+
 /// Demo 商品与默认参数
 enum IAPDemoConfig {
 
-    static let nonConsumable = "demo_nonconsumable"
-    static let consumable = "demo_consumable"
-    static let subscription = "demo_subscription_monthly"
+    static let nonConsumable = "mw_900002"
+    static let consumable = "mw_900001"
+    static let subscription = "mw_100001"
 
-    static let productIds = [nonConsumable, consumable, subscription]
+    /// 默认商品 ID：本地 .storekit 与真实沙盒使用同一套 ID
+    static let defaultProductIds = [nonConsumable, consumable, subscription]
 
     static let defaultTimeout: Double = 20.0
 
     static let delegateEnabledKey = "IAPDemo.delegateEnabled"
+    /// v2：避免旧安装里持久化的 demo_* ID 盖住新默认值
+    static let productIdsKey = "IAPDemo.productIds.v2"
+    static let promoSimulationKey = "IAPDemo.promoSimulation"
+
+    /// 兼容中英文逗号、分号、空格、换行，去空去重
+    static func parseProductIds(_ raw: String) -> [String] {
+        let separators = CharacterSet(charactersIn: ",，;； \t\r\n")
+        var seen = Set<String>()
+        var result: [String] = []
+        for part in raw.components(separatedBy: separators) {
+            let id = part.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !id.isEmpty, !seen.contains(id) else { continue }
+            seen.insert(id)
+            result.append(id)
+        }
+        return result
+    }
 
 }

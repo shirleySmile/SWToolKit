@@ -3,7 +3,8 @@
 //  Pods
 //
 //  内购引擎统一接口。
-//  Core / Shared 不允许引用 Legacy / Current 里的具体类型，只有本文件的工厂能看到两者。
+//  Core / Shared 不允许引用 Legacy / Current 里的具体类型；
+//  只有装配工厂（ApplePayEngineFactory / ReceiptRefreshFactory）能看到两者。
 //
 
 import Foundation

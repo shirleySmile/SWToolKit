@@ -63,6 +63,23 @@ final class IAPDemoHost: NSObject {
 
     let orderStore = IAPDemoOrderStore()
 
+    // MARK: - 商品列表
+
+    enum ProductLoadState {
+        case idle
+        case loading
+        case loaded
+        case failed(String)
+    }
+
+    private(set) var products: [IAPDemoProduct] = []
+    private(set) var productLoadState: ProductLoadState = .idle
+    /// 商品列表变化回调（主线程）
+    var onProductsChanged: (() -> Void)?
+
+    /// 用来丢弃过期请求的结果（连点刷新）
+    private var productLoadToken = UUID()
+
     private let promoSimulator = IAPDemoPromoSimulator()
 
     private override init() {
@@ -85,6 +102,29 @@ final class IAPDemoHost: NSObject {
 
     var isDelegateConnected: Bool {
         return ApplePayManager.share.delegate === self
+    }
+
+    /// 页面输入的商品 ID（逗号分隔持久化），空则回落到默认 demo_*
+    var storedProductIds: [String] {
+        get {
+            let raw = UserDefaults.standard.string(forKey: IAPDemoConfig.productIdsKey) ?? ""
+            let parsed = IAPDemoConfig.parseProductIds(raw)
+            return parsed.isEmpty ? IAPDemoConfig.defaultProductIds : parsed
+        }
+        set {
+            UserDefaults.standard.set(newValue.joined(separator: ","), forKey: IAPDemoConfig.productIdsKey)
+        }
+    }
+
+    /// 模拟促销交易开关（内购测试专用，测试完成后删除）
+    // TODO: 内购测试专用：模拟促销交易，全部测试完成后删除该开关及相关代码
+    var promoSimulationEnabled: Bool {
+        get {
+            return UserDefaults.standard.bool(forKey: IAPDemoConfig.promoSimulationKey)
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: IAPDemoConfig.promoSimulationKey)
+        }
     }
 
     func applyDelegateSetting() {
@@ -169,15 +209,59 @@ final class IAPDemoHost: NSObject {
         }
     }
 
-    /// 校验 .storekit 本地配置是否生效
-    func checkLocalProducts() {
+    /// 从 StoreKit 拉商品（本地 .storekit 生效时取本地，否则走苹果网络），按类型分组
+    func refreshProducts(ids: [String]? = nil) {
+        let source = ids ?? self.storedProductIds
+        let requested = IAPDemoConfig.parseProductIds(source.joined(separator: ","))
+        guard !requested.isEmpty else {
+            self.products = []
+            self.productLoadState = .failed("商品 ID 为空")
+            self.log("刷新商品失败：商品 ID 为空")
+            self.onProductsChanged?()
+            return
+        }
+
+        let token = UUID()
+        self.productLoadToken = token
+        self.productLoadState = .loading
+        self.onProductsChanged?()
+        self.log("开始加载商品：\(requested.count) 个 ID → \(requested.joined(separator: ", "))")
+
         Task { [weak self] in
             do {
-                let products = try await Product.products(for: IAPDemoConfig.productIds)
-                let ids = products.map { $0.id }.sorted().joined(separator: ", ")
-                self?.log("商品加载成功 \(products.count) 个：\(ids)")
+                let result = try await Product.products(for: requested)
+                guard let self, self.productLoadToken == token else { return }
+
+                let mapped = result.map { product in
+                    IAPDemoProduct(id: product.id,
+                                   name: product.displayName,
+                                   priceText: product.displayPrice,
+                                   group: IAPDemoProductGroup.group(for: product.type))
+                }.sorted { lhs, rhs in
+                    if lhs.group.rawValue != rhs.group.rawValue {
+                        return lhs.group.rawValue < rhs.group.rawValue
+                    }
+                    return lhs.id < rhs.id
+                }
+
+                self.products = mapped
+                self.productLoadState = .loaded
+                self.log("商品加载成功 \(mapped.count)/\(requested.count) 个")
+                for item in mapped {
+                    self.log("商品 [\(item.group.title)] \(item.id) \(item.name) \(item.priceText)")
+                }
+                let returned = Set(mapped.map { $0.id })
+                let missing = requested.filter { !returned.contains($0) }
+                if !missing.isEmpty {
+                    self.log("未返回的 ID：\(missing.joined(separator: ", "))（当前环境没有这些商品）")
+                }
+                self.onProductsChanged?()
             } catch {
-                self?.log("商品加载失败：\(error.localizedDescription)")
+                guard let self, self.productLoadToken == token else { return }
+                self.products = []
+                self.productLoadState = .failed(error.localizedDescription)
+                self.log("商品加载失败：\(error.localizedDescription)")
+                self.onProductsChanged?()
             }
         }
     }
@@ -186,7 +270,12 @@ final class IAPDemoHost: NSObject {
 
     /// SK1 才能用：直接入队一笔无 applicationUsername 的交易，
     /// 等价于 App Store 商品页的推广购买（外部交易）。
+    // TODO: 内购测试专用：模拟促销交易，全部测试完成后删除开关判断和整个方法
     func simulatePromotedPurchase(productId: String) {
+        guard self.promoSimulationEnabled else {
+            self.log("模拟促销交易开关未打开，忽略")
+            return
+        }
         if #available(iOS 26.0, *) {
             self.log("iOS 26+ 已切到 StoreKit 2，SK1 入队不会被观察；请用 Xcode 的 Debug > StoreKit > Manage Transactions 模拟外部交易")
             return
@@ -411,6 +500,8 @@ extension IAPDemoHost: @preconcurrency ApplePayManagerDelegate {
 
 // MARK: - SK1 促销模拟
 
+// TODO: 内购测试专用：模拟促销交易，全部测试完成后删除本类和页面上的调试开关
+#warning("TODO: 内购测试专用：模拟促销交易，测试完成后删除开关、按钮和 IAPDemoPromoSimulator")
 /// 直接向 SKPaymentQueue 入队一笔没有 applicationUsername 的交易，
 /// 模拟 App Store 商品页的推广购买。
 final class IAPDemoPromoSimulator: NSObject, SKProductsRequestDelegate {
