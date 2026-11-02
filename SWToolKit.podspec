@@ -53,9 +53,6 @@ Pod::Spec.new do |s|
   s.frameworks = 'UIKit', 'AVFoundation'
   
   
-  # s.dependency 'AFNetworking', '~> 2.3'
-  
-  s.dependency 'SnapKit'
-  
-  
 end
+
+

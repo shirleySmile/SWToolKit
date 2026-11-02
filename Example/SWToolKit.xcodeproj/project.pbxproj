@@ -18,6 +18,7 @@
 		851BB28DC243CEA899F281CD /* Pods_SWToolKit_Example.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 72623FCD7BF8496D6F7E878B /* Pods_SWToolKit_Example.framework */; };
 		D6267B912EDDB41200A484E8 /* ViewPop.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6267B902EDDB40800A484E8 /* ViewPop.swift */; };
 		D6267B932EDDB41400A484E8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6267B922EDDB41300A484E8 /* SceneDelegate.swift */; };
+		D66B95903098802000B0C3D2 /* NaviController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D66B958F3098801400B0C3D2 /* NaviController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +42,7 @@
 		D220C31A950DCCBB4F654730 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
 		D6267B902EDDB40800A484E8 /* ViewPop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewPop.swift; sourceTree = "<group>"; };
 		D6267B922EDDB41300A484E8 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		D66B958F3098801400B0C3D2 /* NaviController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NaviController.swift; sourceTree = "<group>"; };
 		D963EA4653481764C6F96E93 /* Pods-SWToolKit_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SWToolKit_Example.debug.xcconfig"; path = "Target Support Files/Pods-SWToolKit_Example/Pods-SWToolKit_Example.debug.xcconfig"; sourceTree = "<group>"; };
 		F5D425C448135ECD8E6AEC8D /* Pods_SWToolKit_Tests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SWToolKit_Tests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -99,6 +101,7 @@
 		607FACD21AFB9204008FA782 /* Example for SWToolKit */ = {
 			isa = PBXGroup;
 			children = (
+				D66B958F3098801400B0C3D2 /* NaviController.swift */,
 				D6267B902EDDB40800A484E8 /* ViewPop.swift */,
 				607FACD51AFB9204008FA782 /* AppDelegate.swift */,
 				D6267B922EDDB41300A484E8 /* SceneDelegate.swift */,
@@ -244,12 +247,10 @@
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-SWToolKit_Example/Pods-SWToolKit_Example-frameworks.sh",
 				"${BUILT_PRODUCTS_DIR}/SWToolKit/SWToolKit.framework",
-				"${BUILT_PRODUCTS_DIR}/SnapKit/SnapKit.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SWToolKit.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SnapKit.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -264,6 +265,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				607FACD81AFB9204008FA782 /* ViewController.swift in Sources */,
+				D66B95903098802000B0C3D2 /* NaviController.swift in Sources */,
 				D6267B912EDDB41200A484E8 /* ViewPop.swift in Sources */,
 				607FACD61AFB9204008FA782 /* AppDelegate.swift in Sources */,
 				D6267B932EDDB41400A484E8 /* SceneDelegate.swift in Sources */,

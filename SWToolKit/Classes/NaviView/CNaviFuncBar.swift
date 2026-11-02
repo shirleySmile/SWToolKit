@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import SnapKit
 
 
 //MARK: 功能view
@@ -160,15 +159,15 @@ extension CNaviFuncBar {
         if let titleV = titleV {
             titleV.navPosition = .center
             self.addSubview(titleV)
-            titleV.snp.remakeConstraints { make in
-                make.center.equalTo(self)
-                if let cTitleV = titleV as? CNaviCustomTitleView, !cTitleV.isAutoSize, cTitleV.width > 0, cTitleV.height > 0 {
-                    make.width.equalTo(cTitleV.width)
-                    make.height.equalTo(cTitleV.height)
-                }else{
-                    make.width.lessThanOrEqualTo(self).offset(-100)
-                    make.width.greaterThanOrEqualTo(1)
-                }
+            titleV.sw_removeLayoutConstraints()
+            titleV.sw_layoutCenter(equalTo: self)
+            if let cTitleV = titleV as? CNaviCustomTitleView, !cTitleV.isAutoSize, cTitleV.width > 0, cTitleV.height > 0 {
+                titleV.sw_layoutSize(width: cTitleV.width, height: cTitleV.height)
+            }else{
+                NSLayoutConstraint.activate([
+                    titleV.widthAnchor.constraint(lessThanOrEqualTo: self.widthAnchor, constant: -100),
+                    titleV.widthAnchor.constraint(greaterThanOrEqualToConstant: 1)
+                ])
             }
         }
     }
@@ -180,20 +179,15 @@ extension CNaviFuncBar {
                 leftList.forEach { item in
                 item.navPosition = .left
                 self.addSubview(item)
-                item.snp.remakeConstraints { make in
-                    make.centerY.equalTo(self)
-                    if item.frame.size.width > 0 || item.frame.size.height > 0 {
-                        make.size.equalTo(item.frame.size)
-                    }
-                    if leftV == self {
-                        if item == leftList.first && item != backBtn {
-                            make.left.equalTo(leftV).inset(15)
-                        }else{
-                            make.left.equalTo(leftV).inset(15)
-                        }
-                    }else{
-                        make.left.equalTo(leftV.snp.right).inset(-10)
-                    }
+                item.sw_removeLayoutConstraints()
+                item.sw_layoutCenterY(equalTo: self)
+                if item.frame.size.width > 0 || item.frame.size.height > 0 {
+                    item.sw_layoutSize(item.frame.size)
+                }
+                if leftV == self {
+                    item.sw_layoutLeft(equalTo: self.leftAnchor, constant: 15)
+                }else{
+                    item.sw_layoutLeft(equalTo: leftV.rightAnchor, constant: 10)
                 }
                 leftV = item
             }
@@ -207,17 +201,15 @@ extension CNaviFuncBar {
             rightList.forEach { item in
                 item.navPosition = .right
                 self.addSubview(item)
-                item.snp.remakeConstraints { make in
-                    make.centerY.equalTo(self)
-                    if item.frame.size.width > 0 || item.frame.size.height > 0 {
-                        make.size.equalTo(item.frame.size)
-                    }
-                    if rightV == self {
-                        make.right.equalTo(rightV).inset(15)
-                    }else{
-                        make.right.equalTo(rightV.snp.left).inset(-10)
-                    }
-                    
+                item.sw_removeLayoutConstraints()
+                item.sw_layoutCenterY(equalTo: self)
+                if item.frame.size.width > 0 || item.frame.size.height > 0 {
+                    item.sw_layoutSize(item.frame.size)
+                }
+                if rightV == self {
+                    item.sw_layoutRight(equalTo: self.rightAnchor, constant: -15)
+                }else{
+                    item.sw_layoutRight(equalTo: rightV.leftAnchor, constant: -10)
                 }
                 rightV = item
             }
@@ -256,9 +248,7 @@ class CNaviTitleView: CNavItemBaseView{
         titleL?.textAlignment = .center
         titleL?.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         titleL?.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-        titleL?.snp.makeConstraints({ make in
-            make.edges.equalTo(self)
-        })
+        titleL?.sw_layoutEdges(equalTo: self)
     }
     
     required init?(coder: NSCoder) {
@@ -292,9 +282,7 @@ class CNaviCustomTitleView:CNaviTitleView{
             }else{
                 isAutoSize = true
                 addSubview(v)
-                v.snp.makeConstraints { make in
-                    make.top.left.right.bottom.equalToSuperview()
-                }
+                v.sw_layoutEdges(equalTo: self)
             }
         }
     }

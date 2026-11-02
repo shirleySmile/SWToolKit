@@ -1,4 +1,14 @@
 {
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
   "identifier" : "C0FFEE00-1A2B-3C4D-5E6F-708192A3B4C5",
   "nonRenewingSubscriptions" : [
 
@@ -12,7 +22,7 @@
         {
           "description" : "Non-consumable sandbox test",
           "displayName" : "非消耗测试",
-          "locale" : "zh_CN"
+          "locale" : "zh_Hans"
         }
       ],
       "productID" : "mw_900002",
@@ -27,7 +37,7 @@
         {
           "description" : "Consumable sandbox test",
           "displayName" : "消耗测试",
-          "locale" : "zh_CN"
+          "locale" : "zh_Hans"
         }
       ],
       "productID" : "mw_900001",
@@ -37,15 +47,24 @@
   ],
   "settings" : {
     "_applicationInternalID" : "",
+    "_askToBuyEnabled" : false,
+    "_billingGracePeriodEnabled" : false,
+    "_billingIssuesEnabled" : false,
     "_developerTeamID" : "HF9XYS5M5Y",
+    "_disableDialogs" : false,
     "_failTransactionsEnabled" : false,
     "_lastSynchronizedDate" : 0,
-    "_locale" : "zh_CN",
+    "_locale" : "zh_Hans",
+    "_renewalBillingIssuesEnabled" : false,
     "_storefront" : "CHN",
     "_storeKitErrors" : [
 
-    ]
+    ],
+    "_timeRate" : 0
   },
+  "subscriptionBundleGroups" : [
+
+  ],
   "subscriptionGroups" : [
     {
       "id" : "2000000001",
@@ -58,6 +77,15 @@
           "adHocOffers" : [
 
           ],
+          "billingPlans" : [
+            {
+              "billingPlanType" : "BILLED_UPFRONT",
+              "commitmentDisplayPrice" : "6.00",
+              "displayPrice" : "6.00",
+              "internalID" : "B1373DBB",
+              "isEnabled" : true
+            }
+          ],
           "codeOffers" : [
 
           ],
@@ -65,25 +93,33 @@
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "3000000001",
-          "introductoryOffer" : null,
+          "introductoryOffers" : [
+
+          ],
           "localizations" : [
             {
               "description" : "Monthly subscription sandbox test",
               "displayName" : "订阅测试",
-              "locale" : "zh_CN"
+              "locale" : "zh_Hans"
             }
           ],
           "productID" : "mw_100001",
           "recurringSubscriptionPeriod" : "P1M",
           "referenceName" : "MW Monthly",
           "subscriptionGroupID" : "2000000001",
-          "type" : "RecurringSubscription"
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
         }
       ]
     }
   ],
+  "subscriptionSuiteGroups" : [
+
+  ],
   "version" : {
-    "major" : 3,
-    "minor" : 0
+    "major" : 6,
+    "minor" : 3
   }
 }

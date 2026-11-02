@@ -13,6 +13,8 @@ class ViewController: UIViewController {
 
     /// 自动打开内购测试页只做一次（关闭后 viewDidAppear 会再次触发）
     private var didAutoOpenIAPDemo = false
+    /// 自动打开旋转测试页只做一次
+    private var didAutoOpenRotationTest = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -57,11 +59,18 @@ class ViewController: UIViewController {
         btn2.addTarget(self, action: #selector(click2), for: .touchUpInside)
         
         let btn3 = UIButton(type: .custom)
-        btn3.frame = .init(x: 280, y: 500, width: 100, height: 20)
+        btn3.frame = .init(x: 280, y: 400, width: 100, height: 20)
         btn3.setTitle("显示弹窗3", for: .normal)
         btn3.setTitleColor(.red, for: .normal)
         self.view.addSubview(btn3)
         btn3.addTarget(self, action: #selector(click3), for: .touchUpInside)
+        
+        let btn100 = UIButton(type: .custom)
+        btn100.frame = .init(x: 280, y: 500, width: 100, height: 20)
+        btn100.setTitle("测试导航栏 vc", for: .normal)
+        btn100.setTitleColor(.red, for: .normal)
+        self.view.addSubview(btn100)
+        btn100.addTarget(self, action: #selector(click100), for: .touchUpInside)
         
         let btn4 = UIButton(type: .custom)
         btn4.frame = .init(x: 20, y: 560, width: 100, height: 20)
@@ -69,6 +78,13 @@ class ViewController: UIViewController {
         btn4.setTitleColor(.blue, for: .normal)
         self.view.addSubview(btn4)
         btn4.addTarget(self, action: #selector(clickIAPDemo), for: .touchUpInside)
+
+        let btn5 = UIButton(type: .custom)
+        btn5.frame = .init(x: 20, y: 620, width: 100, height: 20)
+        btn5.setTitle("旋转测试", for: .normal)
+        btn5.setTitleColor(.systemGreen, for: .normal)
+        self.view.addSubview(btn5)
+        btn5.addTarget(self, action: #selector(clickRotationTest), for: .touchUpInside)
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -79,6 +95,12 @@ class ViewController: UIViewController {
            self.presentedViewController == nil {
             self.didAutoOpenIAPDemo = true
             self.clickIAPDemo()
+        }
+        /// 自动化调试用：加启动参数 -RotationTestAutoOpen 可直接进旋转测试
+        if ProcessInfo.processInfo.arguments.contains("-RotationTestAutoOpen"),
+           !self.didAutoOpenRotationTest {
+            self.didAutoOpenRotationTest = true
+            self.clickRotationTest()
         }
     }
     
@@ -98,9 +120,22 @@ class ViewController: UIViewController {
         let vc = ScreenViewController()
         self.present(vc, animated: true)
     }
+
+    @objc func clickRotationTest() {
+        let view = RotationTestView(frame: .init(x: 0, y: 0, width: kScreen.width, height: 420))
+        view.animationShow(header: .init(view: SheetBorderSliderHeader(viewHeight: 40), type: .vertical),
+                           cornerSize: .init(width: 16, height: 16))
+    }
     
     @objc func clickIAPDemo() {
         let vc = IAPDemoViewController()
+        let nav = UINavigationController(rootViewController: vc)
+        nav.modalPresentationStyle = .fullScreen
+        self.present(nav, animated: true)
+    }
+    
+    @objc func click100() {
+        let vc = NaviController()
         let nav = UINavigationController(rootViewController: vc)
         nav.modalPresentationStyle = .fullScreen
         self.present(nav, animated: true)

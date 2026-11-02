@@ -7,7 +7,6 @@
 
 import Foundation
 import UIKit
-import SnapKit
 
 public class CNavItemBaseView: UIControl {
     
@@ -67,10 +66,7 @@ public class CNaviItemView: CNavItemBaseView {
             imgV.tag = 9999
             imgV.contentMode = .scaleAspectFit
             item.addSubview(imgV)
-            imgV.snp.makeConstraints { make in
-                make.center.equalTo(item)
-                make.size.equalTo(CGSize.init(width: viewW - space*2.0, height: item.height))
-            }
+            imgV.sw_layoutCenter(equalTo: item).sw_layoutSize(width: viewW - space*2.0, height: item.height)
             item.width = viewW
         }
         return item
@@ -96,9 +92,7 @@ public class CNaviItemView: CNavItemBaseView {
             lab.font = fSize
             lab.textAlignment = .center
             item.addSubview(lab)
-            lab.snp.makeConstraints { make in
-                make.center.equalTo(item)
-            }
+            lab.sw_layoutCenter(equalTo: item)
             lab.layoutIfNeeded()
             /// 计算文字尺寸
             let size = text?.size(width: MAXFLOAT, height: Float(self.baseHeight), font: fSize ?? .MSystemFont(15))
@@ -153,9 +147,7 @@ extension UIView {
             self.origin = .zero
             cnavItemV.size = .init(width: self.width, height: self.height)
         }else{
-            self.snp.makeConstraints { make in
-                make.edges.equalToSuperview()
-            }
+            self.sw_layoutEdges(equalTo: cnavItemV)
         }
         return cnavItemV
     }

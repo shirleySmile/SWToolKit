@@ -8,7 +8,6 @@
 import Foundation
 import UIKit
 import SwiftUI
-import SnapKit
 
 /// 选择的数据
 public class PickerSelectInfo:NSObject {
@@ -101,9 +100,7 @@ public class UIPickerManager: UIView {
         pickerV.delegate = self
         pickerV.dataSource = self
         self.addSubview(pickerV)
-        pickerV.snp.makeConstraints { make in
-            make.edges.equalToSuperview()
-        }
+        pickerV.sw_layoutEdges(equalTo: self)
         
     }
     
@@ -233,9 +230,7 @@ extension UIPickerManager : UIPickerViewDelegate, UIPickerViewDataSource {
         titleL.textColor = .black
         titleL.textAlignment = .center
         showV.addSubview(titleL)
-        titleL.snp.makeConstraints { make in
-            make.edges.equalTo(showV)
-        }
+        titleL.sw_layoutEdges(equalTo: showV)
         var showString:String!
         if linkage {
             if let list = pickerShowInfoList.first, list.count > 0 {

@@ -7,7 +7,6 @@
 
 import Foundation
 import UIKit
-import SnapKit
 
 
 class KBToolView: UIView {
@@ -85,32 +84,19 @@ class KBToolView: UIView {
         nextBtn.addTarget(self, action: #selector(nextBtnClick(btn:)), for: .touchUpInside)
         nextBtn.addSubview(nextImage)
         
-        doneBtn.snp.makeConstraints { make in
-            make.top.bottom.equalToSuperview()
-            make.right.equalTo(self).inset(10)
-        }
+        doneBtn.sw_layoutEdges([.top, .bottom, .right], equalTo: self, insets: UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 10))
         
-        lastBtn.snp.makeConstraints { make in
-            make.size.equalTo(CGSize(width: 40, height: 40))
-            make.left.equalToSuperview().inset(10)
-            make.centerY.equalToSuperview()
-        }
+        lastBtn.sw_layoutSize(width: 40, height: 40)
+            .sw_layoutLeft(equalTo: self.leftAnchor, constant: 10)
+            .sw_layoutCenterY(equalTo: self)
         
-        nextBtn.snp.makeConstraints { make in
-            make.size.equalTo(CGSize(width: 40, height: 40))
-            make.left.equalTo(lastBtn.snp.right).inset(-10)
-            make.centerY.equalToSuperview()
-        }
+        nextBtn.sw_layoutSize(width: 40, height: 40)
+            .sw_layoutLeft(equalTo: lastBtn.rightAnchor, constant: 10)
+            .sw_layoutCenterY(equalTo: self)
         
-        lastImage.snp.makeConstraints { make in
-            make.center.equalToSuperview()
-            make.width.height.equalTo(15)
-        }
+        lastImage.sw_layoutCenter(equalTo: lastBtn).sw_layoutSize(width: 15, height: 15)
         
-        nextImage.snp.makeConstraints { make in
-            make.center.equalToSuperview()
-            make.width.height.equalTo(15)
-        }
+        nextImage.sw_layoutCenter(equalTo: nextBtn).sw_layoutSize(width: 15, height: 15)
         
         self.shadow(color: .lightGray.withAlphaComponent(0.5), opacity: 0.5, radius: 3, rectEdge: [.top], width: 1)
         
