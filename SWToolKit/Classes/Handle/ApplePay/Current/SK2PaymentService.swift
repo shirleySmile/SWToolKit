@@ -297,7 +297,8 @@ class SK2PaymentService: NSObject, ApplePayEngine {
         /// 先清理会话再回调：上层可能在回调里立即发起下一笔
         self.clearSession(sessionId)
         guard let delegate = self.engineDelegate else {
-            /// 引擎代理丢失（理论不会发生）：按未投递处理，保留交易
+            /// 引擎代理丢失（理论不会发生）：按未投递处理，保留交易并可重试
+            self.deliveredTransactionIDs.remove(transaction.id)
             applePayLog.add(type: .end, title: "投递失败", des: "引擎代理为空，保留交易待重试 交易Id:\(transaction.id)")
             return
         }
@@ -305,6 +306,7 @@ class SK2PaymentService: NSObject, ApplePayEngine {
                                                orderId: orderId, receipt: receiptStr)
         guard delivered else {
             /// 宿主代理为空未投递：保留交易与订单映射，等待下次启动重试
+            self.deliveredTransactionIDs.remove(transaction.id)
             applePayLog.add(type: .end, title: "投递失败", des: "宿主代理为空，保留交易待重试 交易Id:\(transaction.id)")
             return
         }

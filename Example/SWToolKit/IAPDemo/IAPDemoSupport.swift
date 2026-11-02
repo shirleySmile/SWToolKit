@@ -8,6 +8,7 @@
 
 import Foundation
 import StoreKit
+import SWToolKit
 
 
 /// Demo 日志：控制台 + 页面面板 + 导出文件
@@ -200,6 +201,10 @@ enum IAPDemoConfig {
     static let defaultProductIds = [nonConsumable, consumable, subscription]
 
     static let defaultTimeout: Double = 20.0
+
+    /// 每次启动固定使用的实现模式（不再按系统版本切换）
+    static let engineMode: ApplePayManager.ImplementationMode = .legacy
+    static let receiptRefreshMode: ApplePayManager.ImplementationMode = .legacy
 
     static let delegateEnabledKey = "IAPDemo.delegateEnabled"
     /// v2：避免旧安装里持久化的 demo_* ID 盖住新默认值

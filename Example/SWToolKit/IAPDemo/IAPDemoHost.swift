@@ -128,11 +128,13 @@ final class IAPDemoHost: NSObject {
     }
 
     func applyDelegateSetting() {
+        let delegate: ApplePayManagerDelegate? = self.delegateEnabled ? self : nil
+        ApplePayManager.share.initData(engineMode: IAPDemoConfig.engineMode,
+                                       receiptRefreshMode: IAPDemoConfig.receiptRefreshMode,
+                                       delegate: delegate)
         if self.delegateEnabled {
-            ApplePayManager.share.delegate = self
             self.log("已挂载 delegate（会启动苹果回调监听）")
         } else {
-            ApplePayManager.share.delegate = nil
             self.log("已断开 delegate（发货时无法投递，交易会被保留）")
         }
     }
@@ -274,10 +276,6 @@ final class IAPDemoHost: NSObject {
     func simulatePromotedPurchase(productId: String) {
         guard self.promoSimulationEnabled else {
             self.log("模拟促销交易开关未打开，忽略")
-            return
-        }
-        if #available(iOS 26.0, *) {
-            self.log("iOS 26+ 已切到 StoreKit 2，SK1 入队不会被观察；请用 Xcode 的 Debug > StoreKit > Manage Transactions 模拟外部交易")
             return
         }
         self.promoSimulator.simulate(productId: productId)

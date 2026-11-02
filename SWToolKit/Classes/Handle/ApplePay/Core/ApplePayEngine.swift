@@ -71,37 +71,18 @@ protocol ApplePayEngineDelegate: AnyObject {
 }
 
 
-/// 引擎类型（仅用于调试时强制指定，不影响线上分发逻辑）
-enum ApplePayEngineKind {
-    /// 新版（StoreKit 2，能力下限 iOS 15）
-    case current
-    /// 旧版（StoreKit 1，后续可整体删除）
-    case legacy
-}
-
-
-/// 根据系统版本选择使用的内购引擎
+/// 根据开关选择使用的内购引擎
 @MainActor
 enum ApplePayEngineFactory {
 
-    /// - Parameter force: 调试用，强制指定引擎；线上不需要传
-    static func makeEngine(force: ApplePayEngineKind? = nil) -> ApplePayEngine {
+    /// - Parameter mode: 引擎实现模式，由 ApplePayManager.engineMode 传入
+    static func makeEngine(mode:ApplePayManager.ImplementationMode) -> ApplePayEngine {
         /// 订单映射两条链路共用同一实例（进程内只会创建一个引擎）
         let store = PaymentOrderStore()
-        if let force {
-            switch force {
-            case .current:
-                return SK2PaymentService(orderStore: store)
-            case .legacy:
-                return SK1PaymentService(orderStore: store)
-            }
-        }
-
-        if #available(iOS 26.0, *) {
-            /// iOS 26+ 使用 StoreKit 2（新代码）
+        switch mode {
+        case .new:
             return SK2PaymentService(orderStore: store)
-        } else {
-            /// iOS 15 ~ 26.0（不含 26.0）使用 StoreKit 1（老代码）
+        case .legacy:
             return SK1PaymentService(orderStore: store)
         }
     }

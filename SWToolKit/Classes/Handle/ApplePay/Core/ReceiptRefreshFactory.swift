@@ -12,7 +12,7 @@ enum ReceiptRefreshFactory {
 
     /// 根据开关创建票据刷新服务
     /// - Parameter mode: 新实现（AppStore.sync）或旧实现（SKReceiptRefreshRequest）
-    static func make(mode:ApplePayManager.ReceiptRefreshMode) -> ReceiptRefreshService {
+    static func make(mode:ApplePayManager.ImplementationMode) -> ReceiptRefreshService {
         switch mode {
         case .new:
             return StoreKit2ReceiptRefreshService()

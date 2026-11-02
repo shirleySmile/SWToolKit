@@ -65,16 +65,19 @@ public class ApplePayManager: NSObject {
     private var receiptWaiters: [(String?) -> Void] = []
     /// 刷新进行中排队的刷新结果回调
     private var refreshWaiters: [(Bool) -> Void] = []
-    /// 内购引擎（根据系统版本选择 StoreKit 1 或 StoreKit 2）
-    private let engine: ApplePayEngine
+    /// 内购引擎（根据 engineMode 选择 StoreKit 1 或 StoreKit 2）
+    /// lazy：首次使用时创建一次并持续复用，允许宿主在首次使用前设置 engineMode
+    private lazy var engine: ApplePayEngine = {
+        let engine = ApplePayEngineFactory.makeEngine(mode: self.engineMode)
+        engine.engineDelegate = self
+        return engine
+    }()
     /// 促销购买入口（两条链路共用，只负责 shouldAddStorePayment）
     private let promotedPurchase: PromotedPurchaseObserver
 
     fileprivate override init() {
-        self.engine = ApplePayEngineFactory.makeEngine()
         self.promotedPurchase = PromotedPurchaseObserver()
         super.init()
-        self.engine.engineDelegate = self
         self.promotedPurchase.manager = self
     }
  
@@ -84,19 +87,40 @@ public class ApplePayManager: NSObject {
     private var paymentTimer: Timer?
     
    
-    ///支付代理
-    public weak var delegate: ApplePayManagerDelegate? {
-        didSet {
-            if delegate != nil {
-                self.startHandle()
-            }
-        }
-    }
+    /// 支付代理（只由 initData 内部赋值）
+    public private(set) weak var delegate: ApplePayManagerDelegate?
     
     /// 超时时间
     public var timeoutInterval: TimeInterval = 150.0
     
-    
+    /// 购买/恢复引擎实现
+    /// 默认 .legacy；必须在首次使用（initData / pay / restore）之前设置，
+    /// 引擎创建后再修改不会重建，需下次启动生效。
+    fileprivate var engineMode: ImplementationMode = .legacy
+    /// 本地票据刷新实现
+    /// 默认旧实现（SKReceiptRefreshRequest），与引擎默认值保持一致。
+    /// 修改后下一次刷新生效，正在进行的刷新不会被打断。
+    fileprivate var receiptRefreshMode: ImplementationMode = .legacy
+
+    /// 初始化内购配置
+    /// 建议在 App 启动、首次 pay / restore / 获取票据之前调用。
+    /// - Parameters:
+    ///   - engineMode: 购买/恢复引擎实现（默认 .legacy）
+    ///   - receiptRefreshMode: 票据刷新实现（默认 .legacy）
+    ///   - delegate: 支付结果代理，默认 nil
+    public func initData(engineMode: ImplementationMode = .legacy,
+                         receiptRefreshMode: ImplementationMode = .legacy,
+                         delegate: ApplePayManagerDelegate? = nil) {
+        /// 先写模式再写 delegate：delegate 赋值后 startHandle 会创建引擎，
+        /// 引擎创建后修改 engineMode 不会重建，需下次启动生效
+        self.engineMode = engineMode
+        self.receiptRefreshMode = receiptRefreshMode
+        self.delegate = delegate
+        self.startHandle()
+    }
+
+
+
     ///开始支付
     public func pay(productId: String) -> ApplePayManager.StartFailType? {
         return self.pay(productId: productId, orderId: productId)
@@ -155,6 +179,7 @@ public class ApplePayManager: NSObject {
     public func finish() {
         self.resetSession()
         /// 显式中止：取消引擎里仍在等待的任务
+        /// 注意：引擎从未使用过时这里会顺带创建一次（两个引擎的 init 都不注册监听，只有 start() 才注册）
         self.engine.cancel()
     }
 
@@ -179,8 +204,8 @@ public class ApplePayManager: NSObject {
     
     /// 开始刷新本地票据，结束后统一回调所有等待者
     private func startReceiptRefresh() {
-        applePayLog.add(type: .start, title: "本地票据", des: "开始")
-        self.receiptRefresh = ReceiptRefreshService()
+        applePayLog.add(type: .start, title: "本地票据", des: "开始(\(self.receiptRefreshMode.rawValue))")
+        self.receiptRefresh = ReceiptRefreshFactory.make(mode: self.receiptRefreshMode)
         self.receiptRefresh?.refreshLocalReceiptInfo { [weak self] error in
             Task { @MainActor in
                 guard let self else { return }

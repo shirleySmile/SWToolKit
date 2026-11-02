@@ -2,105 +2,75 @@
 //  ReceiptRefreshService.swift
 //  Pods
 //
-//  Created by admin on 2025/8/12.
+//  本地票据刷新基类。
+//  对外只使用 refreshLocalReceiptInfo / cancel；
+//  子类只负责实现具体刷新方式（StoreKit 1 / StoreKit 2）。
 //
 
-import StoreKit
+import Foundation
 
 
-/// 本地票据刷新
-/// 两条链路共用：iOS 18+ 使用 AppStore.sync()，以下使用 SKReceiptRefreshRequest
+/// 本地票据刷新基类
+///
+/// 负责超时、回调一次性保护、取消清理；
+/// 具体刷新动作由子类实现。
 class ReceiptRefreshService:NSObject {
-    
+
     private var callback:((Error?)->Void)?
-    /// iOS 18+ 的 AppStore.sync() 任务
-    private var syncTask: Task<Void, Never>?
-    /// iOS 18 以下的旧版票据刷新请求（iOS 18.0 起 SKReceiptRefreshRequest 已弃用）
-    @available(iOS, deprecated: 18.0)
-    private var refreshRequest:SKReceiptRefreshRequest?
+    private var timer:Timer?
+    private var isRefreshing = false
     private let timeout:Double = 20
-    private weak var timer:Timer?
-    
+
     /// 刷新本地票据
-    func refreshLocalReceiptInfo(result:((Error?)->Void)?) {
+    /// - Parameter result: 刷新结果；成功为 nil，失败或超时返回错误
+    /// - Note: 同一时间只支持一次刷新，20 秒超时，回调只会执行一次
+    final func refreshLocalReceiptInfo(result:((Error?)->Void)?) {
         self.callback = result
-        if #available(iOS 18.0, *) {
-            guard self.syncTask == nil else { return }
-        } else {
-            guard self.refreshRequest == nil else { return }
-        }
+        guard self.isRefreshing == false else { return }
+        self.isRefreshing = true
         self.timer?.invalidate()
         self.timer = Timer.scheduledTimer(withTimeInterval: timeout, repeats: false, block: { [weak self] timer in
-            self?.timer?.invalidate()
-            self?.timer = nil
-            self?.timeoutHandle()
+            timer.invalidate()
+            self?.finish(NSError(domain: "超时", code: 9521))
         })
-        if #available(iOS 18.0, *) {
-            /// iOS 18.0 起 SKReceiptRefreshRequest 已弃用，改用 AppStore.sync() 与商店同步
-            /// 注意：sync 语义偏交易同步（可能触发登录弹窗），与刷新票据文件非 1:1
-            self.syncTask = Task { [weak self] in
-                do {
-                    try await AppStore.sync()
-                    self?.callbackHandle(nil)
-                } catch {
-                    self?.callbackHandle(error)
-                }
-            }
-        } else {
-            // Fallback on earlier versions
-            self.refreshRequest = SKReceiptRefreshRequest()
-            self.refreshRequest?.delegate = self
-            self.refreshRequest?.start()
+        self.startRefresh { [weak self] error in
+            self?.finish(error)
         }
-    }
-    
-    func cancel(){
-        if #available(iOS 18.0, *) {
-            self.syncTask?.cancel()
-            self.syncTask = nil
-        } else {
-            self.refreshRequest?.delegate = nil
-            self.refreshRequest?.cancel()
-            self.refreshRequest = nil
-        }
-    }
-    
-    private func timeoutHandle() {
-        let error:NSError = .init(domain: "超时", code: 9521)
-        self.callbackHandle(error)
     }
 
-    private func callbackHandle(_ error:Error?) {
+    /// 取消当前刷新
+    /// - Note: 取消不会触发 result 回调
+    final func cancel() {
         self.timer?.invalidate()
         self.timer = nil
-        if #available(iOS 18.0, *) {
-            self.syncTask?.cancel()
-            self.syncTask = nil
-        } else {
-            self.refreshRequest?.delegate = nil
-            self.refreshRequest?.cancel()
-            self.refreshRequest = nil
-        }
-        self.callback?(error)
         self.callback = nil
+        self.isRefreshing = false
+        self.cancelRefresh()
     }
-    
-}
 
+    // MARK: - 子类实现
 
-//MARK: ---------------SKRequestDelegate-----------------
-/// 仅 iOS 18 以下走此代理回调（iOS 18+ 走 AppStore.sync()）
-@available(iOS, deprecated: 18.0)
-extension ReceiptRefreshService:SKRequestDelegate {
-    
-    public func request(_ request: SKRequest, didFailWithError error: Error) {
-        debugPrint("==SWToolKit==" + "-------请求失败-------\(error)")
-        self.callbackHandle(error)
+    /// 开始具体刷新，完成后调用 completion
+    func startRefresh(completion:@escaping (Error?)->Void) {
+        fatalError("子类必须实现 startRefresh(completion:)")
     }
-    
-    public func requestDidFinish(_ request: SKRequest) {
-        debugPrint("==SWToolKit==" + "-------请求结束-------")
-        self.callbackHandle(nil)
+
+    /// 取消具体刷新
+    func cancelRefresh() {
+        fatalError("子类必须实现 cancelRefresh()")
     }
-    
+
+    // MARK: - 内部
+
+    private func finish(_ error:Error?) {
+        guard self.isRefreshing else { return }
+        self.isRefreshing = false
+        self.timer?.invalidate()
+        self.timer = nil
+        self.cancelRefresh()
+        let callback = self.callback
+        self.callback = nil
+        callback?(error)
+    }
+
 }

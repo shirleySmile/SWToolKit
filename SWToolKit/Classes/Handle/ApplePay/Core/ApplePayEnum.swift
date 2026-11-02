@@ -57,11 +57,11 @@ public extension ApplePayManager {
         case restore
     }
     
-    /// 本地票据刷新实现
-    enum ReceiptRefreshMode:String {
-        /// 新实现：AppStore.sync()，支持 iOS 15+
+    /// 新旧实现选择
+    /// - new：StoreKit 2 引擎 / AppStore.sync() 刷新
+    /// - legacy：StoreKit 1 引擎 / SKReceiptRefreshRequest 刷新
+    enum ImplementationMode:String {
         case new
-        /// 旧实现：SKReceiptRefreshRequest
         case legacy
     }
 
