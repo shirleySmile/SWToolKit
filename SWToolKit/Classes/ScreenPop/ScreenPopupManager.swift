@@ -25,8 +25,13 @@ public enum ScreenPopupAnimationType {
 
 /// 外部添加事件
 public struct ScreenPopupAction {
-    var target:Any
-    var action:Selector
+    public var target:Any
+    public var action:Selector
+
+    public init(target: Any, action: Selector) {
+        self.target = target
+        self.action = action
+    }
 }
 
 

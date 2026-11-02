@@ -28,6 +28,8 @@ class ScreenViewController: UIViewController {
         
         if let vc = UIHostingController(rootView: ScreenView()).view {
             vc.frame = self.view.bounds
+            /// 跟随承载页尺寸变化（旋转 / iPad 分屏）
+            vc.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             self.view.addSubview(vc)
         }
 

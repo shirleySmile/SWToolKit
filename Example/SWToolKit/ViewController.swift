@@ -111,9 +111,8 @@ class ViewController: UIViewController {
 
     
     @objc func click2(){
-        let view:UIView = .init(frame: .init(x: 0, y: 0, width: kScreen.width, height: 200))
-        view.backgroundColor = .red.withAlphaComponent(0.7)
-        view.screenPopupShow(animation: .enterFromTop())
+        let view = TopPopupDemoView(frame: .init(x: 0, y: 0, width: kScreen.width, height: 200))
+        view.screenPopupShow(options: .init(animation: .enterFromTop()))
     }
     
     @objc func click3() {
@@ -148,16 +147,134 @@ class ViewController: UIViewController {
 
 }
 
-class AlertView:UIView {
+/// 顶部弹窗（click2）：演示新入口 + 内容跟随容器宽度重排
+class TopPopupDemoView: UIView, ScreenPopupDelegate {
+
+    private let label = UILabel()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.backgroundColor = .red.withAlphaComponent(0.7)
+
+        label.numberOfLines = 0
+        label.textColor = .white
+        label.font = .systemFont(ofSize: 15)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        self.addSubview(label)
+
+        NSLayoutConstraint.activate([
+            label.topAnchor.constraint(equalTo: topAnchor, constant: 16),
+            label.leftAnchor.constraint(equalTo: leftAnchor, constant: 16),
+            label.rightAnchor.constraint(equalTo: rightAnchor, constant: -16)
+        ])
+        self.updateLabel(size: frame.size, container: CGSize(width: kScreen.width, height: kScreen.height))
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    private func updateLabel(size: CGSize, container: CGSize) {
+        label.text = "顶部弹窗（.enterFromTop）\n自身：\(Int(size.width)) x \(Int(size.height))\n容器：\(Int(container.width)) x \(Int(container.height))\n\n旋转后宽度应跟随容器，文字跟着重排"
+    }
+
+    // MARK: ScreenPopupDelegate
+
+    func screenPopupDidChange(_ change: ScreenPopupLayoutChange) {
+        self.updateLabel(size: change.frame.size, container: change.containerSize)
+    }
+
+    func screenPopupDidShow() {
+        self.updateLabel(size: frame.size, container: CGSize(width: kScreen.width, height: kScreen.height))
+    }
+}
+
+class AlertView:UIView, ScreenPopupDelegate {
     
     static func show() {
         
         let view = AlertView(frame: .init(origin: .zero, size: .init(width: kScreen.width, height: 300)))
         view.animationShow(header: .init(view: SheetBorderSliderHeader.init(viewHeight: 60), type: .cover))
     }
-    
-    
-    
+
+    private let titleLabel = UILabel()
+    private let detailLabel = UILabel()
+    private let sizeLabel = UILabel()
+    private let closeButton = UIButton(type: .system)
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.backgroundColor = .white
+        self.setupUI()
+        self.updateSizeLabel(size: frame.size, container: CGSize(width: kScreen.width, height: kScreen.height))
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    private func setupUI() {
+        titleLabel.text = "这是 AlertView（sheet）"
+        titleLabel.font = .boldSystemFont(ofSize: 17)
+        titleLabel.numberOfLines = 0
+
+        detailLabel.text = "覆盖式头部下面是内容区，旋转或 iPad 分屏后宽度跟随容器，内部 Auto Layout 会重排。"
+        detailLabel.font = .systemFont(ofSize: 14)
+        detailLabel.textColor = .darkGray
+        detailLabel.numberOfLines = 0
+
+        sizeLabel.font = .systemFont(ofSize: 13)
+        sizeLabel.textColor = .gray
+        sizeLabel.numberOfLines = 0
+
+        closeButton.setTitle("关闭", for: .normal)
+        closeButton.contentHorizontalAlignment = .left
+        closeButton.addTarget(self, action: #selector(close), for: .touchUpInside)
+
+        [titleLabel, detailLabel, sizeLabel, closeButton].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            self.addSubview($0)
+        }
+
+        let padding: CGFloat = 16
+        /// 顶部 60 是 cover 头部的遮挡区，内容从这里往下排
+        let top: CGFloat = 76
+        NSLayoutConstraint.activate([
+            titleLabel.topAnchor.constraint(equalTo: topAnchor, constant: top),
+            titleLabel.leftAnchor.constraint(equalTo: leftAnchor, constant: padding),
+            titleLabel.rightAnchor.constraint(equalTo: rightAnchor, constant: -padding),
+
+            detailLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 10),
+            detailLabel.leftAnchor.constraint(equalTo: leftAnchor, constant: padding),
+            detailLabel.rightAnchor.constraint(equalTo: rightAnchor, constant: -padding),
+
+            sizeLabel.topAnchor.constraint(equalTo: detailLabel.bottomAnchor, constant: 10),
+            sizeLabel.leftAnchor.constraint(equalTo: leftAnchor, constant: padding),
+            sizeLabel.rightAnchor.constraint(equalTo: rightAnchor, constant: -padding),
+
+            closeButton.topAnchor.constraint(equalTo: sizeLabel.bottomAnchor, constant: 12),
+            closeButton.leftAnchor.constraint(equalTo: leftAnchor, constant: padding),
+            closeButton.heightAnchor.constraint(equalToConstant: 44)
+        ])
+    }
+
+    private func updateSizeLabel(size: CGSize, container: CGSize) {
+        sizeLabel.text = "内容区：\(Int(size.width)) x \(Int(size.height))\n容器：\(Int(container.width)) x \(Int(container.height))"
+    }
+
+    @objc private func close() {
+        self.animationDismiss()
+    }
+
+    // MARK: ScreenPopupDelegate
+
+    func screenPopupDidChange(_ change: ScreenPopupLayoutChange) {
+        self.updateSizeLabel(size: change.frame.size, container: change.containerSize)
+    }
+
+    func screenPopupDidShow() {
+        self.updateSizeLabel(size: frame.size, container: CGSize(width: kScreen.width, height: kScreen.height))
+    }
 }
 
 
