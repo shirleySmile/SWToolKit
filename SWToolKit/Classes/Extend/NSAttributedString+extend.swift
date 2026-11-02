@@ -48,10 +48,11 @@ extension NSAttributedString{
         if lineSpase > 0 {
             paragraphStyle.lineSpacing = CGFloat.init(lineSpase)
         }
-        if wordSpace > 0 {
-            paragraphStyle.paragraphSpacing = CGFloat.init(wordSpace)
-        }
         attMuString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSMakeRange(0, self.length))
+        // wordSpace 为字/字符间距，用 kern 实现（原实现错误地写到段间距 paragraphSpacing）
+        if wordSpace > 0 {
+            attMuString.addAttribute(.kern, value: CGFloat.init(wordSpace), range: NSMakeRange(0, self.length))
+        }
         
         return attMuString
     }

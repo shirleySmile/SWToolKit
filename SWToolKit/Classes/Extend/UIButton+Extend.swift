@@ -43,8 +43,8 @@ public extension UIButton {
     ///   - state: UIControl.State
     ///   - isSureTitleCompress: 该参数已不生效（配置化布局下标题压缩由系统自动处理，保留仅为兼容既有调用）
     func setImage(param:ButtonImageAndTitleParam){
-        self.setImage(param.image, for: state)
-        self.setTitle(param.title, for: state)
+        self.setImage(param.image, for: param.state)
+        self.setTitle(param.title, for: param.state)
         positionLabelRespectToImage(style: param.style, spacing: param.spacing)
     }
     

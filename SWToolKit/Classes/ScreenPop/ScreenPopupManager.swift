@@ -37,10 +37,13 @@ public class ScreenPopupManager : NSObject {
      
     private override init() { }
     
-    public override class func copy() -> Any {
+    /// 单例禁止复制
+    public override func copy() -> Any {
         return self
     }
-    public override class func mutableCopy() -> Any {
+    
+    /// 单例禁止复制
+    public override func mutableCopy() -> Any {
         return self
     }
     

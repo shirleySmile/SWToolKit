@@ -22,17 +22,20 @@ class VoipRing : NSObject, PKPushRegistryDelegate {
     var bgTask: UIBackgroundTaskIdentifier?
     weak var delegate: VoipRingDelegate?
     weak var notificationDelegate:PushManager?
+    /// 持有 PKPushRegistry，避免局部变量被提前释放导致推送失效
+    private var voipRegistry: PKPushRegistry?
     
     
     ///注册推送key
     func registerPushKit() {
         let mainQueue = DispatchQueue.main
-        // Create a push registry object
+        // Create a push registry object (持有，避免被释放)
         let voipRegistry: PKPushRegistry = PKPushRegistry(queue: mainQueue)
         // Set the registry's delegate to self
         voipRegistry.delegate = self
         // Set the push type to VoIP
         voipRegistry.desiredPushTypes = [PKPushType.voIP]
+        self.voipRegistry = voipRegistry
     }
     
     ///开始
@@ -101,9 +104,10 @@ class VoipRing : NSObject, PKPushRegistryDelegate {
     @objc private func otherCancelRing(){
         stopPlaySystemSound()
         removeNotification()
-        if bgTask != nil {
-            UIApplication.shared.endBackgroundTask(bgTask!)
+        if let taskID = bgTask, taskID != .invalid {
+            UIApplication.shared.endBackgroundTask(taskID)
         }
+        bgTask = .invalid
     }
     
     

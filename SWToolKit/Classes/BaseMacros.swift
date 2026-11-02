@@ -11,7 +11,7 @@ import AVFoundation
 
 
 /// 当前活跃窗口场景（多窗口 / iPhone Duo 半屏时以活跃 scene 为准）
-func kActiveWindowScene() -> UIWindowScene? {
+public func kActiveWindowScene() -> UIWindowScene? {
     let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
     return scenes.first(where: { $0.activationState == .foregroundActive }) ?? scenes.first
 }

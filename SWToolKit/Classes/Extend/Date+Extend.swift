@@ -181,7 +181,7 @@ extension Date {
         adcomps.month = month
         adcomps.day = day
         let newdate = calendar.date(byAdding: adcomps as DateComponents, to: self, wrappingComponents: false)
-        return newdate!
+        return newdate ?? self
     }
     
     
@@ -216,7 +216,7 @@ extension Date {
     ///   - minute: 分钟间隔
     ///   - second: 秒钟
     /// - Returns: 返回相应的时间
-    func getLaterDateFromDate(year:Int,month:Int,day:Int,hour:Int,minute:Int,second:Int) -> Date {
+    public func getLaterDateFromDate(year:Int,month:Int,day:Int,hour:Int,minute:Int,second:Int) -> Date {
         let calendar:Calendar = Calendar.current
         let adcomps = NSDateComponents()
         adcomps.year = year
@@ -226,7 +226,7 @@ extension Date {
         adcomps.minute = minute
         adcomps.second = second
         let newdate = calendar.date(byAdding: adcomps as DateComponents, to: self, wrappingComponents: false)
-        return newdate!
+        return newdate ?? self
     }
     
     

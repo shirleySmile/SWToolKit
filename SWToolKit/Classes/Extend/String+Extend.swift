@@ -65,6 +65,8 @@ extension String {
     /// string[index,length] 例如："abcdefg"[3,2] // de
     subscript (index:Int , length:Int) -> String {
         get {
+            guard index >= 0, length > 0, index < self.count,
+                  length <= self.count - index else { return self }
             let startIndex = self.index(self.startIndex, offsetBy: index)
             let endIndex = self.index(startIndex, offsetBy: length)
             return String(self[startIndex..<endIndex])
@@ -213,7 +215,7 @@ extension String {
         if !self.isContainChinese(){
             return self
         }
-        return self.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!
+        return self.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? self
     }
     
 
@@ -438,13 +440,13 @@ extension String {
     
     //将unicode字符串转成表情
     public func emojDecode() -> String {
-        let data = self.data(using: .utf8)!
+        guard let data = self.data(using: .utf8) else { return self }
         return String(data: data, encoding: .nonLossyASCII) ?? self
     }
     //将表情字符转成unicode字符串
     public func emojEncode() -> String {
-        let data = self.data(using: .nonLossyASCII, allowLossyConversion: true)!
-        return String(data: data, encoding: .utf8)!
+        guard let data = self.data(using: .nonLossyASCII, allowLossyConversion: true) else { return self }
+        return String(data: data, encoding: .utf8) ?? self
     }
     
 }

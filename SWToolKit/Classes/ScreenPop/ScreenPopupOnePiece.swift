@@ -101,7 +101,7 @@ class ScreenPopupOnePiece: UIView {
         }
     }
     
-    open override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         let hitV = super.hitTest(point, with: event)
         if hitThrough, hitV == self {
             return nil

@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SnapKit
 
 
 //MARK: 功能view

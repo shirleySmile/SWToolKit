@@ -13,10 +13,10 @@ import UIKit
 //let kAutoSizeScale_X = ((kScreenH == 667.0) ? 1.0 : (kMaxWidth / 375.0))
 //let kAutoSizeScale_Y = ((kScreenH == 667.0) ? 1.0 : (kMaxHeight / 667.0))
  
-var kAutoSizeScale_X: CGFloat {
+public var kAutoSizeScale_X: CGFloat {
     (kScreen.height == 667.0) ? 1.0 : (kScreen.maxWidth / 375.0)
 }
-var kAutoSizeScale_Y: CGFloat {
+public var kAutoSizeScale_Y: CGFloat {
     (kScreen.height == 667.0) ? 1.0 : (kScreen.maxHeight / 667.0)
 }
 
@@ -29,7 +29,7 @@ public func kAutoConvertWithScreenW_Value(_ value:CGFloat) -> CGFloat {
     return floor(value * kAutoSizeScale_X)
 }
 ///< 纵向向自适应拉伸
-func kAutoConvertWithScreenH_Value(_ value:CGFloat) -> CGFloat {
+public func kAutoConvertWithScreenH_Value(_ value:CGFloat) -> CGFloat {
     return floor(value * kAutoSizeScale_Y)
 }
 

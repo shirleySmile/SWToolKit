@@ -81,32 +81,35 @@ extension UIColor{
         if cString.hasPrefix("#") {
             cString.removeFirst(1)
         }
-        if cString.count != 6 {
+        // 6 位（RRGGBB）或 8 位（RRGGBBAA），超出范围视为非法
+        if cString.count != 6 && cString.count != 8 {
             return UIColor.clear
         }
-        // 从六位数值中找到RGB对应的位数并转换
+        // 从十六进制数值中找到 RGBA 对应的位数并转换
         let mask = 0x000000FF
-        let r: Int
-        let g: Int
-        let b: Int
-        
+
         let red: CGFloat
         let green: CGFloat
         let blue: CGFloat
-        // 系统版本高于13.0
+        var alpha: CGFloat = a
         var color: UInt64 = 0
         let scanner = Scanner(string: cString)
         scanner.scanHexInt64(&color)
-        
-        
-        r = Int(color >> 16) & mask
-        g = Int(color >> 8) & mask
-        b = Int(color) & mask
-        
-        red   = CGFloat(r)
-        green = CGFloat(g)
-        blue  = CGFloat(b)
-        return UIColor.init(red: (red / 255.0), green: (green / 255.0), blue: (blue / 255.0), alpha: a)
+
+        if cString.count == 8 {
+            // 8 位：RRGGBBAA，需按 4 字节拆分
+            red   = CGFloat(Int(color >> 24) & mask)
+            green = CGFloat(Int(color >> 16) & mask)
+            blue  = CGFloat(Int(color >> 8)  & mask)
+            alpha = CGFloat(Int(color)       & mask) / 255.0
+        } else {
+            // 6 位：RRGGBB，alpha 用调用方传入的 a
+            red   = CGFloat(Int(color >> 16) & mask)
+            green = CGFloat(Int(color >> 8)  & mask)
+            blue  = CGFloat(Int(color)       & mask)
+            alpha = a
+        }
+        return UIColor.init(red: (red / 255.0), green: (green / 255.0), blue: (blue / 255.0), alpha: alpha)
     }
     
     

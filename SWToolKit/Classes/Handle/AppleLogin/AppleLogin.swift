@@ -131,8 +131,19 @@ public class AppleLogin: NSObject, ASAuthorizationControllerDelegate, ASAuthoriz
             let fullName = appleIDCredential.fullName
             //            let email = appleIDCredential.email
             // 服务器验证需要使用的参数
-            let code = String(data: appleIDCredential.authorizationCode!, encoding: .utf8)
-            let token = String(data: appleIDCredential.identityToken!, encoding: .utf8)
+            // 注意：二次授权时 authorizationCode / identityToken 可能为 nil，做安全解包避免崩溃
+            let code: String?
+            if let authCodeData = appleIDCredential.authorizationCode {
+                code = String(data: authCodeData, encoding: .utf8)
+            } else {
+                code = nil
+            }
+            let token: String?
+            if let tokenData = appleIDCredential.identityToken {
+                token = String(data: tokenData, encoding: .utf8)
+            } else {
+                token = nil
+            }
             // 用于判断当前登录的苹果账号是否是一个真实用户，取值有：unsupported、unknown、likelyReal
             //            let realUserStatus = appleIDCredential.realUserStatus;
             

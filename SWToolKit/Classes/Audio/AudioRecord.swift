@@ -176,13 +176,18 @@ public class AudioRecord: NSObject, AVAudioRecorderDelegate{
             
             //            try? AVAudioSession.sharedInstance().setCategory(.playback)
             
+            /// 先把录制文件 stop 落盘成完整文件，再读取转换（原实现先 convertM4a 后 stop，
+            /// 导出的可能是未 finalize 的空/损坏文件）。
+            /// 注意：这里不能 deleteRecording，否则待转换的 caf 文件会被删除导致转换失败；
+            /// 录音文件清理由 destruction() 负责。
+            recorder1.stop()
+            recorder = nil
+            
             if recorder1.currentTime >= minTime {
                 convertM4a(totalTime: recorder1.currentTime)
             }else{
                 self.recordDelegate?.audioRecord?(audioRecord: self, failType: .timeShort)
             }
-            recorder1.stop()
-            recorder = nil
         }
         
     }

@@ -10,7 +10,7 @@ import Foundation
 private class CBundleName: NSObject {}
 
 /// 与Bundle相关的方法
-extension Bundle {
+public extension Bundle {
 
     static func image(named: String) -> UIImage? {
         // 注意：CocoaPods 生成的 SWToolKit.bundle 里还嵌套了一层 SWToolKit.bundle
@@ -32,7 +32,7 @@ extension Bundle {
 }
 
 
-extension UIImage {
+public extension UIImage {
     
     static func bundle(imageNamed: String) -> UIImage? {
         return Bundle.image(named: imageNamed)

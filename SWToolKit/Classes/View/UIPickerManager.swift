@@ -8,6 +8,7 @@
 import Foundation
 import UIKit
 import SwiftUI
+import SnapKit
 
 /// 选择的数据
 public class PickerSelectInfo:NSObject {
@@ -63,6 +64,9 @@ public class UIPickerManager: UIView {
     ///联动为几列 (限制最多三级)
     public var linkageNumber:UInt = 1
     
+    /// 联动默认选中行（仅初始化时触发），当父级变化用于子级默认选中（避免被 didSet 清空后失效）
+    private var linkageDefaultSelect:[UInt] = []
+    
     
     ///没有设定选中某个值时，默认选中第几个
     public var defailtInitSelectNum:[UInt]?{
@@ -70,6 +74,8 @@ public class UIPickerManager: UIView {
             debugPrint("==SWToolKit==\(defailtInitSelectNum?.toJson() ?? "无")");
             pickerV.layoutIfNeeded()
             if let defailtInitSelectNum = self.defailtInitSelectNum, defailtInitSelectNum.count > 0 {
+                /// 保存一份供联动子级默认选中使用
+                linkageDefaultSelect = defailtInitSelectNum
                 for i in 0..<defailtInitSelectNum.count {
                     if i < self.pickerV.numberOfComponents{
                         self.pickerV.reloadComponent(i)
@@ -303,8 +309,8 @@ extension UIPickerManager : UIPickerViewDelegate, UIPickerViewDataSource {
                     pickerView.reloadComponent(1)
                     let maxNum = pickerView.numberOfRows(inComponent: 1)
                     var seletNum = pickerView.selectedRow(inComponent: 1)
-                    if (defailtInitSelectNum?.count ?? 0) > 1 , let num = defailtInitSelectNum?[1] as? UInt {
-                        seletNum = Int(num)
+                    if linkageDefaultSelect.count > 1 {
+                        seletNum = Int(linkageDefaultSelect[1])
                     }
                     pickerView.selectRow(min(((maxNum > 0) ? (maxNum - 1) : 0), seletNum), inComponent: 1, animated: false)
                     
@@ -312,8 +318,8 @@ extension UIPickerManager : UIPickerViewDelegate, UIPickerViewDataSource {
                         pickerView.reloadComponent(2)
                         let max2Num = pickerView.numberOfRows(inComponent: 2)
                         var selet2Num = pickerView.selectedRow(inComponent: 2)
-                        if (defailtInitSelectNum?.count ?? 0) > 2 , let num = defailtInitSelectNum?[2] as? UInt {
-                            selet2Num = Int(num)
+                        if linkageDefaultSelect.count > 2 {
+                            selet2Num = Int(linkageDefaultSelect[2])
                         }
                         pickerView.selectRow(min(((max2Num > 0) ? (max2Num - 1) : 0), selet2Num), inComponent: 2, animated: false)
                     }
@@ -323,8 +329,8 @@ extension UIPickerManager : UIPickerViewDelegate, UIPickerViewDataSource {
                     pickerView.reloadComponent(2)
                     let maxNum = pickerView.numberOfRows(inComponent: 2)
                     var seletNum = pickerView.selectedRow(inComponent: 2)
-                    if (defailtInitSelectNum?.count ?? 0) > 2 , let num = defailtInitSelectNum?[2] as? UInt {
-                        seletNum = Int(num)
+                    if linkageDefaultSelect.count > 2 {
+                        seletNum = Int(linkageDefaultSelect[2])
                     }
                     pickerView.selectRow(min(((maxNum > 0) ? (maxNum - 1) : 0), seletNum), inComponent: 2, animated: false)
                 }
