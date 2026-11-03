@@ -33,21 +33,6 @@ public var kTabBarH:CGFloat {
     kSafeBtmH + 49.0
 }
 
-public var kIphoneXUp:Bool { kSafeBtmH > 0 }
-
-public let kIphone14ProUp:Bool = {
-    let modeId = kDevice.modelIdentifier
-    if modeId.contains("iPhone") {
-        let firstStr = modeId.split(separator: ",").first
-        if let num = Int(firstStr?.dropFirst(6) as? Substring ?? "0"){
-            return (num >= 15 ? true : false)
-        }else{
-            return false
-        }
-    }else{
-        return false
-    }
-}()
 
 public struct kScreen {
     /// 屏幕分辨率
@@ -99,72 +84,20 @@ public struct kApp {
 }
 
 
-/// 内部设备信息（机型/电池/CPU 数据等对外能力由 SLExtensionKit 提供）
-private enum SystemInfo {
-
-    /// IP 地址
-    static let ipAddress:String = {
-        var addresses = [String]()
-        var ifaddr : UnsafeMutablePointer<ifaddrs>? = nil
-        if getifaddrs(&ifaddr) == 0 {
-            var ptr = ifaddr
-            while (ptr != nil) {
-                let flags = Int32(ptr!.pointee.ifa_flags)
-                var addr = ptr!.pointee.ifa_addr.pointee
-                if (flags & (IFF_UP|IFF_RUNNING|IFF_LOOPBACK)) == (IFF_UP|IFF_RUNNING) {
-                    if addr.sa_family == UInt8(AF_INET) || addr.sa_family == UInt8(AF_INET6) {
-                        var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-                        if (getnameinfo(&addr, socklen_t(addr.sa_len), &hostname, socklen_t(hostname.count),nil, socklen_t(0), NI_NUMERICHOST) == 0) {
-                            if let address = String(validatingUTF8:hostname) {
-                                addresses.append(address)
-                            }
-                        }
-                    }
-                }
-                ptr = ptr!.pointee.ifa_next
-            }
-            freeifaddrs(ifaddr)
-        }
-        return addresses.first ?? "0.0.0.0"
-    }()
-
-    /// 硬件标识:(iPhone10,3)
-    static let modeIdentifier:String = {
-        var systemInfo = utsname()
-        uname(&systemInfo)
-        let machineMirror = Mirror(reflecting: systemInfo.machine)
-        let identifier = machineMirror.children.reduce("") { identifier, element in
-            guard let value = element.value as? Int8, value != 0 else { return identifier }
-            return identifier + String(UnicodeScalar(UInt8(value)))
-        }
-        return identifier
-    }()
-
-    /// CPU 核心数
-    static let cpuCores:Int = ProcessInfo.processInfo.activeProcessorCount
-}
-
-
-//用户设备信息
+//用户设备信息（机型标识/IP/CPU 等设备数据见 SLExtensionKit 的 SLDeviceInfo）
 public struct kDevice {
     /// 机型
     public static let idiom:UIUserInterfaceIdiom = UIDevice.current.userInterfaceIdiom
     /// 是否是IPhone
     public static let isPhone = (Self.idiom == .phone)
-    /// 是否是isPad
+    /// 是否是iPad
     public static let isPad = (Self.idiom == .pad)
-    /// 是否是isPad
+    /// 是否是AppleTV
     public static let isAppleTV = (Self.idiom == .tv)
     /// 设备的系统版本
     public static let systemVersion = UIDevice.current.systemVersion
-    /// 设置型号:(iPhone10,3)
-    public static let modelIdentifier = SystemInfo.modeIdentifier
     /// 设备的别名::用户定义的名称
     public static let phoneName = UIDevice.current.name
-    /// IP地址
-    public static let ip = SystemInfo.ipAddress
-    /// cpu
-    public static let cpu = SystemInfo.cpuCores
     
 }
 
