@@ -235,7 +235,10 @@ public class ApplePayManager: NSObject {
             /// 投递期间被 finish / 新流程清理掉就放弃，并解除「恢复不并发」
             let stillCurrent = self.withStateLock { () -> Bool in
                 if self.currentSession?.id == session.id { return true }
-                self.restoreInFlight = false
+                /// 只有当前没有新会话时才解除，避免旧任务清掉新恢复的标记
+                if self.currentSession == nil {
+                    self.restoreInFlight = false
+                }
                 return false
             }
             guard stillCurrent else { return }
