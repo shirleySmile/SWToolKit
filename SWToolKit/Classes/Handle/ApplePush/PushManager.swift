@@ -240,3 +240,12 @@ public class PushManager: NSObject, UNUserNotificationCenterDelegate,VoipRingDel
 }
 
 
+
+private extension Dictionary {
+    /// 字典拼接字典（内部使用，原 Dictionary+Extend 中的 merge）
+    mutating func merge(other dic: Dictionary) {
+        self.merge(dic) { _, new in
+            new
+        }
+    }
+}

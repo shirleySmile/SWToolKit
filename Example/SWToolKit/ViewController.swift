@@ -39,8 +39,11 @@ class ViewController: UIViewController {
         
         let fmt:String = "yyyy-MM-dd HH:mm:ss"
         let dateStr = "2025-08-28 23:50:10"
-        let date:Date = Date.date(format: fmt, str: dateStr)
-        print("==123==", date.isToday)
+        let dataFmt = DateFormatter()
+        dataFmt.locale = Locale(identifier: "en_GB")
+        dataFmt.dateFormat = fmt
+        let date:Date = dataFmt.date(from: dateStr) ?? Date()
+        print("==123==", Calendar.current.isDateInToday(date))
         
         
         let btn = UIButton(type: .custom)

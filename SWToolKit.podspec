@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'SWToolKit'
-  s.version          = '1.1.0'
+  s.version          = '2.0.0'
   s.summary          = 'This is base tool of SWToolKit. Support iOS 15 and above'
   
   # This description is used to generate tags and improve search results.
@@ -29,6 +29,7 @@ Pod::Spec.new do |s|
   1.0.8 优化弹窗的使用
   1.0.9 优化弹窗的使用
   1.1.0 修改本库最低支持iOS 15.0
+  2.0.0 移除公开的 String/Array/Dictionary/Date 扩展与设备型号 API（改用 SLExtensionKit）
   
   DESC
   

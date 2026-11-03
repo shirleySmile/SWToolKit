@@ -113,3 +113,20 @@ extension SK1ProductCache: SKProductsRequestDelegate {
 
 
 
+
+private extension Array {
+    /// 转 JSON 字符串（内部使用，原 Array+Extend 中的 toJson）
+    func toJson(options opt: JSONSerialization.WritingOptions = []) -> String {
+        guard JSONSerialization.isValidJSONObject(self) else {
+            debugPrint("==SWToolKit==" + "无法解析出JSONString")
+            return ""
+        }
+        do {
+            let data = try JSONSerialization.data(withJSONObject: self, options: opt)
+            return String(data: data, encoding: .utf8) ?? ""
+        } catch {
+            debugPrint("==SWToolKit==toJson error:", error)
+            return ""
+        }
+    }
+}

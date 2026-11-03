@@ -6,8 +6,15 @@
 //  StoreKit 2：作为 appAccountToken（仅支持 UUID），回调时用它换回业务订单号；
 //  StoreKit 1：写入 applicationUsername，回调原样带回后用它换回业务订单号。
 //
+//  线程模型：
+//  - 首次访问时才从本地加载；
+//  - 增删改查都在内存里完成；
+//  - 每次操作后异步写盘（专用串行队列，保证多次写盘按顺序落地）；
+//  - App 即将终止时 `flush()` 做一次同步补写，避免最后一条映射丢失。
+//
 
 import Foundation
+import UIKit
 
 
 /// 订单映射记录（会话Id → 订单号，附带创建时间用于过期清理）
@@ -18,8 +25,8 @@ private struct OrderRecord: Codable {
 
 
 /// 订单映射存储。
-/// 注意：不加 @MainActor，是因为它会在引擎的 nonisolated init 里创建；
-/// 实际只在主线程访问（与引擎调用保持一致）。
+/// 不加 @MainActor：它会在引擎创建时构造，实际由调用方线程访问；
+/// 内部状态只在调用方线程读写，写盘在自有的串行队列上执行。
 final class PaymentOrderStore {
 
     /// 持久化存储 key（不能改，改了会丢失线上用户的订单映射）
@@ -28,10 +35,35 @@ final class PaymentOrderStore {
     /// 订单映射过期时间（Ask to Buy 无苹果超时上限，超时后清理避免堆积）
     private static let maxOrderAge: TimeInterval = 30 * 24 * 3600
 
-    private var map: [UUID: OrderRecord] = [:]
+    /// 写盘队列：串行，保证多次写盘按提交顺序落地
+    private static let ioQueue = DispatchQueue(label: "com.swtoolkit.applepay.orderStore", qos: .utility)
+
+    /// 首次访问时才加载本地数据
+    private lazy var map: [UUID: OrderRecord] = Self.load()
+
+    /// 保护待写盘快照（`flush` 可能在任何线程调用）
+    private let snapshotLock = NSLock()
+    /// 最近一次提交给写盘队列的快照，用于 App 终止时同步补写
+    private var pendingSnapshot: [UUID: OrderRecord]?
+
+    /// App 终止通知
+    private var terminateObserver: NSObjectProtocol?
 
     init() {
-        self.map = Self.load()
+        /// App 被系统终止时把最后一批数据同步写盘
+        self.terminateObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.willTerminateNotification,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            self?.flush()
+        }
+    }
+
+    deinit {
+        if let terminateObserver {
+            NotificationCenter.default.removeObserver(terminateObserver)
+        }
     }
 
     /// 记录一笔待发货订单
@@ -60,6 +92,44 @@ final class PaymentOrderStore {
 
     //MARK: ---------------持久化-----------------
 
+    /// 提交一次异步写盘
+    /// - Note: 快照必须在调用方线程取，后台不能直接读 `map`
+    private func persist() {
+        let snapshot = self.map
+        self.snapshotLock.lock()
+        self.pendingSnapshot = snapshot
+        self.snapshotLock.unlock()
+        Self.ioQueue.async {
+            Self.writeToDisk(snapshot)
+        }
+    }
+
+    /// 同步补写最近一次快照（App 即将终止时调用）
+    /// - Note: 必须走同一个串行队列并 sync，保证排在之前排队的写盘之后，
+    ///   否则先入队的旧快照可能在补写之后落地，反而把最新数据覆盖回旧值。
+    func flush() {
+        self.snapshotLock.lock()
+        let snapshot = self.pendingSnapshot
+        self.snapshotLock.unlock()
+        guard let snapshot else { return }
+        Self.ioQueue.sync {
+            Self.writeToDisk(snapshot)
+        }
+    }
+
+    /// 把快照编码后写入 UserDefaults（线程安全，可从任意队列调用）
+    private static func writeToDisk(_ snapshot: [UUID: OrderRecord]) {
+        let deadline = Date().addingTimeInterval(-maxOrderAge)
+        var raw: [String: String] = [:]
+        for (key, value) in snapshot where value.createdAt >= deadline {
+            if let data = try? JSONEncoder().encode(value),
+               let json = String(data: data, encoding: .utf8) {
+                raw[key.uuidString] = json
+            }
+        }
+        UserDefaults.standard.set(raw, forKey: orderMapKey)
+    }
+
     /// 从本地恢复订单映射（会话Id → orderId），并清理过期条目
     private static func load() -> [UUID: OrderRecord] {
         guard let raw = UserDefaults.standard.dictionary(forKey: orderMapKey) as? [String: String] else { return [:] }
@@ -86,19 +156,6 @@ final class PaymentOrderStore {
             }
         }
         return map
-    }
-
-    /// 保存订单映射到本地，并清理过期条目
-    private func persist() {
-        let deadline = Date().addingTimeInterval(-Self.maxOrderAge)
-        var raw: [String: String] = [:]
-        for (key, value) in self.map where value.createdAt >= deadline {
-            if let data = try? JSONEncoder().encode(value),
-               let json = String(data: data, encoding: .utf8) {
-                raw[key.uuidString] = json
-            }
-        }
-        UserDefaults.standard.set(raw, forKey: Self.orderMapKey)
     }
 
 }

@@ -36,11 +36,16 @@ class ApplePayLog: NSObject {
         case product
     }
 
+    /// 日志会在主线程与后台线程同时写入，统一加锁
+    private let lock = NSLock()
+
     private(set) var infoList:[ApplePayProgressInfo] = Array()
     
     fileprivate override init() {}
        
     func add(type:ProgressType, title:String, des:String) {
+        self.lock.lock()
+        defer { self.lock.unlock() }
         infoList.append(.init(type: type, title: title, des: des, date: Date()))
         /// 日志只增不减，长会话下会无限占用内存，限制最大条数
         if infoList.count > 500 {
@@ -49,6 +54,8 @@ class ApplePayLog: NSObject {
     }
     
     func getInfo() -> [String] {
+        self.lock.lock()
+        defer { self.lock.unlock() }
         let strList:[String] = infoList.compactMap { progress in
             return progress.info()
         }

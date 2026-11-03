@@ -8,6 +8,15 @@
 
 import UIKit
 
+/// 随机字符串（原 String.random，随 String+Extend 精简而来）
+private func swRandomString(num: Int = 10) -> String {
+    let uuid = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+    guard num > 0, num <= uuid.count else { return uuid }
+    let start = Int.random(in: 0...(uuid.count - num))
+    let s = uuid.index(uuid.startIndex, offsetBy: start)
+    return String(uuid[s..<uuid.index(s, offsetBy: num)])
+}
+
 /// 屏幕弹窗的 View
 class ScreenPopupBackgroundView:HitThroughView {
     
@@ -46,7 +55,7 @@ class ScreenPopupOnePiece: UIView {
     /// 背景色
     var bgColor:UIColor?
     /// 自定义key
-    var customKey:String = String.random(num: 10)
+    var customKey:String = swRandomString(num: 10)
     
     var dismissCompletion:(()->Void)? = nil
     /// 一次完整的关闭（避免重复触发回调）
