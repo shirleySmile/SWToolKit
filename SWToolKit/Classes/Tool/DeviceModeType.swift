@@ -86,7 +86,6 @@ public enum DeviceModeType: String {
     case iPad_8 = "iPad 8"
     case iPad_9 = "iPad 9"
     case iPad_10 = "iPad 10"
-    case iPad_16 = "iPad 16"
     case iPad_a16 = "iPad (A16)"   /// 2025.3.4
 
     /// iPad Air
@@ -336,7 +335,7 @@ extension DeviceModeType {
         case .iPhone_16_pro: return 27
         case .iPhone_16_pro_max: return 33
         case .iPhone_16e: return 26
-        case .iPad_1, .iPad_2, .iPad_3, .iPad_4, .iPad_5, .iPad_6, .iPad_7, .iPad_8, .iPad_9, .iPad_10, .iPad_16: return 10
+        case .iPad_1, .iPad_2, .iPad_3, .iPad_4, .iPad_5, .iPad_6, .iPad_7, .iPad_8, .iPad_9, .iPad_10: return 10
         case .iPad_air, .iPad_air_2, .iPad_air_3, .iPad_air_4, .iPad_air_5, .iPad_air_m2_11, .iPad_air_m2_13, .iPad_air_m3_11, .iPad_air_m3_13: return 10
         case .iPad_pro_9_7, .iPad_pro_12_9, .iPad_pro_12_9_2nd, .iPad_pro_10_5, .iPad_pro_11, .iPad_pro_12_9_3rd, .iPad_pro_11_2nd: return 10
         case .iPad_pro_12_9_4th, .iPad_pro_11_3rd, .iPad_pro_12_9_5th, .iPad_pro_m4_11, .iPad_pro_m4_13, .iPad_pro_11_4th, .iPad_pro_12_9_6th: return 10
@@ -420,7 +419,6 @@ extension DeviceModeType {
         case .iPad_8:  return 8757
         case .iPad_9:  return 8756
         case .iPad_10:  return 8800
-        case .iPad_16: return 7600
         case .iPad_air: return 8820
         case .iPad_air_2: return 7340
         case .iPad_air_3: return 8134
@@ -540,8 +538,6 @@ extension DeviceModeType {
             return "A13 Bionic"
         case .iPad_10:
             return "A14 Bionic"
-        case .iPad_16:
-            return "A15 Bionic"
         case .iPad_air:
             return "A7"
         case .iPad_air_2:
@@ -652,7 +648,6 @@ extension DeviceModeType {
         case .iPad_8: return 2490
         case .iPad_9: return 2650
         case .iPad_10: return 2990
-        case .iPad_16: return 3500
         case .iPad_air: return 1400
         case .iPad_air_2: return 1500
         case .iPad_air_3: return 2480
